@@ -1,0 +1,70 @@
+const { expect } = require('chai');
+const consts = require('../src/consts.js');
+const config = require('../src/config.js');
+
+
+describe('tracer config tests', () => {
+    const DEFAULT_CONFIG = {
+        token: '',
+        appName: 'Application',
+        metadataOnly: true,
+        useSSL: false,
+        traceCollectorURL: consts.TRACE_COLLECTOR_URL,
+    };
+
+    function resetConfig() {
+        config.config = DEFAULT_CONFIG;
+    }
+
+    beforeEach(() => {
+        resetConfig();
+    });
+
+    it('setConfig: empty config', () => {
+        config.setConfig({});
+        expect(config.config).to.equal(DEFAULT_CONFIG);
+    });
+
+    it('setConfig: undefined config', () => {
+        config.setConfig();
+        expect(config.config).to.equal(DEFAULT_CONFIG);
+    });
+
+    it('setConfig: empty config on non default config', () => {
+        const token = 'notdefault';
+        config.setConfig({ token });
+        const updatedConfig = DEFAULT_CONFIG;
+        updatedConfig.token = token;
+        expect(config.config).to.equal(updatedConfig);
+    });
+
+    it('setConfig: update ssl traces url', () => {
+        const useSSL = true;
+        config.setConfig({ useSSL });
+        const updatedConfig = DEFAULT_CONFIG;
+        updatedConfig.useSSL = useSSL;
+        updatedConfig.traceCollectorURL = 'https://us-east-1.tc.epsagon.com';
+        expect(config.config).to.equal(updatedConfig);
+    });
+
+    it('setConfig: custom traces url', () => {
+        const traceCollectorURL = 'http://custom.tc.epsagon.com';
+        config.setConfig({ traceCollectorURL });
+        const updatedConfig = DEFAULT_CONFIG;
+        updatedConfig.traceCollectorURL = traceCollectorURL;
+        expect(config.config).to.equal(updatedConfig);
+    });
+
+    it('setConfig: custom traces url with SSL', () => {
+        const traceCollectorURL = 'http://custom.tc.epsagon.com';
+        const useSSL = true;
+        config.setConfig({ traceCollectorURL, useSSL });
+        const updatedConfig = DEFAULT_CONFIG;
+        updatedConfig.useSSL = useSSL;
+        updatedConfig.traceCollectorURL = traceCollectorURL.replace(
+            'http://',
+            'https://'
+        );
+        expect(config.config).to.equal(updatedConfig);
+    });
+});

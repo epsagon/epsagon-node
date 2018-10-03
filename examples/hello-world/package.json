@@ -1,0 +1,8 @@
+{
+  "name": "EpsagonHelloWorldExample",
+  "version": "1.0.0",
+  "description": "Epsagon library basic usage example",
+  "dependencies": {
+    "epsagon": "^1.0.0"
+  }
+}

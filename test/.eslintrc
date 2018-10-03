@@ -1,0 +1,18 @@
+{
+    "env": {
+        "mocha": true,
+    },
+    "plugins": [
+        "mocha",
+        "chai-friendly"
+    ],
+    "rules": {
+        "indent": ["error", 4],
+        "function-paren-newline": ["error", "consistent"],
+        "mocha/no-exclusive-tests": "error",
+        "no-unused-expressions": 0,
+        "chai-friendly/no-unused-expressions": 2,
+        "require-jsdoc": 0,
+        "valid-jsdoc": 0,
+    }
+}

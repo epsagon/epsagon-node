@@ -1,0 +1,34 @@
+{
+    "extends": "airbnb",
+    "env": {
+        "node": true,
+        "browser": false
+    },
+    "plugins": [
+        "json"
+    ],
+    "rules": {
+        "indent": ["error", 4],
+        "function-paren-newline": ["error", "consistent"],
+        "require-jsdoc": ["error", {
+            "require": {
+                "FunctionDeclaration": true,
+                "MethodDefinition": true,
+                "ClassDeclaration": true,
+                "ArrowFunctionExpression": false,
+                "FunctionExpression": true
+            }
+        }],
+        "operator-linebreak": ["error", "after"],
+        "valid-jsdoc": ["error", {
+            "requireReturn": false
+        }],
+        "comma-dangle": ["error", {
+            "arrays": "always-multiline",
+            "objects": "always-multiline",
+            "imports": "never",
+            "exports": "never",
+            "functions": "never"
+        }]
+    }
+}

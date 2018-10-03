@@ -1,0 +1,33 @@
+language: node_js
+
+notifications:
+  slack:
+    rooms:
+      - epsagon:Q0XcrHSJRI5YkYftfUzl83Lx
+  on_pull_requests: false
+
+branches:
+  only:
+    - master
+
+node_js:
+  - "6.10"
+  - "8.10"
+
+script:
+  - npm run lint
+  - npm run test
+
+
+jobs:
+  include:
+    - stage: build-and-deploy
+      node_js: "8.10"
+      script:
+        - npm run build && npm run semantic-release
+
+stages:
+  - Test
+  - name: build-and-deploy
+    if: branch = master AND type = push
+
