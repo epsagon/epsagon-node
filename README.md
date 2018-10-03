@@ -34,6 +34,7 @@ handler = epsagon.lambdaWrapper(handler)
 
 ## Copyright
 
-Provided under the MIT license. See LICENSE for details.
+Provided under the MIT license.
+See LICENSE for details.
 
 Copyright 2018, Epsagon
