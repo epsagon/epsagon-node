@@ -26,7 +26,7 @@ epsagon.init({
 });
 
 function handler(event, context, callback) {
-    /* your code here */
+    callback(null, 'It worked!')
 }
 
 handler = epsagon.lambdaWrapper(handler)
