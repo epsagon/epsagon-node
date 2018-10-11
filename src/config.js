@@ -31,20 +31,20 @@ module.exports.config = {
 module.exports.setConfig = function setConfig(configData) {
     if (configData === undefined) return;
 
-    if (configData.token !== undefined) {
+    if (configData.token) {
         module.exports.config.token = configData.token;
     }
 
-    if (configData.appName !== undefined) {
+    if (configData.appName) {
         module.exports.config.appName = configData.appName;
     }
 
-    if (configData.metadataOnly !== undefined) {
+    if (configData.metadataOnly !== undefined && configData.metadataOnly != null) {
         module.exports.config.metadataOnly = configData.metadataOnly;
     }
 
     // Set custom URL if defined
-    if (configData.traceCollectorURL !== undefined) {
+    if (configData.traceCollectorURL) {
         module.exports.config.traceCollectorURL = configData.traceCollectorURL;
     }
 

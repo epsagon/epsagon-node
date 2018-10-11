@@ -21,8 +21,7 @@
     "build:dev": "rollup -c",
     "build": "NODE_ENV=production rollup -c",
     "clean": "rm -r dist/",
-    "semantic-release": "semantic-release",
-    "travis-deploy-once": "travis-deploy-once --pro"
+    "semantic-release": "semantic-release"
   },
   "bugs": {
     "url": "https://github.com/epsagon/epsagon-node/issues"
@@ -66,7 +65,6 @@
     "rollup-plugin-uglify-es": "0.0.1",
     "semantic-release": "^15.9.16",
     "sinon": "^4.3.0",
-    "travis-deploy-once": "^5.0.9",
     "uglify-es": "^3.3.9",
     "aws-sdk": "^2.197.0"
   },
