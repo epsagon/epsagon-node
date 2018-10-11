@@ -1,7 +1,7 @@
 const commonjs = require('rollup-plugin-commonjs');
 const json = require('rollup-plugin-json');
 const { eslint } = require('rollup-plugin-eslint');
-const uglify = require('rollup-plugin-uglify-es');
+const { terser } = require('rollup-plugin-terser');
 
 module.exports = {
     input: 'src/index.js',
@@ -12,17 +12,21 @@ module.exports = {
     plugins: [
         eslint({
             throwOnError: true,
-            throwOnWarning: true
+            throwOnWarning: true,
         }),
         commonjs(),
         json(),
-        (process.env.NODE_ENV === 'production' ? uglify({
+        (process.env.NODE_ENV === 'production' ? terser({
+            warnings: 'verbose',
+            compress: {
+                warnings: 'verbose',
+            },
             mangle: {
                 keep_fnames: true,
             },
             output: {
                 beautify: false,
-            }
-        }): null),
+            },
+        }) : null),
     ],
 };
