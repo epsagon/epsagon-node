@@ -92,6 +92,7 @@ describe('lambdaWrapper tests', () => {
             logGroupName: 'logGroupName',
             functionVersion: 'functionVersion',
             memoryLimitInMB: 'memoryLimitInMB',
+            invokedFunctionArn: '0:1:2:3:4:5:6',
         };
         Object.assign(this.context, contextData);
 
@@ -112,6 +113,7 @@ describe('lambdaWrapper tests', () => {
         expect(resource.getMetadataMap().get('cold_start')).to.equal('true');
         expect(resource.getMetadataMap().get('memory')).to.equal('memoryLimitInMB');
         expect(resource.getMetadataMap().get('region')).to.equal(consts.REGION);
+        expect(resource.getMetadataMap().get('aws_account')).to.equal('4');
     });
 
     it('lambdaWrapper: trigger creation failure', (done) => {
@@ -368,6 +370,7 @@ describe('stepLambdaWrapper tests', () => {
             logGroupName: 'logGroupName',
             functionVersion: 'functionVersion',
             memoryLimitInMB: 'memoryLimitInMB',
+            invokedFunctionArn: '0:1:2:3:4:5:6',
         };
 
         Object.assign(this.context, contextData);
@@ -389,6 +392,7 @@ describe('stepLambdaWrapper tests', () => {
         expect(resource.getMetadataMap().get('cold_start')).to.equal('true');
         expect(resource.getMetadataMap().get('memory')).to.equal('memoryLimitInMB');
         expect(resource.getMetadataMap().get('region')).to.equal(consts.REGION);
+        expect(resource.getMetadataMap().get('aws_account')).to.equal('4');
     });
 
     it('stepLambdaWrapper: wrapped function dont return object', (done) => {
