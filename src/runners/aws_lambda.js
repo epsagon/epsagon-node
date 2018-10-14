@@ -31,10 +31,14 @@ function createRunner(originalContext, resourceType = 'lambda') {
     ]);
 
     runner.setResource(runnerResource);
+    const AWSAccountNumber = (originalContext.invokedFunctionArn) ?
+        originalContext.invokedFunctionArn.split(':')[4] : '';
+
     eventInterface.addToMetadata(runner, {
         log_stream_name: `${originalContext.logStreamName}`,
         log_group_name: `${originalContext.logGroupName}`,
         function_version: `${originalContext.functionVersion}`,
+        aws_account: `${AWSAccountNumber}`,
         cold_start: `${consts.COLD_START}`,
         memory: `${originalContext.memoryLimitInMB}`,
         region: consts.REGION,
