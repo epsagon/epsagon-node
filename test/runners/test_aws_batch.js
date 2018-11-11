@@ -4,11 +4,13 @@ const axios = require('axios');
 const batchRunner = require('../../src/runners/aws_batch.js');
 const errorCode = require('../../src/proto/error_code_pb.js');
 const tracer = require('../../src/tracer.js');
+const config = require('../../src/config.js');
 
 describe('AWS Batch createRunner tests', () => {
     beforeEach(() => {
         this.getStub = sinon.stub(axios, 'get').returns(Promise.resolve({ data: JSON.stringify({ region: 'test-reg' }) }));
         this.addExceptionStub = sinon.stub(tracer, 'addException');
+        config.setConfig({ metadataOnly: false });
     });
     afterEach(() => {
         this.getStub.restore();
