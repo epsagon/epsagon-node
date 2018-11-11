@@ -297,7 +297,7 @@ const dynamoDBEventCreator = {
             });
             /* fallthrough */
         case 'getItem':
-            eventInterface.addToMetadata(event, {
+            eventInterface.addToMetadata(event, {}, {
                 Key: parameters.Key,
             });
             break;
@@ -322,6 +322,64 @@ const dynamoDBEventCreator = {
             });
             break;
 
+        case 'query': {
+            eventInterface.addObjectToMetadata(
+                event,
+                'Parameters',
+                parameters,
+                [
+                    'KeyConditions',
+                    'QueryFilter',
+                    'ExclusiveStartKey',
+                    'ProjectionExpression',
+                    'FilterExpression',
+                    'KeyConditionExpression',
+                    'ExpressionAttributeValues',
+                ]
+            );
+            break;
+        }
+
+        case 'scan': {
+            eventInterface.addObjectToMetadata(
+                event,
+                'Parameters',
+                parameters,
+                [
+                    'ScanFilter',
+                    'ExclusiveStartKey',
+                    'ProjectionExpression',
+                    'FilterExpression',
+                    'ExpressionAttributeValues',
+                ]
+            );
+            break;
+        }
+
+        case 'batchWriteItem': {
+            const tableName = Object.keys(parameters.RequestItems)[0];
+            resource.setName(tableName || parameters.TableName);
+            const addedItems = [];
+            const deletedKeys = [];
+            parameters.RequestItems[tableName].forEach(
+                (item) => {
+                    if (item.PutRequest) {
+                        addedItems.push(item.PutRequest.Item);
+                    }
+                    if (item.DeleteRequest) {
+                        deletedKeys.push(item.DeleteRequest.Key);
+                    }
+                }
+            );
+            if (addedItems.length !== 0) {
+                eventInterface.addToMetadata(event, {}, { 'Added Items': JSON.stringify(addedItems) });
+            }
+            if (deletedKeys.length !== 0) {
+                eventInterface.addToMetadata(event, {}, { 'Deleted Keys': JSON.stringify(deletedKeys) });
+            }
+            break;
+        }
+
         default:
             break;
         }
@@ -334,15 +392,6 @@ const dynamoDBEventCreator = {
      */
     responseHandler(response, event) {
         switch (response.request.operation) {
-        case 'scan':
-            eventInterface.addToMetadata(event, {
-                'Items Count': `${response.data.Count}`,
-                'Scanned Items Count': `${response.data.ScannedCount}`,
-            }, {
-                Items: JSON.stringify(response.data.Items),
-            });
-            break;
-
         case 'getItem':
             eventInterface.addToMetadata(event, {}, {
                 Item: JSON.stringify(response.data.Item),
@@ -354,6 +403,17 @@ const dynamoDBEventCreator = {
                 'Table Names': response.data.TableNames.join(', '),
             });
             break;
+
+        case 'scan':
+        case 'query': {
+            eventInterface.addObjectToMetadata(
+                event,
+                'Response',
+                response.data,
+                ['Items', 'LastEvaluatedKey']
+            );
+            break;
+        }
 
         default:
             break;

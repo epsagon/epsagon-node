@@ -5,7 +5,7 @@
 const utils = require('./utils');
 const errorCode = require('./proto/error_code_pb.js');
 const exception = require('./proto/exception_pb.js');
-const config = require('./config.js');
+const { config } = require('./config.js');
 const tracer = require('./tracer.js');
 
 /**
@@ -31,7 +31,7 @@ module.exports.setException = function setException(event, error) {
  * Adds items from a map to a resource Metadata
  * @param {proto.event_pb.Event} event The event to add the items to
  * @param {object} map The map containing the objects
- * @param {object} [fullDataMap={}] Additional data to add only if {@link tracer.shouldSendFullData}
+ * @param {object} [fullDataMap={}] Additional data to add only if {@link config.metadataOnly}
  *     is True
  */
 module.exports.addToMetadata = function addToMetadata(event, map, fullDataMap = {}) {
@@ -43,4 +43,29 @@ module.exports.addToMetadata = function addToMetadata(event, map, fullDataMap = 
             event.getResource().getMetadataMap().set(key, fullDataMap[key]);
         });
     }
+};
+
+
+/**
+ * Adds JSON serialized object to a resource Metadata
+ * @param {proto.event_pb.Event} event The event to add the items to
+ * @param {string} key The name of field that is added
+ * @param {object} object The object to add
+ * @param {array} [dataFields=[]] List of data fields that should be filtered out
+ *  only if {@link config.metadataOnly} is True
+ */
+module.exports.addObjectToMetadata = function addObjectToMetadata(
+    event,
+    key,
+    object,
+    dataFields = []
+) {
+    let objectToAdd = object;
+    if (config.metadataOnly && dataFields.length > 0) {
+        const fields = Object.getOwnPropertyNames(object).filter(
+            field => !dataFields.includes(field)
+        );
+        objectToAdd = Object.assign(...(fields.map(field => ({ [field]: object[field] }))));
+    }
+    event.getResource().getMetadataMap().set(key, JSON.stringify(objectToAdd));
 };
