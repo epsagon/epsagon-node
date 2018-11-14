@@ -23,6 +23,13 @@ module.exports.config = {
     },
 };
 
+/**
+ * @returns {object} The config object
+ */
+module.exports.getConfig = function getConfig() {
+    return module.exports.config;
+};
+
 
 /**
  * Initializes the configuration

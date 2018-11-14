@@ -40,7 +40,6 @@ describe('tracer module tests', () => {
             config,
             'setConfig'
         );
-        config.config = {};
     });
 
     afterEach(() => {
@@ -364,7 +363,6 @@ describe('sendTraceSync function tests', () => {
             config,
             'setConfig'
         );
-        config.config = {};
         this.postStub = sinon.stub(
             axios,
             'post'

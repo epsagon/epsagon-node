@@ -5,10 +5,14 @@ const uuid4 = require('uuid4');
 const util = require('util');
 const tracer = require('../tracer.js');
 const utils = require('../utils.js');
+const { getConfig } = require('../config.js');
 const awsLambdaTrigger = require('../triggers/aws_lambda.js');
 const eventInterface = require('../event.js');
 const lambdaRunner = require('../runners/aws_lambda.js');
 const { STEP_ID_NAME } = require('../consts.js');
+
+const FAILED_TO_SERIALIZE_MESSAGE = 'Unable to stringify response body as json';
+module.exports.FAILED_TO_SERIALIZE_MESSAGE = FAILED_TO_SERIALIZE_MESSAGE;
 
 /**
  * The epsagon's base lambda wrapper, wrap a lambda function with it to trace it
@@ -79,9 +83,20 @@ function baseLambdaWrapper(
             });
         };
 
-        const handleUserExecutionDone = (error) => {
+        const handleUserExecutionDone = (error, result) => {
             if (error) { // not catching false here, but that seems OK
                 eventInterface.setException(runner, error);
+            }
+
+            if (error === null && !getConfig().metadataOnly) {
+                let jsonResult;
+                try {
+                    // Taken from AWS Lambda runtime
+                    jsonResult = JSON.stringify(typeof result === 'undefined' ? null : result);
+                } catch (err) {
+                    jsonResult = `${FAILED_TO_SERIALIZE_MESSAGE}: ${err.message}`;
+                }
+                eventInterface.addToMetadata(runner, { return_value: jsonResult });
             }
 
             // Restoring empty event loop handling.
@@ -100,11 +115,10 @@ function baseLambdaWrapper(
         };
 
         const wrappedCallback = (error, result) => {
-            handleUserExecutionDone(error).then(() => {
-                utils.debugLog('calling User\'s callback');
-                callbackCalled = true;
-                originalCallback(error, result);
-            });
+            handleUserExecutionDone(error, result);
+            utils.debugLog('calling User\'s callback');
+            callbackCalled = true;
+            return originalCallback(error, result);
         };
 
 
@@ -118,7 +132,7 @@ function baseLambdaWrapper(
             if (!callbackCalled) {
                 if (result instanceof Promise) {
                     result = result
-                        .then(() => { handleUserExecutionDone(null); })
+                        .then((res) => { handleUserExecutionDone(null, res); })
                         .catch((err) => { handleUserExecutionDone(err); });
                 }
             }
