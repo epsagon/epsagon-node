@@ -29,9 +29,8 @@ function getReturnValue(addEventStub) {
 }
 
 describe('lambdaWrapper tests', () => {
-    before(() => { config.setConfig({ metadataOnly: false }); });
-
     beforeEach(() => {
+        config.setConfig({ metadataOnly: false });
         this.createFromEventStub = sinon.stub(
             awsLambdaTrigger,
             'createFromEvent'

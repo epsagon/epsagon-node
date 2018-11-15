@@ -7,14 +7,24 @@ const tracer = require('../../src/tracer.js');
 const config = require('../../src/config.js');
 
 describe('AWS Batch createRunner tests', () => {
+    before(() => {
+        this.baseConfig = config.getConfig();
+    });
     beforeEach(() => {
         this.getStub = sinon.stub(axios, 'get').returns(Promise.resolve({ data: JSON.stringify({ region: 'test-reg' }) }));
         this.addExceptionStub = sinon.stub(tracer, 'addException');
-        config.setConfig({ metadataOnly: false });
+        this.getConfigStub = sinon.stub(config, 'getConfig').returns(
+            Object.assign(
+                {},
+                this.baseConfig,
+                { metadataOnly: false }
+            )
+        );
     });
     afterEach(() => {
         this.getStub.restore();
         this.addExceptionStub.restore();
+        this.getConfigStub.restore();
     });
     it('createRunner: create correct runner event', (done) => {
         const env = {

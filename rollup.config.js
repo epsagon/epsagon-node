@@ -10,10 +10,10 @@ module.exports = {
         format: 'cjs',
     },
     plugins: [
-        eslint({
+        (process.env.NODE_ENV === 'production' ? eslint({
             throwOnError: true,
             throwOnWarning: true,
-        }),
+        }) : null),
         commonjs(),
         json(),
         (process.env.NODE_ENV === 'production' ? terser({

@@ -14,7 +14,7 @@ module.exports = {
     wrapBatchJob: f => f,
 };
 
-if (!config.config.isEpsagonDisabled) {
+if (!config.getConfig().isEpsagonDisabled) {
     module.exports.lambdaWrapper = lambdaWrapper.lambdaWrapper;
     module.exports.stepLambdaWrapper = lambdaWrapper.stepLambdaWrapper;
     module.exports.nodeWrapper = nodeWrapper.nodeWrapper;

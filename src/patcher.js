@@ -9,7 +9,7 @@ const httpPatcher = require('./events/http.js');
 
 const pgPatcher = tryRequire('./events/pg.js') || { init: () => {} };
 
-if (!config.config.isEpsagonPatchDisabled) {
+if (!config.getConfig().isEpsagonPatchDisabled) {
     [awsSDKPatcher, httpPatcher, pgPatcher].forEach((patcher) => {
         try {
             patcher.init();

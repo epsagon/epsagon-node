@@ -40,11 +40,17 @@ describe('tracer module tests', () => {
             config,
             'setConfig'
         );
+        this.baseConfig = config.getConfig();
+        this.getConfigStub = sinon.stub(
+            config,
+            'getConfig'
+        ).returns(this.baseConfig);
     });
 
     afterEach(() => {
         this.postStub.restore();
         this.setConfigStub.restore();
+        this.getConfigStub.restore();
     });
 
     function validateTrace(token, appName) {
@@ -85,8 +91,9 @@ describe('tracer module tests', () => {
     });
 
     it('restart: accept token and appName on tracer', () => {
-        config.config.token = 'token1';
-        config.config.appName = 'app1';
+        this.baseConfig.token = 'token1';
+        this.baseConfig.appName = 'app1';
+        this.getConfigStub.returns(this.baseConfig);
         tracer.restart();
         validateTrace('token1', 'app1');
     });

@@ -12,8 +12,9 @@ describe('tracer config tests', () => {
         traceCollectorURL: consts.TRACE_COLLECTOR_URL,
     };
 
+
     function resetConfig() {
-        config.config = DEFAULT_CONFIG;
+        Object.assign(config.getConfig(), DEFAULT_CONFIG);
     }
 
     beforeEach(() => {
@@ -22,12 +23,12 @@ describe('tracer config tests', () => {
 
     it('setConfig: empty config', () => {
         config.setConfig({});
-        expect(config.config).to.equal(DEFAULT_CONFIG);
+        expect(config.getConfig()).to.contain(DEFAULT_CONFIG);
     });
 
     it('setConfig: undefined config', () => {
         config.setConfig();
-        expect(config.config).to.equal(DEFAULT_CONFIG);
+        expect(config.getConfig()).to.contain(DEFAULT_CONFIG);
     });
 
     it('setConfig: empty config on non default config', () => {
@@ -35,7 +36,7 @@ describe('tracer config tests', () => {
         config.setConfig({ token });
         const updatedConfig = DEFAULT_CONFIG;
         updatedConfig.token = token;
-        expect(config.config).to.equal(updatedConfig);
+        expect(config.getConfig()).to.contain(updatedConfig);
     });
 
     it('setConfig: update ssl traces url', () => {
@@ -44,7 +45,7 @@ describe('tracer config tests', () => {
         const updatedConfig = DEFAULT_CONFIG;
         updatedConfig.useSSL = useSSL;
         updatedConfig.traceCollectorURL = 'https://us-east-1.tc.epsagon.com';
-        expect(config.config).to.equal(updatedConfig);
+        expect(config.getConfig()).to.contain(updatedConfig);
     });
 
     it('setConfig: custom traces url', () => {
@@ -52,7 +53,7 @@ describe('tracer config tests', () => {
         config.setConfig({ traceCollectorURL });
         const updatedConfig = DEFAULT_CONFIG;
         updatedConfig.traceCollectorURL = traceCollectorURL;
-        expect(config.config).to.equal(updatedConfig);
+        expect(config.getConfig()).to.contain(updatedConfig);
     });
 
     it('setConfig: custom traces url with SSL', () => {
@@ -65,6 +66,6 @@ describe('tracer config tests', () => {
             'http://',
             'https://'
         );
-        expect(config.config).to.equal(updatedConfig);
+        expect(config.getConfig()).to.contain(updatedConfig);
     });
 });
