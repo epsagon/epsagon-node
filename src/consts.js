@@ -1,6 +1,8 @@
-const pjson = require('../package.json');
+const fs = require('fs');
+const path = require('path');
 
-module.exports.VERSION = pjson.version;
+const pjsonPath = path.resolve(__dirname, '../package.json');
+module.exports.VERSION = JSON.parse(fs.readFileSync(pjsonPath)).version;
 
 const DEFAULT_REGION = 'us-east-1';
 let REGION = process.env.AWS_REGION;
