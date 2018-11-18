@@ -47,7 +47,7 @@ function createRunner(functionToWrap, args) {
  * @return {function} The original function, wrapped by our tracer
  */
 module.exports.nodeWrapper = function nodeWrapper(functionToWrap) {
-    return (...args) => {
+    return (...args) => { // eslint-disable-line consistent-return
         tracer.restart();
         let runner;
 
@@ -73,8 +73,9 @@ module.exports.nodeWrapper = function nodeWrapper(functionToWrap) {
         } catch (err) {
             eventInterface.setException(runner, err);
             runnerSendUpdateHandler(); // Doing it here since the send is synchronous on error
-            tracer.sendTraceSync();
-            throw err;
+            tracer.sendTraceSync().then(() => {
+                throw err;
+            });
         }
     };
 };

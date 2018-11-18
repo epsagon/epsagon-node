@@ -368,7 +368,7 @@ describe('sendTraceSync function tests', () => {
         this.postStub = sinon.stub(
             axios,
             'post'
-        ).yields(null, { statusCode: 200 }, []);
+        ).returns(Promise.resolve(true));
     });
 
     afterEach(() => {
@@ -476,7 +476,7 @@ describe('sendTraceSync function tests', () => {
 
     it('sendTraceSync: post fails', () => {
         this.postStub.reset();
-        this.postStub.yields(null, { statusCode: 500 }, []);
+        this.postStub.returns(Promise.reject(new Error()));
 
         tracer.sendTraceSync();
         expect(this.postStub.calledOnce).to.be.true;
