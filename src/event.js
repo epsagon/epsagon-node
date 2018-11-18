@@ -5,7 +5,7 @@
 const utils = require('./utils');
 const errorCode = require('./proto/error_code_pb.js');
 const exception = require('./proto/exception_pb.js');
-const { config } = require('./config.js');
+const config = require('./config.js');
 const tracer = require('./tracer.js');
 
 /**
@@ -38,7 +38,7 @@ module.exports.addToMetadata = function addToMetadata(event, map, fullDataMap = 
     Object.keys(map).forEach((key) => {
         event.getResource().getMetadataMap().set(key, map[key]);
     });
-    if (!config.metadataOnly) {
+    if (!config.getConfig().metadataOnly) {
         Object.keys(fullDataMap).forEach((key) => {
             event.getResource().getMetadataMap().set(key, fullDataMap[key]);
         });

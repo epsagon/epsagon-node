@@ -93,8 +93,8 @@ module.exports.restart = function restart() {
     const { tracer } = module.exports;
     tracer.clearExceptionList();
     tracer.clearEventList();
-    tracer.setAppName(config.config.appName);
-    tracer.setToken(config.config.token);
+    tracer.setAppName(config.getConfig().appName);
+    tracer.setToken(config.getConfig().token);
 };
 
 /**
@@ -159,10 +159,10 @@ function sendCurrentTrace(traceSender) {
  * @returns {Promise} a promise that is resolved after the trace is posted.
  *  */
 function postTrace(traceObject) {
-    utils.debugLog(`Posting trace to ${config.config.traceCollectorURL}`);
+    utils.debugLog(`Posting trace to ${config.getConfig().traceCollectorURL}`);
     utils.debugLog(`trace: ${util.inspect(traceObject)}`);
     return axios.post(
-        config.config.traceCollectorURL,
+        config.getConfig().traceCollectorURL,
         traceObject,
         { timeout: sendTimeoutMiliseconds }
     ).then((res) => {

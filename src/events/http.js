@@ -102,7 +102,7 @@ function httpWrapper(wrappedFunction) {
                 }
 
                 let data = '';
-                if (!config.metadataOnly) {
+                if (!config.getConfig().metadataOnly) {
                     res.on('data', (chunk) => {
                         data += chunk;
                     });

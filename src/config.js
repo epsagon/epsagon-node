@@ -6,7 +6,7 @@ const consts = require('./consts.js');
 /**
  * configuration singleton. preconfigured with default values.
  */
-module.exports.config = {
+const config = {
     token: '',
     appName: 'Application',
     metadataOnly: true,
@@ -23,6 +23,13 @@ module.exports.config = {
     },
 };
 
+/**
+ * @returns {object} The config object
+ */
+module.exports.getConfig = function getConfig() {
+    return config;
+};
+
 
 /**
  * Initializes the configuration
@@ -32,25 +39,25 @@ module.exports.setConfig = function setConfig(configData) {
     if (configData === undefined) return;
 
     if (configData.token) {
-        module.exports.config.token = configData.token;
+        config.token = configData.token;
     }
 
     if (configData.appName) {
-        module.exports.config.appName = configData.appName;
+        config.appName = configData.appName;
     }
 
     if (configData.metadataOnly !== undefined && configData.metadataOnly != null) {
-        module.exports.config.metadataOnly = configData.metadataOnly;
+        config.metadataOnly = configData.metadataOnly;
     }
 
     // Set custom URL if defined
     if (configData.traceCollectorURL) {
-        module.exports.config.traceCollectorURL = configData.traceCollectorURL;
+        config.traceCollectorURL = configData.traceCollectorURL;
     }
 
     // Use SSL
     if (configData.useSSL) {
-        module.exports.config.traceCollectorURL = module.exports.config.traceCollectorURL.replace('http:', 'https:');
-        module.exports.config.useSSL = configData.useSSL;
+        config.traceCollectorURL = config.traceCollectorURL.replace('http:', 'https:');
+        config.useSSL = configData.useSSL;
     }
 };
