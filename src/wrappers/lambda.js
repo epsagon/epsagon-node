@@ -27,6 +27,7 @@ function baseLambdaWrapper(
     shouldPassRunner = false,
     originalFunctionToWrap = null
 ) {
+    // eslint-disable-next-line consistent-return
     return (originalEvent, originalContext, originalCallback) => {
         tracer.restart();
         let runner;
@@ -90,31 +91,33 @@ function baseLambdaWrapper(
             // If the user is waiting for the rest of the events, we can send async. Otherwise
             // don't wait ourselves and send sync.
             if (originalContext.callbackWaitsForEmptyEventLoop) {
-                tracer.sendTrace(runnerSendUpdateHandler);
-            } else {
-                runnerSendUpdateHandler();
-                tracer.sendTraceSync();
+                return tracer.sendTrace(runnerSendUpdateHandler);
             }
+
+            // The callback does not wait, don't wait for events.
+            runnerSendUpdateHandler();
+            return tracer.sendTraceSync();
         };
 
         const wrappedCallback = (error, result) => {
-            handleUserExecutionDone(error);
-            utils.debugLog('calling User\'s callback');
-            callbackCalled = true;
-            return originalCallback(error, result);
+            handleUserExecutionDone(error).then(() => {
+                utils.debugLog('calling User\'s callback');
+                callbackCalled = true;
+                originalCallback(error, result);
+            });
         };
 
 
         try {
             runner.setStartTime(utils.createTimestampFromTime(startTime));
-            const result = (
+            let result = (
                 shouldPassRunner ?
                     functionToWrap(originalEvent, originalContext, wrappedCallback, runner) :
                     functionToWrap(originalEvent, originalContext, wrappedCallback)
             );
             if (!callbackCalled) {
                 if (result instanceof Promise) {
-                    result
+                    result = result
                         .then(() => { handleUserExecutionDone(null); })
                         .catch((err) => { handleUserExecutionDone(err); });
                 }
@@ -126,8 +129,9 @@ function baseLambdaWrapper(
             // Restoring empty event loop handling.
             // eslint-disable-next-line no-underscore-dangle
             process._events.beforeExit = originalBeforeExit;
-            tracer.sendTraceSync();
-            throw err;
+            tracer.sendTraceSync().then(() => {
+                originalCallback(err);
+            });
         }
     };
 }

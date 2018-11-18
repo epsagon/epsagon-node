@@ -38,7 +38,7 @@ describe('lambdaWrapper tests', () => {
         this.sendTraceSyncStub = sinon.stub(
             tracer,
             'sendTraceSync'
-        );
+        ).returns(Promise.resolve('success'));
 
         this.setExceptionStub = sinon.stub(
             eventInterface,
@@ -133,23 +133,26 @@ describe('lambdaWrapper tests', () => {
         }, 1);
     });
 
-    it('lambdaWrapper: wrapped function throws error', () => {
+    it('lambdaWrapper: wrapped function throws error', (done) => {
         this.stubFunction.reset();
         this.stubFunction.throws();
-        expect(() => this.wrappedStub(
+        this.wrappedStub(
             {},
             this.context,
             this.callbackStub
-        )).to.throw();
-        expect(this.createFromEventStub.callCount).to.equal(1);
-        expect(this.createFromEventStub.calledWith({}));
-        expect(this.addEventStub.callCount).to.equal(2);
-        expect(this.addExceptionStub.called).to.be.false;
-        expect(this.sendTraceStub.callCount).to.equal(0);
-        expect(this.sendTraceSyncStub.callCount).to.equal(1);
-        expect(this.stubFunction.callCount).to.equal(1);
-        expect(this.callbackStub.called).to.be.false;
-        expect(this.setExceptionStub.callCount).to.equal(1);
+        );
+        setTimeout(() => {
+            expect(this.createFromEventStub.calledWith({}));
+            expect(this.createFromEventStub.callCount).to.equal(1);
+            expect(this.addEventStub.callCount).to.equal(2);
+            expect(this.addExceptionStub.called).to.be.false;
+            expect(this.sendTraceStub.callCount).to.equal(0);
+            expect(this.sendTraceSyncStub.callCount).to.equal(1);
+            expect(this.stubFunction.callCount).to.equal(1);
+            expect(this.callbackStub.callCount).to.equal(1);
+            expect(this.setExceptionStub.callCount).to.equal(1);
+            done();
+        }, 1);
     });
 
     it('lambdaWrapper: wrapped callback error call', (done) => {
@@ -276,7 +279,7 @@ describe('stepLambdaWrapper tests', () => {
         this.sendTraceSyncStub = sinon.stub(
             tracer,
             'sendTraceSync'
-        );
+        ).returns(Promise.resolve('success'));
 
         this.setExceptionStub = sinon.stub(
             eventInterface,
@@ -418,35 +421,40 @@ describe('stepLambdaWrapper tests', () => {
         }, 1);
     });
 
-    it('stepLambdaWrapper: trigger creation failure', () => {
+    it('stepLambdaWrapper: trigger creation failure', (done) => {
         this.createFromEventStub.reset();
         this.createFromEventStub.throws();
         this.wrappedStub({}, this.context, this.callbackStub);
-        expect(this.createFromEventStub.callCount).to.equal(1);
-        expect(this.createFromEventStub.calledWith({}));
-        expect(this.addEventStub.callCount).to.equal(1);
-        expect(this.addExceptionStub.callCount).to.equal(1);
-        expect(this.sendTraceStub.callCount).to.equal(1);
-        expect(this.stubFunction.callCount).to.equal(1);
-        expect(this.callbackStub.callCount).to.be.equal(1);
-        expect(this.setExceptionStub.called).to.be.false;
-        expect(this.uuid4Stub.calledOnce).to.be.true;
+        setTimeout(() => {
+            expect(this.createFromEventStub.callCount).to.equal(1);
+            expect(this.createFromEventStub.calledWith({}));
+            expect(this.addEventStub.callCount).to.equal(1);
+            expect(this.addExceptionStub.callCount).to.equal(1);
+            expect(this.sendTraceStub.callCount).to.equal(1);
+            expect(this.stubFunction.callCount).to.equal(1);
+            expect(this.callbackStub.callCount).to.equal(1);
+            expect(this.setExceptionStub.called).to.be.false;
+            done();
+        }, 1);
     });
 
-    it('stepLambdaWrapper: wrapped function throws error', () => {
+    it('stepLambdaWrapper: wrapped function throws error', (done) => {
         this.stubFunction.reset();
         this.stubFunction.throws();
-        expect(() => this.wrappedStub({}, this.context, this.callbackStub)).to.throw();
-        expect(this.createFromEventStub.callCount).to.equal(1);
-        expect(this.createFromEventStub.calledWith({}));
-        expect(this.addEventStub.callCount).to.equal(2);
-        expect(this.addExceptionStub.called).to.be.false;
-        expect(this.sendTraceStub.called).to.be.false;
-        expect(this.sendTraceSyncStub.callCount).to.equal(1);
-        expect(this.stubFunction.callCount).to.equal(1);
-        expect(this.callbackStub.called).to.be.false;
-        expect(this.setExceptionStub.callCount).to.equal(1);
-        expect(this.uuid4Stub.called).to.be.false;
+        this.wrappedStub({}, this.context, this.callbackStub);
+        setTimeout(() => {
+            expect(this.createFromEventStub.callCount).to.equal(1);
+            expect(this.createFromEventStub.calledWith({}));
+            expect(this.addEventStub.callCount).to.equal(2);
+            expect(this.addExceptionStub.called).to.be.false;
+            expect(this.sendTraceStub.called).to.be.false;
+            expect(this.sendTraceSyncStub.callCount).to.equal(1);
+            expect(this.stubFunction.callCount).to.equal(1);
+            expect(this.callbackStub.callCount).to.equal(1);
+            expect(this.setExceptionStub.callCount).to.equal(1);
+            expect(this.uuid4Stub.called).to.be.false;
+            done();
+        }, 1);
     });
 
     it('stepLambdaWrapper: wrapped callback error call', (done) => {

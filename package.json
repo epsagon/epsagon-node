@@ -76,7 +76,6 @@
   },
   "dependencies": {
     "axios": "^0.18.0",
-    "deasync": "^0.1.13",
     "google-protobuf": "^3.5.0",
     "json.sortify": "^2.2.2",
     "md5": "^2.2.1",

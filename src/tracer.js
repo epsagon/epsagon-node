@@ -3,7 +3,6 @@
  */
 const uuid4 = require('uuid4');
 const axios = require('axios');
-const deasync = require('deasync');
 const util = require('util');
 const trace = require('./proto/trace_pb.js');
 const exception = require('./proto/exception_pb.js');
@@ -169,14 +168,13 @@ function postTrace(traceObject) {
     ).then((res) => {
         utils.debugLog('Trace posted!');
         return res;
-    })
-        .catch(err => err); // Always resolve.
+    }).catch(err => err); // Always resolve.
 }
 
 /**
  * Sends the trace to epsagon's infrastructure when all pending events are finished.
  * @param {function} runnerUpdateFunc function that sets the duration of the runner.
- * @returns {Promise} a promise that is resolved when the trace transmission begins.
+ * @returns {Promise} a promise that is resolved when the trace transmission ends.
  */
 module.exports.sendTrace = function sendTrace(runnerUpdateFunc) {
     utils.debugLog('Sending trace async');
@@ -188,27 +186,12 @@ module.exports.sendTrace = function sendTrace(runnerUpdateFunc) {
 };
 
 /**
- * Sends the trace to epsagon's infrastructure, synchronously, marking all the pending promises as
+ * Sends the trace to epsagon's infrastructure, marking all the pending promises as
  * failures.
- * NOTE: this function does post synchronously. It should be only called when something terrible
- * happens (i.e. an error was Thrown inside a Lambda and no one caught it), and in these cases
- * being synchronous is OK.
+ * @returns {Promise} a promise that is resolved when the trace transmission ends.
  */
 module.exports.sendTraceSync = function sendTraceSync() {
     utils.debugLog('Sending trace sync');
-
-    const traceSender = (traceObject) => {
-        try {
-            let done = false;
-            postTrace(traceObject).then(() => {
-                utils.debugLog('Trace sent sync!');
-                done = true;
-            });
-            deasync.loopWhile(() => !done);
-        } catch (err) {
-            // we cannot handle this error. carry on.
-        }
-    };
 
     pendingEvents.forEach((promise, event) => {
         if (event.getId() === '') {
@@ -222,5 +205,5 @@ module.exports.sendTraceSync = function sendTraceSync() {
         }
     });
 
-    sendCurrentTrace(traceSender);
+    return sendCurrentTrace(traceObject => postTrace(traceObject));
 };
