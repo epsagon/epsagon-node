@@ -96,6 +96,24 @@ function createSNSTrigger(event, trigger) {
 }
 
 /**
+ * Initializes an event representing a trigger to the lambda caused by SQS
+ * @param {object} event The event the lambda was triggered with
+ * @param {proto.event_pb.Event} trigger An Event to initialize as the trigger
+ */
+function createSQSTrigger(event, trigger) {
+    const resource = trigger.getResource();
+    trigger.setId(event.Records[0].messageId);
+    resource.setName(event.Records[0].eventSourceARN.split(':').slice(-1)[0]);
+    resource.setOperation('ReceiveMessage');
+    eventInterface.addToMetadata(trigger, {
+        'MD5 Of Message Body': event.Records[0].md5OfBody,
+        'Message Attributes': event.Records[0].attributes,
+    }, {
+        'Message Body': event.Records[0].body,
+    });
+}
+
+/**
  * Initializes an event representing a trigger to the lambda caused by API Trigger
  * @param {object} event The event the lambda was triggered with
  * @param {proto.event_pb.Event} trigger An Event to initialize as the trigger
@@ -157,6 +175,7 @@ const resourceTypeToFactoryMap = {
     kinesis: createKinesisTrigger,
     events: createEventsTrigger,
     sns: createSNSTrigger,
+    sqs: createSQSTrigger,
     api_gateway: createAPIGatewayTrigger,
     dynamodb: createDynamoDBTrigger,
 };
