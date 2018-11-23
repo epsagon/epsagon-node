@@ -1,11 +1,5 @@
 language: node_js
 
-notifications:
-  slack:
-    rooms:
-      - epsagon:Q0XcrHSJRI5YkYftfUzl83Lx
-  on_pull_requests: false
-
 branches:
   only:
     - master
