@@ -1,8 +1,8 @@
 const uuid4 = require('uuid4');
 const shimmer = require('shimmer');
-const pg = require('pg');
-const Pool = require('pg-pool');
-const sqlParser = require('node-sqlparser');
+const pg = require('pg'); // eslint-disable-line import/no-unresolved
+const Pool = require('pg-pool'); // eslint-disable-line import/no-unresolved
+const sqlParser = require('node-sqlparser'); // eslint-disable-line import/no-unresolved
 const utils = require('../utils.js');
 const tracer = require('../tracer.js');
 const serverlessEvent = require('../proto/event_pb.js');
