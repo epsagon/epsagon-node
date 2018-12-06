@@ -69,11 +69,6 @@
     "sinon": "^4.3.0",
     "uglify-es": "^3.3.9"
   },
-  "peerDependencies": {
-    "pg": "^7.5.0",
-    "aws-sdk": "^2.197.0",
-    "pg-pool": "^2.0.3"
-  },
   "dependencies": {
     "axios": "^0.18.0",
     "google-protobuf": "^3.5.0",
