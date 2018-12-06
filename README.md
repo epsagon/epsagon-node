@@ -10,7 +10,7 @@ This package provides an instrumentation to Node.js code running on functions fo
 From your project directory:
 
 ```sh
-npm install --save epsagon 
+npm install --save epsagon
 ```
 
 ## Getting started
