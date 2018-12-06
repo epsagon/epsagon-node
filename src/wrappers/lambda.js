@@ -87,6 +87,7 @@ function baseLambdaWrapper(
             if (callbackCalled) {
                 return Promise.resolve();
             }
+            callbackCalled = true;
             if (error) { // not catching false here, but that seems OK
                 eventInterface.setException(runner, error);
             }
@@ -117,14 +118,16 @@ function baseLambdaWrapper(
             return tracer.sendTraceSync();
         };
 
+        let waitForOriginalCallbackPromise = Promise.resolve();
         const wrappedCallback = (error, result) => {
-            handleUserExecutionDone(error, result).then(() => {
-                utils.debugLog('calling User\'s callback');
-                return originalCallback(error, result);
+            waitForOriginalCallbackPromise = new Promise((resolve) => {
+                handleUserExecutionDone(error, result).then(() => {
+                    utils.debugLog('calling User\'s callback');
+                    originalCallback(error, result);
+                    resolve();
+                });
             });
-            callbackCalled = true;
         };
-
 
         try {
             runner.setStartTime(utils.createTimestampFromTime(startTime));
@@ -135,12 +138,23 @@ function baseLambdaWrapper(
             );
 
             if (result instanceof Promise) {
+                let raisedError;
+                let returnValue;
                 result = result
                     .then((res) => {
-                        handleUserExecutionDone(null, res).then(() => res);
+                        returnValue = res;
+                        return handleUserExecutionDone(null, res);
                     })
                     .catch((err) => {
-                        handleUserExecutionDone(err).then(() => err);
+                        raisedError = err;
+                        return handleUserExecutionDone(err);
+                    })
+                    .then(() => waitForOriginalCallbackPromise)
+                    .then(() => {
+                        if (raisedError) {
+                            throw raisedError;
+                        }
+                        return returnValue;
                     });
             }
             return result;
