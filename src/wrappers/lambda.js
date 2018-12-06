@@ -84,6 +84,9 @@ function baseLambdaWrapper(
         };
 
         const handleUserExecutionDone = (error, result) => {
+            if (callbackCalled) {
+                return Promise.resolve();
+            }
             if (error) { // not catching false here, but that seems OK
                 eventInterface.setException(runner, error);
             }
@@ -115,10 +118,11 @@ function baseLambdaWrapper(
         };
 
         const wrappedCallback = (error, result) => {
-            handleUserExecutionDone(error, result);
-            utils.debugLog('calling User\'s callback');
+            handleUserExecutionDone(error, result).then(() => {
+                utils.debugLog('calling User\'s callback');
+                return originalCallback(error, result);
+            });
             callbackCalled = true;
-            return originalCallback(error, result);
         };
 
 
@@ -129,12 +133,15 @@ function baseLambdaWrapper(
                     functionToWrap(originalEvent, originalContext, wrappedCallback, runner) :
                     functionToWrap(originalEvent, originalContext, wrappedCallback)
             );
-            if (!callbackCalled) {
-                if (result instanceof Promise) {
-                    result = result
-                        .then((res) => { handleUserExecutionDone(null, res); })
-                        .catch((err) => { handleUserExecutionDone(err); });
-                }
+
+            if (result instanceof Promise) {
+                result = result
+                    .then((res) => {
+                        handleUserExecutionDone(null, res).then(() => res);
+                    })
+                    .catch((err) => {
+                        handleUserExecutionDone(err).then(() => err);
+                    });
             }
             return result;
         } catch (err) {
