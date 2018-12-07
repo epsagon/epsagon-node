@@ -4,8 +4,8 @@ const tryRequire = require('try-require');
 /* eslint-disable import/no-unresolved, import/no-extraneous-dependencies */
 const pg = tryRequire('pg');
 const Pool = tryRequire('pg-pool');
-const sqlParser = tryRequire('node-sqlparser');
 /* eslint-enable import/no-unresolved, import/no-extraneous-dependencies */
+const sqlParser = require('node-sqlparser');
 const utils = require('../utils.js');
 const tracer = require('../tracer.js');
 const serverlessEvent = require('../proto/event_pb.js');
