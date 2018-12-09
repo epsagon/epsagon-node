@@ -1,15 +1,15 @@
 const uuid4 = require('uuid4');
 const shimmer = require('shimmer');
-/* eslint-disable import/no-unresolved, import/no-extraneous-dependencies */
-const pg = require('pg');
-const Pool = require('pg-pool');
+const tryRequire = require('try-require');
 const sqlParser = require('node-sqlparser');
-/* eslint-enable import/no-unresolved, import/no-extraneous-dependencies */
 const utils = require('../utils.js');
 const tracer = require('../tracer.js');
 const serverlessEvent = require('../proto/event_pb.js');
 const eventInterface = require('../event.js');
 const errorCode = require('../proto/error_code_pb.js');
+
+const pg = tryRequire('pg');
+const Pool = tryRequire('pg-pool');
 
 /**
  * Wraps the pg's module request function with tracing
@@ -113,7 +113,7 @@ module.exports = {
      * Initializes the pg tracer
      */
     init() {
-        shimmer.wrap(pg.Client.prototype, 'query', pgClientWrapper);
-        shimmer.wrap(Pool.prototype, 'query', pgClientWrapper);
+        if (pg) shimmer.wrap(pg.Client.prototype, 'query', pgClientWrapper);
+        if (Pool) shimmer.wrap(Pool.prototype, 'query', pgClientWrapper);
     },
 };
