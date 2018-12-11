@@ -83,7 +83,7 @@ function baseLambdaWrapper(
             });
         };
 
-        const handleUserExecutionDone = (error, result) => {
+        const handleUserExecutionDone = (error, result, sendSync) => {
             if (callbackCalled) {
                 return Promise.resolve();
             }
@@ -109,7 +109,7 @@ function baseLambdaWrapper(
 
             // If the user is waiting for the rest of the events, we can send async. Otherwise
             // don't wait ourselves and send sync.
-            if (originalContext.callbackWaitsForEmptyEventLoop) {
+            if (!sendSync && originalContext.callbackWaitsForEmptyEventLoop) {
                 return tracer.sendTrace(runnerSendUpdateHandler);
             }
 
@@ -121,6 +121,12 @@ function baseLambdaWrapper(
         let waitForOriginalCallbackPromise = Promise.resolve();
         const wrappedCallback = (error, result) => {
             waitForOriginalCallbackPromise = new Promise((resolve) => {
+                if (callbackCalled) {
+                    utils.debugLog('not calling callback since it was already called');
+                    resolve();
+                    return;
+                }
+
                 handleUserExecutionDone(error, result).then(() => {
                     utils.debugLog('calling User\'s callback');
                     originalCallback(error, result);
@@ -129,12 +135,30 @@ function baseLambdaWrapper(
             });
         };
 
+        const patchedContext = Object.assign({}, originalContext, {
+            succeed: (res) => {
+                handleUserExecutionDone(null, res, true)
+                    .then(() => waitForOriginalCallbackPromise)
+                    .then(() => originalContext.succeed(res));
+            },
+            fail: (err) => {
+                handleUserExecutionDone(err, null, true)
+                    .then(() => waitForOriginalCallbackPromise)
+                    .then(() => originalContext.fail(err));
+            },
+            done: (res, err) => {
+                handleUserExecutionDone(res, err, true)
+                    .then(() => waitForOriginalCallbackPromise)
+                    .then(() => originalContext.done(res, err));
+            },
+        });
+
         try {
             runner.setStartTime(utils.createTimestampFromTime(startTime));
             let result = (
                 shouldPassRunner ?
-                    functionToWrap(originalEvent, originalContext, wrappedCallback, runner) :
-                    functionToWrap(originalEvent, originalContext, wrappedCallback)
+                    functionToWrap(originalEvent, patchedContext, wrappedCallback, runner) :
+                    functionToWrap(originalEvent, patchedContext, wrappedCallback)
             );
 
             if (result instanceof Promise) {
@@ -159,14 +183,7 @@ function baseLambdaWrapper(
             }
             return result;
         } catch (err) {
-            eventInterface.setException(runner, err);
-            runnerSendUpdateHandler(); // Doing it here since the send is synchronous on error
-            // Restoring empty event loop handling.
-            // eslint-disable-next-line no-underscore-dangle
-            process._events.beforeExit = originalBeforeExit;
-            tracer.sendTraceSync().then(() => {
-                originalCallback(err);
-            });
+            patchedContext.fail(err);
         }
     };
 }
