@@ -174,7 +174,7 @@ describe('lambdaWrapper tests', () => {
             expect(this.sendTraceStub.callCount).to.equal(0);
             expect(this.sendTraceSyncStub.callCount).to.equal(1);
             expect(this.stubFunction.callCount).to.equal(1);
-            expect(this.callbackStub.callCount).to.equal(1);
+            expect(this.callbackStub.callCount).to.equal(0);
             expect(this.setExceptionStub.callCount).to.equal(1);
             done();
         }, 1);
@@ -508,7 +508,7 @@ describe('stepLambdaWrapper tests', () => {
             expect(this.sendTraceStub.called).to.be.false;
             expect(this.sendTraceSyncStub.callCount).to.equal(1);
             expect(this.stubFunction.callCount).to.equal(1);
-            expect(this.callbackStub.callCount).to.equal(1);
+            expect(this.callbackStub.callCount).to.equal(0);
             expect(this.setExceptionStub.callCount).to.equal(1);
             expect(this.uuid4Stub.called).to.be.false;
             done();
