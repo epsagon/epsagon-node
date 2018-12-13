@@ -9,6 +9,7 @@ const serverlessEvent = require('../proto/event_pb.js');
 const errorCode = require('../proto/error_code_pb.js');
 const eventInterface = require('../event.js');
 const utils = require('../utils');
+const resourceUtils = require('../resource_utils/sqs_utils.js');
 
 /**
  * Fills the common fields for a trigger event
@@ -111,6 +112,10 @@ function createSQSTrigger(event, trigger) {
     }, {
         'Message Body': event.Records[0].body,
     });
+    const snsData = resourceUtils.getSNSTrigger(event.Records);
+    if (snsData != null) {
+        eventInterface.addToMetadata(trigger, { 'SNS Trigger': snsData });
+    }
 }
 
 /**

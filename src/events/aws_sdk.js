@@ -12,6 +12,7 @@ const serverlessEvent = require('../proto/event_pb.js');
 const eventInterface = require('../event.js');
 const errorCode = require('../proto/error_code_pb.js');
 const { STEP_ID_NAME } = require('../consts.js');
+const resourceUtils = require('../resource_utils/sqs_utils.js');
 
 const s3EventCreator = {
     /**
@@ -192,6 +193,10 @@ const SQSEventCreator = {
                     'Message ID': `${response.data.Messages[0].MessageId}`,
                     'MD5 Of Message Body': `${response.data.Messages[0].MD5OfBody}`,
                 });
+                const snsData = resourceUtils.getSNSTrigger(response.data.Messages);
+                if (snsData != null) {
+                    eventInterface.addToMetadata(event, { 'SNS Trigger': snsData });
+                }
             }
             eventInterface.addToMetadata(event, { 'Number Of Messages': messagesNumber });
             break;
