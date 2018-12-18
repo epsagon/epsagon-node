@@ -33,12 +33,12 @@ function baseLambdaWrapper(
 ) {
     // eslint-disable-next-line consistent-return
     return (originalEvent, originalContext, originalCallback) => {
-        tracer.restart();
         let runner;
         let callbackCalled = false;
 
         try {
             runner = lambdaRunner.createRunner(originalContext, runnerResourceType);
+            tracer.restart(runner);
         } catch (err) {
             const wrappedFunction = (
                 originalFunctionToWrap === null ?
@@ -46,8 +46,6 @@ function baseLambdaWrapper(
             );
             return wrappedFunction(originalEvent, originalContext, originalCallback);
         }
-
-        tracer.addEvent(runner);
 
         try {
             const trigger = awsLambdaTrigger.createFromEvent(

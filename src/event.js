@@ -69,3 +69,22 @@ module.exports.addObjectToMetadata = function addObjectToMetadata(
     }
     event.getResource().getMetadataMap().set(key, JSON.stringify(objectToAdd));
 };
+
+/**
+ * Adds items from a map to a resource Metadata
+ * @param {proto.event_pb.Event} event The event to add the items to
+ * @param {string} key key for the added label
+ * @param {string} value value for the added label
+ */
+module.exports.addLabelToMetadata = function addLabelToMetadata(event, key, value) {
+    const currLabels = event.getResource().getMetadataMap().get('labels');
+    let labels = null;
+    if (currLabels !== undefined) {
+        labels = JSON.parse(currLabels);
+        labels[key] = value;
+    } else {
+        labels = { [key]: value };
+    }
+
+    event.getResource().getMetadataMap().set('labels', JSON.stringify(labels));
+};

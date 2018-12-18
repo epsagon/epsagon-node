@@ -23,6 +23,12 @@ module.exports.tracer = new trace.Trace([
     `node ${process.versions.node}`,
 ]);
 
+/**
+ * Custom traces that will be added to the runner of the current trace.
+ */
+let currRunner = null;
+let currentLabelsLen = 0;
+
 
 /**
  * The requests promises pending to resolve. All must be resolved before sending the trace.
@@ -88,13 +94,17 @@ module.exports.initTrace = function initTrace(
 /**
  * Restarts the tracer. Has to be called after a trace has been sent to reset the tracer
  * and start collecting a new trace
+ * @param {object} runner The current of the current trace
  */
-module.exports.restart = function restart() {
+module.exports.restart = function restart(runner) {
     const { tracer } = module.exports;
     tracer.clearExceptionList();
     tracer.clearEventList();
     tracer.setAppName(config.getConfig().appName);
     tracer.setToken(config.getConfig().token);
+    tracer.addEvent(runner);
+    currRunner = runner;
+    currentLabelsLen = 0;
 };
 
 /**
@@ -206,4 +216,20 @@ module.exports.sendTraceSync = function sendTraceSync() {
     });
 
     return sendCurrentTrace(traceObject => postTrace(traceObject));
+};
+
+/**
+ * Add a custom label to the runner of the current trace.
+ * @param {string} key key for the added label
+ * @param {string} value value for the added label
+ */
+module.exports.label = function addLabel(key, value) {
+    if (typeof key !== 'string' || typeof value !== 'string') {
+        return;
+    }
+
+    if (key.length + value.length + currentLabelsLen <= consts.MAX_LABEL_SIZE) {
+        eventInterface.addLabelToMetadata(currRunner, key, value);
+        currentLabelsLen += key.length + value.length;
+    }
 };

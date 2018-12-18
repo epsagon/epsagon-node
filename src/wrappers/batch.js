@@ -19,6 +19,7 @@ module.exports.wrapBatchJob = function wrapBatchJob() {
 
         const runnerSendUpdateHandler = (() => {
             runner.setDuration(utils.createDurationTimestamp(startTime));
+            runner.setLabels();
         });
 
         runner.setStartTime(utils.createTimestampFromTime(startTime));
