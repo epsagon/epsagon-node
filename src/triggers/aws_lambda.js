@@ -2,13 +2,16 @@
  * @fileoverview Trigger creation for aws-Lambda function invocations
  */
 const uuid4 = require('uuid4');
-const AWS = require('aws-sdk'); // eslint-disable-line import/no-extraneous-dependencies
+const tryRequire = require('try-require');
 const md5 = require('md5');
 JSON.sortify = require('json.sortify');
 const serverlessEvent = require('../proto/event_pb.js');
 const errorCode = require('../proto/error_code_pb.js');
 const eventInterface = require('../event.js');
 const utils = require('../utils');
+const resourceUtils = require('../resource_utils/sqs_utils.js');
+
+const AWS = tryRequire('aws-sdk');
 
 /**
  * Fills the common fields for a trigger event
@@ -111,6 +114,10 @@ function createSQSTrigger(event, trigger) {
     }, {
         'Message Body': event.Records[0].body,
     });
+    const snsData = resourceUtils.getSNSTrigger(event.Records);
+    if (snsData != null) {
+        eventInterface.addToMetadata(trigger, { 'SNS Trigger': snsData });
+    }
 }
 
 /**
@@ -158,14 +165,18 @@ function createEventsTrigger(event, trigger) {
 function createDynamoDBTrigger(event, trigger) {
     const resource = trigger.getResource();
     const record = event.Records[0];
-    const item = AWS.DynamoDB.Converter.unmarshall(record.dynamodb.NewImage);
+    let itemHash = '';
+    if (AWS) {
+        const item = AWS.DynamoDB.Converter.unmarshall(record.dynamodb.NewImage);
+        itemHash = md5(JSON.sortify(item));
+    }
     trigger.setId(record.eventID);
     resource.setName(record.eventSourceARN.split('/')[1]);
     resource.setOperation(record.eventName);
     eventInterface.addToMetadata(trigger, {
         region: record.awsRegion,
         sequence_number: record.dynamodb.SequenceNumber,
-        item_hash: md5(JSON.sortify(item)),
+        item_hash: itemHash,
     });
 }
 

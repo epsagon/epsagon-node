@@ -1,9 +1,9 @@
 /**
  * @fileoverview Handlers for the aws-sdk js library instrumantation.
  */
-const AWS = require('aws-sdk'); // eslint-disable-line import/no-extraneous-dependencies
 const md5 = require('md5');
 const uuid4 = require('uuid4');
+const tryRequire = require('try-require');
 const shimmer = require('shimmer');
 JSON.sortify = require('json.sortify');
 const utils = require('../utils.js');
@@ -12,6 +12,9 @@ const serverlessEvent = require('../proto/event_pb.js');
 const eventInterface = require('../event.js');
 const errorCode = require('../proto/error_code_pb.js');
 const { STEP_ID_NAME } = require('../consts.js');
+const resourceUtils = require('../resource_utils/sqs_utils.js');
+
+const AWS = tryRequire('aws-sdk');
 
 const s3EventCreator = {
     /**
@@ -192,6 +195,10 @@ const SQSEventCreator = {
                     'Message ID': `${response.data.Messages[0].MessageId}`,
                     'MD5 Of Message Body': `${response.data.Messages[0].MD5OfBody}`,
                 });
+                const snsData = resourceUtils.getSNSTrigger(response.data.Messages);
+                if (snsData != null) {
+                    eventInterface.addToMetadata(event, { 'SNS Trigger': snsData });
+                }
             }
             eventInterface.addToMetadata(event, { 'Number Of Messages': messagesNumber });
             break;
@@ -253,7 +260,9 @@ const lambdaEventCreator = {
     requestHandler(request, event) {
         const parameters = request.params;
         const resource = event.getResource();
-        resource.setName(parameters.FunctionName);
+        const name = (parameters.FunctionName.includes(':')) ?
+            parameters.FunctionName.split(':').slice(-1)[0] : parameters.FunctionName;
+        resource.setName(name);
         eventInterface.addToMetadata(event, {
             payload: `${parameters.Payload}`,
         });
@@ -741,7 +750,9 @@ module.exports = {
      * Initializes the aws-sdk tracer
      */
     init() {
-        shimmer.wrap(AWS.Request.prototype, 'send', AWSSDKWrapper);
-        shimmer.wrap(AWS.Request.prototype, 'promise', AWSSDKWrapper);
+        if (AWS) {
+            shimmer.wrap(AWS.Request.prototype, 'send', AWSSDKWrapper);
+            shimmer.wrap(AWS.Request.prototype, 'promise', AWSSDKWrapper);
+        }
     },
 };

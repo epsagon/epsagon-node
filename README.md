@@ -32,6 +32,17 @@ function handler(event, context, callback) {
 handler = epsagon.lambdaWrapper(handler)
 ```
 
+## Custom labels
+
+You can add custom labels to your traces. Filters can later be used for filtering
+traces that contains specific labels:
+```node
+function handler(event, context, callback) {
+    epsagon.label('myCustomLabel', 'labelValue');
+    callback(null, 'It worked!')
+}
+```
+
 ## Copyright
 
 Provided under the MIT license. See LICENSE for details.

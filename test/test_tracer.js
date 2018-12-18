@@ -13,7 +13,9 @@ chai.use(chaiAsPromised);
 describe('tracer restart tests - if these fail the others will too', () => {
     it('restart: restart when trace is empty', () => {
         tracer.restart();
-        expect(tracer.tracer.getEventList()).to.be.empty;
+        const runnerToAdd = new serverlessEvent.Event();
+        tracer.addRunner(runnerToAdd);
+        expect(tracer.tracer.getEventList().length).to.equal(1);
         expect(tracer.tracer.getExceptionList()).to.be.empty;
     });
 
@@ -22,7 +24,8 @@ describe('tracer restart tests - if these fail the others will too', () => {
         tracer.addEvent(new serverlessEvent.Event());
         tracer.addException(Error('test error'));
         tracer.restart();
-        expect(tracer.tracer.getEventList()).to.be.empty;
+        tracer.addRunner(new serverlessEvent.Event());
+        expect(tracer.tracer.getEventList().length).to.equal(1);
         expect(tracer.tracer.getExceptionList()).to.be.empty;
         expect(tracer.tracer.getAppName()).to.equal('app');
         expect(tracer.tracer.getToken()).to.equal('token');
@@ -31,7 +34,25 @@ describe('tracer restart tests - if these fail the others will too', () => {
 
 describe('tracer module tests', () => {
     beforeEach(() => {
+        const runnerResource = new serverlessEvent.Resource([
+            'mock-func',
+            'lambda',
+            'invoke',
+            {},
+        ]);
+
+        const runner = new serverlessEvent.Event([
+            'id_123',
+            0,
+            null,
+            'runner',
+            0,
+            0,
+        ]);
+        runner.setResource(runnerResource);
+
         tracer.restart();
+        tracer.addRunner(runner);
         this.postStub = sinon.stub(
             axios,
             'post'
@@ -56,7 +77,7 @@ describe('tracer module tests', () => {
     function validateTrace(token, appName) {
         expect(tracer.tracer.getToken()).to.equal(token);
         expect(tracer.tracer.getAppName()).to.equal(appName);
-        expect(tracer.tracer.getEventList()).to.be.empty;
+        expect(tracer.tracer.getEventList().length).to.equal(1);
         expect(tracer.tracer.getExceptionList()).to.be.empty;
         expect(tracer.tracer.getVersion()).to.equal(consts.VERSION);
         expect(tracer.tracer.getPlatform()).to.equal(
@@ -95,24 +116,25 @@ describe('tracer module tests', () => {
         this.baseConfig.appName = 'app1';
         this.getConfigStub.returns(this.baseConfig);
         tracer.restart();
+        tracer.addRunner(new serverlessEvent.Event());
         validateTrace('token1', 'app1');
     });
 
     it('addEvent: add the event to the tracer', () => {
         const eventToAdd = new serverlessEvent.Event();
         tracer.addEvent(eventToAdd);
-        expect(tracer.tracer.getEventList()[0]).to.equal(eventToAdd);
+        expect(tracer.tracer.getEventList()[1]).to.equal(eventToAdd);
     });
 
     it('addEvent: add more then one event', () => {
         const firstEventToAdd = new serverlessEvent.Event();
         tracer.addEvent(firstEventToAdd);
-        expect(tracer.tracer.getEventList()[0]).to.equal(firstEventToAdd);
+        expect(tracer.tracer.getEventList()[1]).to.equal(firstEventToAdd);
 
         const secondEventToAdd = new serverlessEvent.Event();
         tracer.addEvent(secondEventToAdd);
-        expect(tracer.tracer.getEventList()[0]).to.equal(firstEventToAdd);
-        expect(tracer.tracer.getEventList()[1]).to.equal(secondEventToAdd);
+        expect(tracer.tracer.getEventList()[1]).to.equal(firstEventToAdd);
+        expect(tracer.tracer.getEventList()[2]).to.equal(secondEventToAdd);
     });
 
     it('addEvent: add an event and a result promise to the tracer', (doneCallback) => {
@@ -130,13 +152,44 @@ describe('tracer module tests', () => {
         });
 
         tracer.addEvent(eventToAdd, stubPromise);
-        expect(tracer.tracer.getEventList()[0]).to.equal(eventToAdd);
+        expect(tracer.tracer.getEventList()[1]).to.equal(eventToAdd);
         tracer.sendTrace(() => {}).then(() => {
             expect(axios.post.called).to.be.true;
             doneCallback();
         });
         expect(axios.post.called).to.be.false;
         shouldPromiseResolve = true;
+    });
+
+    it('addLabel: Add a label to the trace', () => {
+        tracer.label('label1', 'value1');
+        const labels = JSON.parse(tracer.tracer.getEventList()[0].getResource().getMetadataMap().get('labels'));
+        expect(labels.label1).to.equal('value1');
+    });
+
+    it('addLabel: Override existing label', () => {
+        tracer.label('label1', 'value1');
+        tracer.label('label1', 'value2');
+        const labels = JSON.parse(tracer.tracer.getEventList()[0].getResource().getMetadataMap().get('labels'));
+        expect(labels.label1).to.equal('value2');
+    });
+
+    it('addLabel: Labels too big - 1 label', () => {
+        const bigString = 'x'.repeat(100 * 1024);
+        tracer.label('label1', bigString);
+        const labels = tracer.tracer.getEventList()[0].getResource().getMetadataMap().get('labels');
+        expect(labels).to.equal(undefined);
+    });
+
+    it('addLabel: Labels too big - multiple labels', () => {
+        const expectedLabel1 = 'x'.repeat(70 * 1024);
+
+        tracer.label('label1', expectedLabel1);
+        tracer.label('label2', 'x'.repeat(40 * 1024));
+
+        const labels = JSON.parse(tracer.tracer.getEventList()[0].getResource().getMetadataMap().get('labels'));
+        expect(labels.label1).to.equal(expectedLabel1);
+        expect(labels.label2).to.equal(undefined);
     });
 
     function checkException(storedException, originalException, additionalData) {
@@ -366,6 +419,7 @@ describe('tracer module tests', () => {
 describe('sendTraceSync function tests', () => {
     beforeEach(() => {
         tracer.restart();
+        tracer.addRunner(new serverlessEvent.Event());
         this.setConfigStub = sinon.stub(
             config,
             'setConfig'

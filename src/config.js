@@ -10,7 +10,7 @@ const config = {
     token: '',
     appName: 'Application',
     metadataOnly: true,
-    useSSL: false,
+    useSSL: true,
     traceCollectorURL: consts.TRACE_COLLECTOR_URL,
     isEpsagonDisabled: process.env.DISABLE_EPSAGON === 'TRUE',
     /**
