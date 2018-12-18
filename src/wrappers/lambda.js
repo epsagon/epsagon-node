@@ -136,6 +136,21 @@ function baseLambdaWrapper(
         };
 
         const patchedContext = Object.assign({}, originalContext, {
+            /**
+             * Sets whether the callback waits for empty event loop
+             * @param {Boolean} value True to wait, False otherwise
+             */
+            set callbackWaitsForEmptyEventLoop(value) {
+                // eslint-disable-next-line no-param-reassign
+                originalContext.callbackWaitsForEmptyEventLoop = value;
+            },
+            /**
+             * Gets whether the callback waits for empty event loop
+             * @return {Boolean} True if it waits, False otherwise
+             */
+            get callbackWaitsForEmptyEventLoop() {
+                return originalContext.callbackWaitsForEmptyEventLoop;
+            },
             succeed: (res) => {
                 handleUserExecutionDone(null, res, true)
                     .then(() => waitForOriginalCallbackPromise)
