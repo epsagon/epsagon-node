@@ -39,6 +39,7 @@ function baseLambdaWrapper(
 
         try {
             runner = lambdaRunner.createRunner(originalContext, runnerResourceType);
+            tracer.addRunner(runner);
         } catch (err) {
             const wrappedFunction = (
                 originalFunctionToWrap === null ?
@@ -46,8 +47,6 @@ function baseLambdaWrapper(
             );
             return wrappedFunction(originalEvent, originalContext, originalCallback);
         }
-
-        tracer.addEvent(runner);
 
         try {
             const trigger = awsLambdaTrigger.createFromEvent(

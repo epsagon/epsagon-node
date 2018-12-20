@@ -14,7 +14,7 @@ module.exports.wrapBatchJob = function wrapBatchJob() {
     tracer.restart();
     try {
         const { runner, runnerPromise } = batchRunner.createRunner();
-        tracer.addEvent(runner, runnerPromise);
+        tracer.addRunner(runner, runnerPromise);
         const startTime = Date.now();
 
         const runnerSendUpdateHandler = (() => {

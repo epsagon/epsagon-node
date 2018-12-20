@@ -22,3 +22,5 @@ module.exports.COLD_START = true;
  * The identifier of the injected step data in the step machine result dict
  */
 module.exports.STEP_ID_NAME = 'Epsagon';
+
+module.exports.MAX_LABEL_SIZE = 100 * 1024;

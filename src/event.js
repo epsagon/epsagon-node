@@ -7,6 +7,7 @@ const errorCode = require('./proto/error_code_pb.js');
 const exception = require('./proto/exception_pb.js');
 const config = require('./config.js');
 const tracer = require('./tracer.js');
+const consts = require('./consts.js');
 
 /**
  * Sets an event's exception to the given error
@@ -68,4 +69,26 @@ module.exports.addObjectToMetadata = function addObjectToMetadata(
         objectToAdd = Object.assign(...(fields.map(field => ({ [field]: object[field] }))));
     }
     event.getResource().getMetadataMap().set(key, JSON.stringify(objectToAdd));
+};
+
+/**
+ * Adds a given label to the metadata map
+ * @param {proto.event_pb.Event} event The event to add the items to
+ * @param {string} key key for the added label
+ * @param {string} value value for the added label
+ */
+module.exports.addLabelToMetadata = function addLabelToMetadata(event, key, value) {
+    const currLabels = event.getResource().getMetadataMap().get('labels');
+    let labels = null;
+    if (currLabels !== undefined) {
+        labels = JSON.parse(currLabels);
+        labels[key] = value;
+    } else {
+        labels = { [key]: value };
+    }
+
+    const labelsJson = JSON.stringify(labels);
+    if (labelsJson.length <= consts.MAX_LABEL_SIZE) {
+        event.getResource().getMetadataMap().set('labels', labelsJson);
+    }
 };

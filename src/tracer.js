@@ -7,9 +7,9 @@ const util = require('util');
 const trace = require('./proto/trace_pb.js');
 const exception = require('./proto/exception_pb.js');
 const utils = require('./utils.js');
-const consts = require('./consts.js');
 const config = require('./config.js');
 const eventInterface = require('./event.js');
+const consts = require('./consts.js');
 
 /**
  * The tracer singleton, used to manage the trace and send it at the end of the function invocation
@@ -23,6 +23,7 @@ module.exports.tracer = new trace.Trace([
     `node ${process.versions.node}`,
 ]);
 
+let currRunner = null;
 
 /**
  * The requests promises pending to resolve. All must be resolved before sending the trace.
@@ -85,9 +86,25 @@ module.exports.initTrace = function initTrace(
     config.setConfig(configData);
 };
 
+
+/**
+ * Adds a runner to the current trace.
+ * @param {object} runner The runner of the current trace
+ * @param {Promise} runnerPromise A promise that resolves when the event handling is Done,
+ *      if required.
+ */
+module.exports.addRunner = function addRunner(runner, runnerPromise) {
+    const { tracer } = module.exports;
+    tracer.addEvent(runner, runnerPromise);
+    currRunner = runner;
+};
+
 /**
  * Restarts the tracer. Has to be called after a trace has been sent to reset the tracer
  * and start collecting a new trace
+ * @param {object} runner The runner of the current trace
+ * @param {Promise} runnerPromise A promise that resolves when the event handling is Done,
+ *      if required.
  */
 module.exports.restart = function restart() {
     const { tracer } = module.exports;
@@ -206,4 +223,17 @@ module.exports.sendTraceSync = function sendTraceSync() {
     });
 
     return sendCurrentTrace(traceObject => postTrace(traceObject));
+};
+
+/**
+ * Add a custom label to the runner of the current trace.
+ * @param {string} key key for the added label
+ * @param {string} value value for the added label
+ */
+module.exports.label = function addLabel(key, value) {
+    if (typeof key !== 'string' || typeof value !== 'string') {
+        return;
+    }
+
+    eventInterface.addLabelToMetadata(currRunner, key, value);
 };

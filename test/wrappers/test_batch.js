@@ -71,7 +71,7 @@ describe('batchWrapper tests', () => {
     it('wrapBatchJob: sanity', () => {
         batchWrapper.wrapBatchJob();
         expect(this.restartStub.callCount).to.equal(1);
-        expect(this.addEventStub.callCount).to.equal(1);
+        expect(this.addEventStub.callCount).to.equal(0);
         expect(this.addExceptionStub.called).to.be.false;
         expect(this.sendTraceStub.callCount).to.equal(0);
         expect(this.sendTraceSyncStub.callCount).to.equal(0);
@@ -83,7 +83,7 @@ describe('batchWrapper tests', () => {
     it('wrapBatchJob: raised Error', () => {
         batchWrapper.wrapBatchJob();
         expect(this.restartStub.callCount).to.equal(1);
-        expect(this.addEventStub.callCount).to.equal(1);
+        expect(this.addEventStub.callCount).to.equal(0);
         expect(this.addExceptionStub.called).to.be.false;
         expect(this.sendTraceStub.callCount).to.equal(0);
         expect(this.sendTraceSyncStub.callCount).to.equal(0);
