@@ -6,7 +6,7 @@ epsagon.init({
     metadataOnly: false,
 });
 
-module.exports.test = epsagon.lambdaWrapper(() => {
+module.exports.test = epsagon.lambdaWrapper(async () => {
     epsagon.label('myFirstLabel', 'customValue1');
     epsagon.label('mySecondLabel', 'customValue2');
 
