@@ -6,10 +6,9 @@ epsagon.init({
     metadataOnly: false,
 });
 
-module.exports.test = epsagon.lambdaWrapper((event, context, callback) => { // eslint-disable-line no-unused-vars
+module.exports.test = epsagon.lambdaWrapper(() => {
     epsagon.label('myFirstLabel', 'customValue1');
     epsagon.label('mySecondLabel', 'customValue2');
 
-    // eslint-disable-next-line no-console
-    console.log('hello world from node function');
+    return 'success';
 });
