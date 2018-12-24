@@ -93,7 +93,13 @@ function httpWrapper(wrappedFunction) {
             });
 
             const patchedCallback = (res) => {
-                eventInterface.addToMetadata(awsEvent, {}, {
+                let metadataFields = {};
+                if ('x-powered-by' in res.headers) {
+                    // This field is used to identify responses from 'Express'
+                    metadataFields = { response_headers: { 'x-powered-by': res.headers['x-powered-by'] } };
+                }
+                // The complete headers will override metadata only when needed
+                eventInterface.addToMetadata(awsEvent, metadataFields, {
                     response_headers: res.headers,
                 });
 
