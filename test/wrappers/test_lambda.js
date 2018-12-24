@@ -78,6 +78,9 @@ describe('lambdaWrapper tests', () => {
         this.callbackStub = sinon.stub();
         this.context = {
             callbackWaitsForEmptyEventLoop: true,
+            fail() {},
+            succeed() {},
+            done() {},
         };
         consts.COLD_START = true;
     });
@@ -365,6 +368,9 @@ describe('stepLambdaWrapper tests', () => {
         this.callbackStub = sinon.stub();
         this.context = {
             callbackWaitsForEmptyEventLoop: true,
+            fail() {},
+            succeed() {},
+            done() {},
         };
         consts.COLD_START = true;
     });
