@@ -33,7 +33,7 @@ module.exports.setException = function setException(event, error) {
  * @param {proto.event_pb.Event} event The event to add the items to
  * @param {object} map The map containing the objects
  * @param {object} [fullDataMap={}] Additional data to add only if {@link config.metadataOnly}
- *     is True
+ *     is False
  */
 module.exports.addToMetadata = function addToMetadata(event, map, fullDataMap = {}) {
     Object.keys(map).forEach((key) => {
