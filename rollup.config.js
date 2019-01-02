@@ -1,6 +1,7 @@
 const commonjs = require('rollup-plugin-commonjs');
 const { eslint } = require('rollup-plugin-eslint');
 const { terser } = require('rollup-plugin-terser');
+const json = require('rollup-plugin-json');
 
 module.exports = {
     input: 'src/index.js',
@@ -14,6 +15,7 @@ module.exports = {
             throwOnWarning: true,
         }) : null),
         commonjs(),
+        json(),
         (process.env.NODE_ENV === 'production' ? terser({
             warnings: 'verbose',
             compress: {

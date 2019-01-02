@@ -21,6 +21,7 @@
     "build:dev": "rollup -c",
     "build": "NODE_ENV=production rollup -c",
     "clean": "rm -r dist/",
+    "prepublishOnly": "npm run build",
     "semantic-release": "semantic-release"
   },
   "bugs": {
