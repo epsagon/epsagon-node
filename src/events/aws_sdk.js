@@ -301,8 +301,9 @@ const dynamoDBEventCreator = {
         resource.setName(parameters.TableName || 'DynamoDBEngine');
         switch (operation) {
         case 'deleteItem':
+            // on delete, hash only the key
             eventInterface.addToMetadata(event, {
-                item_hash: this.generateItemHash(parameters.Item),
+                item_hash: this.generateItemHash(parameters.Key),
             });
             /* fallthrough */
         case 'getItem':
