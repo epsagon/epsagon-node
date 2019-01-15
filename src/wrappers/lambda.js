@@ -193,11 +193,11 @@ function baseLambdaWrapper(
                 result = result
                     .then((res) => {
                         returnValue = res;
-                        return handleUserExecutionDone(null, res);
+                        return handleUserExecutionDone(null, res, true);
                     })
                     .catch((err) => {
                         raisedError = err;
-                        return handleUserExecutionDone(err);
+                        return handleUserExecutionDone(err, null, true);
                     })
                     .then(() => waitForOriginalCallbackPromise)
                     .then(() => waitForContextResultHandlersPromise)
