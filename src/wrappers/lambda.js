@@ -119,13 +119,11 @@ function baseLambdaWrapper(
 
         let waitForOriginalCallbackPromise = Promise.resolve();
         const wrappedCallback = (error, result) => {
+            if (callbackCalled) {
+                utils.debugLog('not calling callback since it was already called');
+                return;
+            }
             waitForOriginalCallbackPromise = new Promise((resolve) => {
-                if (callbackCalled) {
-                    utils.debugLog('not calling callback since it was already called');
-                    resolve();
-                    return;
-                }
-
                 handleUserExecutionDone(error, result).then(() => {
                     utils.debugLog('calling User\'s callback');
                     originalCallback(error, result);
@@ -134,21 +132,43 @@ function baseLambdaWrapper(
             });
         };
 
+        let waitForContextResultHandlersPromise = Promise.resolve();
         const patchedContext = Object.assign({}, originalContext, {
             succeed: (res) => {
-                handleUserExecutionDone(null, res, true)
-                    .then(() => waitForOriginalCallbackPromise)
-                    .then(() => originalContext.succeed(res));
+                if (callbackCalled) {
+                    utils.debugLog('not calling succeed, callback was already called');
+                    return;
+                }
+                waitForContextResultHandlersPromise = new Promise((resolve) => {
+                    handleUserExecutionDone(null, res, true)
+                        .then(() => waitForOriginalCallbackPromise)
+                        .then(() => originalContext.succeed(res))
+                        .then(() => resolve());
+                });
             },
             fail: (err) => {
-                handleUserExecutionDone(err, null, true)
-                    .then(() => waitForOriginalCallbackPromise)
-                    .then(() => originalContext.fail(err));
+                if (callbackCalled) {
+                    utils.debugLog('not calling fail, callback was already called');
+                    return;
+                }
+                waitForContextResultHandlersPromise = new Promise((resolve) => {
+                    handleUserExecutionDone(err, null, true)
+                        .then(() => waitForOriginalCallbackPromise)
+                        .then(() => originalContext.fail(err))
+                        .then(() => resolve());
+                });
             },
             done: (res, err) => {
-                handleUserExecutionDone(res, err, true)
-                    .then(() => waitForOriginalCallbackPromise)
-                    .then(() => originalContext.done(res, err));
+                if (callbackCalled) {
+                    utils.debugLog('not calling done, callback was already called');
+                    return;
+                }
+                waitForContextResultHandlersPromise = new Promise((resolve) => {
+                    handleUserExecutionDone(res, err, true)
+                        .then(() => waitForOriginalCallbackPromise)
+                        .then(() => originalContext.done(res, err))
+                        .then(() => resolve());
+                });
             },
         });
 
@@ -180,6 +200,7 @@ function baseLambdaWrapper(
                         return handleUserExecutionDone(err, null, true);
                     })
                     .then(() => waitForOriginalCallbackPromise)
+                    .then(() => waitForContextResultHandlersPromise)
                     .then(() => {
                         if (raisedError) {
                             throw raisedError;

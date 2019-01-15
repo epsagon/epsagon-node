@@ -41,7 +41,12 @@ function httpWrapper(wrappedFunction) {
     return function internalHttpWrapper(options, callback) {
         let clientRequest = null;
         try {
-            const hostname = options.hostname || options.host || options.uri.hostname;
+            const hostname = (
+                options.hostname ||
+                options.host ||
+                (options.uri && options.uri.hostname) ||
+                'localhost'
+            );
             if (isBlacklistURL(hostname)) {
                 utils.debugLog(`filtered blacklist hostname ${hostname}`);
                 return wrappedFunction.apply(this, [options, callback]);
@@ -64,7 +69,7 @@ function httpWrapper(wrappedFunction) {
             const method = options.method || 'GET';
 
             const resource = new serverlessEvent.Resource([
-                'http',
+                hostname,
                 'http',
                 method,
             ]);
@@ -88,14 +93,19 @@ function httpWrapper(wrappedFunction) {
             });
 
             const patchedCallback = (res) => {
-                eventInterface.addToMetadata(awsEvent, {}, {
+                let metadataFields = {};
+                if ('x-powered-by' in res.headers) {
+                    // This field is used to identify responses from 'Express'
+                    metadataFields = { response_headers: { 'x-powered-by': res.headers['x-powered-by'] } };
+                }
+                // The complete headers will override metadata only when needed
+                eventInterface.addToMetadata(awsEvent, metadataFields, {
                     response_headers: res.headers,
                 });
 
                 if ('x-amzn-requestid' in res.headers) {
                     // This is a request to AWS API Gateway
                     resource.setType('api_gateway');
-                    resource.setName(path);
                     eventInterface.addToMetadata(awsEvent, {
                         request_trace_id: res.headers['x-amzn-requestid'],
                     });

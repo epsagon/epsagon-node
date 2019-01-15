@@ -23,7 +23,7 @@ const s3EventCreator = {
      * @param {proto.event_pb.Event} event The event to update the data on
      */
     requestHandler(request, event) {
-        const parameters = request.params;
+        const parameters = request.params || {};
         const { operation } = request;
         const resource = event.getResource();
 
@@ -86,7 +86,7 @@ const kinesisEventCreator = {
      * @param {proto.event_pb.Event} event The event to update the data on
      */
     requestHandler(request, event) {
-        const parameters = request.params;
+        const parameters = request.params || {};
         const resource = event.getResource();
 
         resource.setName(`${parameters.StreamName}`);
@@ -123,7 +123,7 @@ const SNSEventCreator = {
      * @param {proto.event_pb.Event} event The event to update the data on
      */
     requestHandler(request, event) {
-        const parameters = request.params;
+        const parameters = request.params || {};
         const resource = event.getResource();
         resource.setName(`${parameters.TopicArn.split(':').pop()}` || 'N/A');
         eventInterface.addToMetadata(event, {}, {
@@ -156,7 +156,7 @@ const SQSEventCreator = {
      * @param {proto.event_pb.Event} event The event to update the data on
      */
     requestHandler(request, event) {
-        const parameters = request.params;
+        const parameters = request.params || {};
         const resource = event.getResource();
 
         if ('QueueUrl' in parameters) {
@@ -216,7 +216,7 @@ const SESEventCreator = {
      * @param {proto.event_pb.Event} event The event to update the data on
      */
     requestHandler(request, event) {
-        const parameters = request.params;
+        const parameters = request.params || {};
         switch (request.operation) {
         case 'sendEmail':
             eventInterface.addToMetadata(event, {
@@ -258,7 +258,7 @@ const lambdaEventCreator = {
      * @param {proto.event_pb.Event} event The event to update the data on
      */
     requestHandler(request, event) {
-        const parameters = request.params;
+        const parameters = request.params || {};
         const resource = event.getResource();
         const name = (parameters.FunctionName.includes(':')) ?
             parameters.FunctionName.split(':').slice(-1)[0] : parameters.FunctionName;
@@ -294,15 +294,16 @@ const dynamoDBEventCreator = {
      * @param {proto.event_pb.Event} event The event to update the data on
      */
     requestHandler(request, event) {
-        const parameters = request.params;
+        const parameters = request.params || {};
         const resource = event.getResource();
         const { operation } = request;
 
         resource.setName(parameters.TableName || 'DynamoDBEngine');
         switch (operation) {
         case 'deleteItem':
+            // on delete, hash only the key
             eventInterface.addToMetadata(event, {
-                item_hash: this.generateItemHash(parameters.Item),
+                item_hash: this.generateItemHash(parameters.Key),
             });
             /* fallthrough */
         case 'getItem':
@@ -437,7 +438,7 @@ const athenaEventCreator = {
      * @param {proto.event_pb.Event} event The event to update the data on
      */
     requestHandler(request, event) {
-        const parameters = request.params;
+        const parameters = request.params || {};
         switch (request.operation) {
         case 'startQueryExecution':
             if (('QueryExecutionContext' in parameters) &&
@@ -511,7 +512,7 @@ const stepFunctionsEventCreator = {
      * @param {proto.event_pb.Event} event The event to update the data on
      */
     patchInput(request, event) {
-        const parameters = request.params;
+        const parameters = request.params || {};
         switch (request.operation) {
         case 'startExecution': {
             let input;
@@ -591,7 +592,7 @@ const batchEventCreator = {
      * @param {proto.event_pb.Event} event The event to update the data on
      */
     requestHandler(request, event) {
-        const parameters = request.params;
+        const parameters = request.params || {};
         const { operation } = request;
         const resource = event.getResource();
 
@@ -695,43 +696,55 @@ function AWSSDKWrapper(wrappedFunction) {
 
             const responsePromise = new Promise((resolve) => {
                 request.on('send', () => {
-                    specificEventCreators[serviceIdentifier].requestHandler(
-                        request,
-                        awsEvent
-                    );
-                }).on('error', (error) => {
-                    eventInterface.setException(awsEvent, error);
-                }).on('complete', (response) => {
-                    awsEvent.setId(`${response.requestId}`);
-                    awsEvent.setDuration(utils.createDurationTimestamp(startTime));
-
-                    if (response.data !== null) {
-                        awsEvent.setErrorCode(errorCode.ErrorCode.OK);
-                        eventInterface.addToMetadata(awsEvent, {
-                            request_id: `${response.requestId}`,
-                            retry_attempts: `${response.retryCount}`,
-                            status_code: `${response.httpResponse.statusCode}`,
-                        });
-
-                        specificEventCreators[serviceIdentifier].responseHandler(
-                            response,
+                    try {
+                        specificEventCreators[serviceIdentifier].requestHandler(
+                            request,
                             awsEvent
                         );
+                    } catch (e) {
+                        tracer.addException(e);
                     }
+                }).on('error', (error) => {
+                    try {
+                        eventInterface.setException(awsEvent, error);
+                    } catch (e) {
+                        tracer.addException(e);
+                    }
+                }).on('complete', (response) => {
+                    try {
+                        awsEvent.setId(`${response.requestId}`);
+                        awsEvent.setDuration(utils.createDurationTimestamp(startTime));
 
-                    if (response.error !== null) {
-                        if (awsEvent.getErrorCode() !== errorCode.ErrorCode.EXCEPTION) {
-                            awsEvent.setErrorCode(errorCode.ErrorCode.ERROR);
+                        if (response.data !== null) {
+                            awsEvent.setErrorCode(errorCode.ErrorCode.OK);
+                            eventInterface.addToMetadata(awsEvent, {
+                                request_id: `${response.requestId}`,
+                                retry_attempts: `${response.retryCount}`,
+                                status_code: `${response.httpResponse.statusCode}`,
+                            });
+
+                            specificEventCreators[serviceIdentifier].responseHandler(
+                                response,
+                                awsEvent
+                            );
                         }
 
-                        eventInterface.addToMetadata(awsEvent, {
-                            request_id: `${response.requestId}`,
-                            error_message: `${response.error.message}`,
-                            error_code: `${response.error.code}`,
-                        });
-                    }
+                        if (response.error !== null) {
+                            if (awsEvent.getErrorCode() !== errorCode.ErrorCode.EXCEPTION) {
+                                awsEvent.setErrorCode(errorCode.ErrorCode.ERROR);
+                            }
 
-                    resolve();
+                            eventInterface.addToMetadata(awsEvent, {
+                                request_id: `${response.requestId}`,
+                                error_message: `${response.error.message}`,
+                                error_code: `${response.error.code}`,
+                            });
+                        }
+                    } catch (e) {
+                        tracer.addException(e);
+                    } finally {
+                        resolve();
+                    }
                 });
             }).catch((err) => {
                 tracer.addException(err);
