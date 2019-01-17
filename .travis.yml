@@ -18,7 +18,7 @@ jobs:
     - stage: build-and-deploy
       node_js: "8.10"
       script:
-        - npm run build && npm run semantic-release
+        - npm run build && npm run semantic-release && ./scripts/publish_layers.sh
 
 stages:
   - Test
