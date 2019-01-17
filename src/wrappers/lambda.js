@@ -187,7 +187,9 @@ function baseLambdaWrapper(
                     functionToWrap(originalEvent, patchedContext, wrappedCallback)
             );
 
-            if (result instanceof Promise) {
+            // Check if result is an instance of Promise (some Webpack versions
+            // don't support instanceof Promise)
+            if (result && typeof result.then === 'function') {
                 let raisedError;
                 let returnValue;
                 result = result
