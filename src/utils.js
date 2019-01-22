@@ -46,7 +46,7 @@ function reflectPromise(promise) {
  * @param {list} args list of arguments as passed to console.log
  */
 function debugLog(...args) {
-    if (process.env.EPSAGON_DEBUG === 'TRUE') {
+    if ((process.env.EPSAGON_DEBUG || '').toUpperCase() === 'TRUE') {
         console.log(...args); // eslint-disable-line no-console
     }
 }

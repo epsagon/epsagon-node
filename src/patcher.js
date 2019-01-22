@@ -13,7 +13,7 @@ if (!config.getConfig().isEpsagonPatchDisabled) {
         try {
             patcher.init();
         } catch (error) {
-            if (process.env.EPSAGON_DEBUG === 'TRUE') {
+            if ((process.env.EPSAGON_DEBUG || '').toUpperCase() === 'TRUE') {
                 // eslint-disable-next-line no-console
                 console.log(error);
             }

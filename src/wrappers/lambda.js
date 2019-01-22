@@ -251,7 +251,7 @@ function createStepIdAddWrapper(functionToWrap) {
                 });
             }
 
-            if (process.env.EPSAGON_DEBUG === 'TRUE') {
+            if ((process.env.EPSAGON_DEBUG || '').toUpperCase() === 'TRUE') {
                 // eslint-disable-next-line no-console
                 console.log('Step function result update attempt');
                 // eslint-disable-next-line no-console
