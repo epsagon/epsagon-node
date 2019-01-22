@@ -185,7 +185,11 @@ function postTrace(traceObject) {
     ).then((res) => {
         utils.debugLog('Trace posted!');
         return res;
-    }).catch(err => err); // Always resolve.
+    }).catch((err) => {
+        utils.debugLog(`Error sending trace. Trace size: ${err.config.data.length}`);
+        utils.debugLog(err.stack);
+        return err;
+    }); // Always resolve.
 }
 
 /**
