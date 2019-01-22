@@ -80,6 +80,8 @@ function pgClientWrapper(wrappedFunction) {
 
             const responsePromise = new Promise((resolve) => {
                 patchedCallback = (err, res) => {
+                    dbapiEvent.setDuration(utils.createDurationTimestamp(startTime));
+
                     if (err) {
                         eventInterface.setException(dbapiEvent, err);
                     } else {
@@ -92,7 +94,6 @@ function pgClientWrapper(wrappedFunction) {
                         callback(err, res);
                     }
 
-                    dbapiEvent.setDuration(utils.createDurationTimestamp(startTime));
                     resolve();
                 };
             }).catch((err) => {
