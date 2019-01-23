@@ -12,14 +12,14 @@ const config = {
     metadataOnly: true,
     useSSL: true,
     traceCollectorURL: consts.TRACE_COLLECTOR_URL,
-    isEpsagonDisabled: process.env.DISABLE_EPSAGON === 'TRUE',
+    isEpsagonDisabled: (process.env.DISABLE_EPSAGON || '').toUpperCase() === 'TRUE',
     /**
      * get isEpsagonPatchDisabled
      * @return {boolean} True if DISABLE_EPSAGON or DISABLE_EPSAGON_PATCH are set to TRUE, false
      *     otherwise
      */
     get isEpsagonPatchDisabled() {
-        return this.isEpsagonDisabled || process.env.DISABLE_EPSAGON_PATCH === 'TRUE';
+        return this.isEpsagonDisabled || (process.env.DISABLE_EPSAGON_PATCH || '').toUpperCase() === 'TRUE';
     },
 };
 
