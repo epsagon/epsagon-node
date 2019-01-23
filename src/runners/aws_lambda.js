@@ -2,6 +2,7 @@
  * @fileoverview runners for the AWS Lambda environment
  */
 
+const uuid4 = require('uuid4');
 const consts = require('../consts.js');
 const serverlessEvent = require('../proto/event_pb.js');
 const eventInterface = require('../event.js');
@@ -22,7 +23,8 @@ function createRunner(originalContext, resourceType = 'lambda') {
     ]);
 
     const runner = new serverlessEvent.Event([
-        originalContext.awsRequestId,
+        // Generating id in case of local invocation with Serverless framework
+        (originalContext.awsRequestId === 'id') ? `local-${uuid4()}` : originalContext.awsRequestId,
         0,
         null,
         'runner',

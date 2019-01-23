@@ -61,6 +61,7 @@
     "pg": "^7.6.0",
     "pg-pool": "^2.0.3",
     "proxyquire": "^2.0.1",
+    "redis": "^2.8.0",
     "rollup": "^0.66.2",
     "rollup-plugin-commonjs": "^9.1.8",
     "rollup-plugin-eslint": "^5.0.0",
