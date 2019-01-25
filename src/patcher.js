@@ -7,10 +7,11 @@ const awsSDKPatcher = require('./events/aws_sdk.js');
 const httpPatcher = require('./events/http.js');
 const pgPatcher = require('./events/pg.js');
 const redisPatcher = require('./events/redis.js');
+const mongoPatcher = require('./events/mongodb.js');
 
 
 if (!config.getConfig().isEpsagonPatchDisabled) {
-    [awsSDKPatcher, httpPatcher, pgPatcher, redisPatcher].forEach((patcher) => {
+    [awsSDKPatcher, httpPatcher, pgPatcher, redisPatcher, mongoPatcher].forEach((patcher) => {
         try {
             patcher.init();
         } catch (error) {
