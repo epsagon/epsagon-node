@@ -11,6 +11,8 @@ const errorCode = require('../proto/error_code_pb.js');
 const pg = tryRequire('pg');
 const Pool = tryRequire('pg-pool');
 
+const MAX_QUERY_SIZE = 2048;
+
 /**
  * Wraps the pg's module request function with tracing
  * @param {Function} wrappedFunction The pg's module
@@ -19,37 +21,33 @@ const Pool = tryRequire('pg-pool');
 function pgClientWrapper(wrappedFunction) {
     return function internalpgClientWrapper(queryString, arg1, arg2) {
         let patchedCallback;
-        const callback = (arg2 === undefined) ? arg1 : arg2;
-        const params = (arg1 instanceof Function) ? [] : arg1;
-        let sqlObj = {};
+        const paramNotSet = (arg2 === undefined && arg1 instanceof Function);
+        const callback = (paramNotSet) ? arg1 : arg2;
+        const params = (paramNotSet) ? [] : arg1;
 
         try {
-            sqlObj = sqlParser.parse(queryString);
-        } catch (error) {
-            sqlObj.type = 'Can not process';
-            sqlObj.table = 'Can not process';
-        }
+            let sqlObj = {};
+            try {
+                sqlObj = sqlParser.parse(queryString);
+            } catch (error) {
+                sqlObj.type = 'SQL-Command';
+            }
 
-        let databaseType = 'local';
+            const { type, table } = sqlObj;
 
-        const {
-            type,
-            table,
-        } = sqlObj;
+            const {
+                database,
+                host,
+            } = this.connectionParameters || this._clients[0]; // eslint-disable-line
 
-        const {
-            database,
-            host,
-        } = this.connectionParameters || this._clients[0]; // eslint-disable-line
+            let resourceType = 'sql';
+            if (host.match('.rds.')) { resourceType = 'rds'; }
+            if (host.match('.redshift.')) { resourceType = 'redshift'; }
 
-        if (host.match('.rds.')) { databaseType = 'rds'; }
-        if (host.match('.redshift.')) { databaseType = 'redshift'; }
-
-        try {
             const resource = new serverlessEvent.Resource([
                 database, // name of the database
-                databaseType,
-                queryString,
+                resourceType,
+                type,
             ]);
 
             const startTime = Date.now();
@@ -75,8 +73,9 @@ function pgClientWrapper(wrappedFunction) {
                 Driver: 'pg',
                 Type: type,
                 'Table Name': table,
-            }, extendedData);
-
+            }, {
+                Query: queryString.substring(0, MAX_QUERY_SIZE),
+            });
 
             const responsePromise = new Promise((resolve) => {
                 patchedCallback = (err, res) => {
