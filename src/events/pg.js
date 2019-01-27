@@ -33,7 +33,7 @@ function pgClientWrapper(wrappedFunction) {
                 sqlObj.type = 'SQL-Command';
             }
 
-            const { type, table, } = sqlObj;
+            const { type, table } = sqlObj;
 
             const {
                 database,
