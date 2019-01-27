@@ -9,6 +9,21 @@ const errorCode = require('../proto/error_code_pb.js');
 const eventInterface = require('../event.js');
 
 const requestsResolvers = {};
+const MAX_DATA_LENGTH = 4096;
+
+/**
+ * Stringify given obejct (and shorten if needed)
+ * @param {Object} obj The data to stringify
+ * @returns {string} The stringified data
+ * @note A better shortening approach should be added as a general feature
+ */
+function stringifyData(obj) {
+    if (!obj) {
+        return undefined;
+    }
+    const data = (typeof obj === 'string') ? obj : JSON.stringify(obj);
+    return data.substring(0, MAX_DATA_LENGTH);
+}
 
 /**
  * Hook for mongodb requests starting
@@ -45,6 +60,9 @@ function onStartHook(event) {
         eventInterface.addToMetadata(dbapiEvent, {
             port,
             namespace: `${event.databaseName}.${collection}`,
+        }, {
+            filter: stringifyData(event.command.filter),
+            query: stringifyData(event.command.query),
         });
 
         const responsePromise = new Promise((resolve) => {
