@@ -5,7 +5,7 @@
 /**
  * Creates a timestamp (according to epsagon-protocol timestamp format) from a given js time
  * @param {number} time the time in miliseconds to generate the timestamp from
- * @return {double} the time in epsagon's fomat
+ * @return {double} the time in epsagon's format
  */
 function createTimestampFromTime(time) {
     return time / 1000;
@@ -13,7 +13,7 @@ function createTimestampFromTime(time) {
 
 /**
  * Creates a timestamp (according to epsagon-protocol timestamp format) of the current time
- * @return {double} the time in epsagon's fomat
+ * @return {double} the time in epsagon's format
  */
 function createTimestamp() {
     return createTimestampFromTime(Date.now());
@@ -23,7 +23,7 @@ function createTimestamp() {
  * Creates a timestamp (according to epsagon-protocol timestamp format) describing the time elapsed
  * since a given time until now
  * @param {integer} startTime The time to start counting from
- * @return {double} the duration in epsagon's timestamp fomat
+ * @return {double} the duration in epsagon's timestamp format
  */
 function createDurationTimestamp(startTime) {
     return createTimestampFromTime(Date.now() - startTime);
