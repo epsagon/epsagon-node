@@ -84,7 +84,7 @@ function handleEventResponse(event, hasError) {
     try {
         const { resolve, dbapiEvent } = requestsResolvers[event.requestId];
 
-        dbapiEvent.setDuration(event.duration);
+        dbapiEvent.setDuration(utils.createDurationTimestamp(event.duration));
         if (hasError) {
             dbapiEvent.addException({
                 name: 'Mongodb Error',

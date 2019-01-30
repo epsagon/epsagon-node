@@ -1,0 +1,111 @@
+const uuid4 = require('uuid4');
+const sqlParser = require('node-sqlparser');
+const utils = require('../utils.js');
+const tracer = require('../tracer.js');
+const serverlessEvent = require('../proto/event_pb.js');
+const eventInterface = require('../event.js');
+const errorCode = require('../proto/error_code_pb.js');
+
+const MAX_QUERY_SIZE = 2048;
+
+/**
+ * Parse query arguments - get the callback and params
+ * @param {Array|Function} arg1 First argument
+ * @param {Function} arg2 Second argument
+ * @returns {{params: Array, callback: Function}} The callback and params
+ */
+module.exports.parseQueryArgs = function parseQueryArgs(arg1, arg2) {
+    const paramNotSet = (arg2 === undefined && arg1 instanceof Function);
+    const callback = (paramNotSet) ? arg1 : arg2;
+    const params = (paramNotSet) ? [] : arg1;
+
+    return { params, callback };
+};
+
+/**
+ * Wrap SQL query call with tracing
+ * @param {string} queryString The executed SQL command
+ * @param {Array} params The params argument (values)
+ * @param {Function} callback The callback argument (cb)
+ * @param {Object} config The connection config object
+ * @param {string} driver The database driver type (mysql/pg/..)
+ * @returns {Array} The arguments
+ */
+module.exports.wrapSqlQuery = function wrapSqlQuery(queryString, params, callback, config, driver) {
+    let patchedCallback;
+
+    try {
+        let sqlObj = {};
+        try {
+            sqlObj = sqlParser.parse(queryString);
+        } catch (error) {
+            sqlObj.type = 'SQL-Command';
+        }
+
+        const { type, table } = sqlObj;
+
+        const { database, host } = config;
+
+        let resourceType = 'sql';
+        if (host.match('.rds.')) { resourceType = 'rds'; }
+        if (host.match('.redshift.')) { resourceType = 'redshift'; }
+
+        const resource = new serverlessEvent.Resource([
+            database, // name of the database
+            resourceType,
+            type,
+        ]);
+
+        const startTime = Date.now();
+
+        const dbapiEvent = new serverlessEvent.Event([
+            `dbapi-${uuid4()}`,
+            utils.createTimestampFromTime(startTime),
+            null,
+            driver,
+            0,
+            errorCode.ErrorCode.OK,
+        ]);
+
+        dbapiEvent.setResource(resource);
+
+        eventInterface.addToMetadata(dbapiEvent, {
+            Host: host,
+            Driver: driver,
+            Type: type,
+            'Table Name': table,
+        }, {
+            Query: queryString.substring(0, MAX_QUERY_SIZE),
+        });
+
+        const responsePromise = new Promise((resolve) => {
+            patchedCallback = (err, res, fields) => {
+                dbapiEvent.setDuration(utils.createDurationTimestamp(startTime));
+
+                if (err) {
+                    eventInterface.setException(dbapiEvent, err);
+                } else {
+                    let { rowCount } = res;
+                    if (!rowCount && res instanceof Array) {
+                        rowCount = res.length;
+                    }
+                    eventInterface.addToMetadata(dbapiEvent, { rowCount });
+                }
+
+                if (callback) {
+                    callback(err, res, fields);
+                }
+
+                resolve();
+            };
+        }).catch((err) => {
+            tracer.addException(err);
+        });
+
+        tracer.addEvent(dbapiEvent, responsePromise);
+    } catch (error) {
+        tracer.addException(error);
+    }
+
+    return patchedCallback;
+};
