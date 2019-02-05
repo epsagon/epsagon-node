@@ -4,7 +4,7 @@ pip install --user awscli jq
 mkdir layer
 cd layer
 npm init -f
-npm i epsagon
+npm i epsagon@latest
 mkdir nodejs
 mv node_modules nodejs/
 zip -r epsagon-node-layer.zip nodejs -x ".*" -x "__MACOSX"
@@ -14,5 +14,6 @@ do
     echo ${region}
     aws s3 cp epsagon-node-layer.zip s3://epsagon-layers-${region}/
     LAYER_VERSION=$(aws lambda publish-layer-version --layer-name epsagon-node-layer --description "Epsagon Node.js layer that includes pre-installed packages to get up and running with monitoring and distributed tracing" --content S3Bucket=epsagon-layers-${region},S3Key=epsagon-node-layer.zip --compatible-runtimes nodejs8.10 nodejs6.10 --license-info MIT --region ${region} | jq '.Version')
+    sleep 3
     aws lambda add-layer-version-permission --layer-name epsagon-node-layer --version-number ${LAYER_VERSION} --statement-id sid1 --action lambda:GetLayerVersion --principal \* --region ${region}
 done

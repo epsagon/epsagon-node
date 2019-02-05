@@ -7,9 +7,9 @@ const consts = require('./consts.js');
  * configuration singleton. preconfigured with default values.
  */
 const config = {
-    token: '',
-    appName: 'Application',
-    metadataOnly: true,
+    token: process.env.EPSAGON_TOKEN || '',
+    appName: process.env.EPSAGON_APP_NAME || 'Application',
+    metadataOnly: false,
     useSSL: true,
     traceCollectorURL: consts.TRACE_COLLECTOR_URL,
     isEpsagonDisabled: (process.env.DISABLE_EPSAGON || '').toUpperCase() === 'TRUE',
