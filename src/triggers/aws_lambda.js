@@ -141,7 +141,7 @@ function createAPIGatewayTrigger(event, trigger) {
 }
 
 /**
- * Initializes an event representing a trigger to the lambda caused by NoProxy API Trigger
+ * Initializes an event representing a trigger to the lambda caused by No-Proxy API Trigger
  * @param {object} event The event the lambda was triggered with
  * @param {proto.event_pb.Event} trigger An Event to initialize as the trigger
  */
