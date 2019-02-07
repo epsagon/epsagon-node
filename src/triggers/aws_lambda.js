@@ -146,18 +146,18 @@ function createAPIGatewayTrigger(event, trigger) {
  * @param {proto.event_pb.Event} trigger An Event to initialize as the trigger
  */
 function createNoProxyAPIGatewayTrigger(event, trigger) {
-  const resource = trigger.getResource();
-  trigger.setId(event.context['request-id']);
-  resource.setName(event.context['resource-path']);
-  resource.setOperation(event.context['http-method']);
-  eventInterface.addToMetadata(trigger, {
-    stage: event.context.stage,
-    query_string_parameters: JSON.stringify(event.params.querystring),
-    path_parameters: JSON.stringify(event.params.path),
-  }, {
-    body: JSON.stringify(event['body-json']),
-    headers: JSON.stringify(event.params.header),
-  });
+    const resource = trigger.getResource();
+    trigger.setId(event.context['request-id']);
+    resource.setName(event.context['resource-path']);
+    resource.setOperation(event.context['http-method']);
+    eventInterface.addToMetadata(trigger, {
+        stage: event.context.stage,
+        query_string_parameters: JSON.stringify(event.params.querystring),
+        path_parameters: JSON.stringify(event.params.path),
+    }, {
+        body: JSON.stringify(event['body-json']),
+        headers: JSON.stringify(event.params.header),
+    });
 }
 
 /**
