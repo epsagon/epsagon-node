@@ -37,7 +37,9 @@ module.exports.wrapSqlQuery = function wrapSqlQuery(queryString, params, callbac
     try {
         let sqlObj = {};
         try {
-            sqlObj = sqlParser.parse(queryString);
+            // Sanitizing query.
+            const queryStringSan = queryString.split('`').join('').replace(';', '');
+            sqlObj = sqlParser.parse(queryStringSan);
         } catch (error) {
             sqlObj.type = 'SQL-Command';
         }
@@ -68,7 +70,6 @@ module.exports.wrapSqlQuery = function wrapSqlQuery(queryString, params, callbac
         ]);
 
         dbapiEvent.setResource(resource);
-
         eventInterface.addToMetadata(dbapiEvent, {
             Host: host,
             Driver: driver,

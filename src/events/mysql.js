@@ -15,14 +15,17 @@ function mysqlQueryWrapper(wrappedFunction) {
         let queryString;
         let callback;
         let params;
-        // This function can be called with either a string or Query object
-        if (typeof sql === 'string') {
-            queryString = sql;
-            ({ params, callback } = sqlWrapper.parseQueryArgs(arg1, arg2));
-        } else {
+        if (typeof sql !== 'string') {
             queryString = sql.sql;
             params = sql.values;
-            callback = sql.onResult;
+            callback = (
+                sql.onResult ||
+                (typeof arg2 === 'function' && arg2) ||
+                (typeof arg1 === 'function' && arg1)
+            );
+        } else {
+            queryString = sql;
+            ({ params, callback } = sqlWrapper.parseQueryArgs(arg1, arg2));
         }
 
         const patchedCallback = sqlWrapper.wrapSqlQuery(
