@@ -17,14 +17,14 @@ function mysqlQueryWrapper(wrappedFunction) {
         let params;
         if (typeof sql !== 'string') {
             queryString = sql.sql;
-            params = sql.values;
-            callback = (
-                sql.onResult ||
-                (typeof arg2 === 'function' && arg2) ||
-                (typeof arg1 === 'function' && arg1)
-            );
         } else {
             queryString = sql;
+        }
+
+        if (sql.onResult) {
+            params = sql.values;
+            callback = sql.onResult;
+        } else {
             ({ params, callback } = sqlWrapper.parseQueryArgs(arg1, arg2));
         }
 

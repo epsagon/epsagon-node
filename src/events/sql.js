@@ -38,7 +38,10 @@ module.exports.wrapSqlQuery = function wrapSqlQuery(queryString, params, callbac
         let sqlObj = {};
         try {
             // Sanitizing query.
-            const queryStringSan = queryString.split('`').join('').replace(';', '');
+            let queryStringSan = queryString.split('`').join('');
+            if (queryStringSan.endsWith(';')) {
+                queryStringSan = queryStringSan.substr(0, queryStringSan.length - 1);
+            }
             sqlObj = sqlParser.parse(queryStringSan);
         } catch (error) {
             sqlObj.type = 'SQL-Command';
