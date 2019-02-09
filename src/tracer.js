@@ -3,7 +3,6 @@
  */
 const uuid4 = require('uuid4');
 const axios = require('axios');
-const util = require('util');
 const trace = require('./proto/trace_pb.js');
 const exception = require('./proto/exception_pb.js');
 const utils = require('./utils.js');
@@ -177,7 +176,7 @@ function sendCurrentTrace(traceSender) {
  *  */
 function postTrace(traceObject) {
     utils.debugLog(`Posting trace to ${config.getConfig().traceCollectorURL}`);
-    utils.debugLog(`trace: ${util.inspect(traceObject)}`);
+    utils.debugLog(`trace: ${JSON.stringify(traceObject, null, 2)}`);
     return axios.post(
         config.getConfig().traceCollectorURL,
         traceObject,
