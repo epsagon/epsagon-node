@@ -32,7 +32,7 @@ module.exports.setException = function setException(event, error) {
  * Add timeout indication to a given event
  * @param {proto.event_pb.Event} event The event the timeout is set on
  */
-module.exports.setTimeout = function setTimeout(event) {
+module.exports.markAsTimeout = function setTimeout(event) {
     event.setErrorCode(errorCode.ErrorCode.TIMEOUT);
 };
 

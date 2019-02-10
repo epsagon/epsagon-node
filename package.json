@@ -81,7 +81,6 @@
     "json.sortify": "^2.2.2",
     "md5": "^2.2.1",
     "node-sqlparser": "^1.0.4",
-    "nvm": "0.0.4",
     "shimmer": "^1.2.0",
     "try-require": "^1.2.1",
     "uuid4": "^1.0.0"

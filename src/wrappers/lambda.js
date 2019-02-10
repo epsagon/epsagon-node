@@ -38,7 +38,7 @@ function baseLambdaWrapper(
     return (originalEvent, originalContext, originalCallback) => {
         tracer.restart();
         let runner;
-        let timeout;
+        let timeoutHandler;
         let tracesSent = false;
         let callbackCalled = false;
 
@@ -88,12 +88,9 @@ function baseLambdaWrapper(
         };
 
         const handleUserExecutionDone = (error, result, sendSync) => {
-            clearTimeout(timeout);
+            clearTimeout(timeoutHandler);
 
-            if (tracesSent) {
-                return Promise.resolve();
-            }
-            if (callbackCalled) {
+            if (tracesSent || callbackCalled) {
                 return Promise.resolve();
             }
             callbackCalled = true;
@@ -193,9 +190,9 @@ function baseLambdaWrapper(
         });
 
         try {
-            timeout = setTimeout(() => {
+            timeoutHandler = setTimeout(() => {
                 tracesSent = true;
-                eventInterface.setTimeout(runner);
+                eventInterface.markAsTimeout(runner);
                 tracer.sendTraceSync();
             }, patchedContext.getRemainingTimeInMillis() - TIMEOUT_WINDOW);
             runner.setStartTime(utils.createTimestampFromTime(startTime));

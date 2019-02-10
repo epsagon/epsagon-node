@@ -79,9 +79,9 @@ describe('lambdaWrapper tests', () => {
             'setException'
         );
 
-        this.setTimeoutStub = sinon.stub(
+        this.markAsTimeoutStub = sinon.stub(
             eventInterface,
-            'setTimeout'
+            'markAsTimeout'
         );
 
         this.stubFunction = sinon.stub().callsArgWith(2, null, RETURN_VALUE);
@@ -107,7 +107,7 @@ describe('lambdaWrapper tests', () => {
         this.restartStub.restore();
         this.addRunnerStub.restore();
         this.setExceptionStub.restore();
-        this.setTimeoutStub.restore();
+        this.markAsTimeoutStub.restore();
     });
 
     it('lambdaWrapper: return a function', () => {
@@ -349,7 +349,7 @@ describe('lambdaWrapper tests', () => {
         });
         this.wrappedStub = lambdaWrapper.lambdaWrapper(this.stubFunction);
         expect(this.wrappedStub({}, this.context, this.callbackStub)).to.equal(17);
-        expect(this.setTimeoutStub.callCount).to.equal(1);
+        expect(this.markAsTimeoutStub.callCount).to.equal(1);
         setTimeout(() => {
             expect(this.sendTraceSyncStub.callCount).to.equal(1);
             expect(this.sendTraceStub.callCount).to.equal(0);
@@ -364,7 +364,7 @@ describe('lambdaWrapper tests', () => {
         });
         this.wrappedStub = lambdaWrapper.lambdaWrapper(this.stubFunction);
         expect(this.wrappedStub({}, this.context, this.callbackStub)).to.equal(17);
-        expect(this.setTimeoutStub.callCount).to.equal(0);
+        expect(this.markAsTimeoutStub.callCount).to.equal(0);
         setTimeout(() => {
             expect(this.sendTraceStub.callCount).to.equal(1);
             expect(this.sendTraceSyncStub.callCount).to.equal(0);
