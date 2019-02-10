@@ -176,7 +176,7 @@ function sendCurrentTrace(traceSender) {
  *  */
 function postTrace(traceObject) {
     utils.debugLog(`Posting trace to ${config.getConfig().traceCollectorURL}`);
-    utils.debugLog(`trace: ${JSON.stringify(traceObject, null, 4)}`);
+    utils.debugLog(`trace: ${JSON.stringify(traceObject, null, 2)}`);
     return axios.post(
         config.getConfig().traceCollectorURL,
         traceObject,

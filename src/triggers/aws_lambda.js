@@ -141,6 +141,26 @@ function createAPIGatewayTrigger(event, trigger) {
 }
 
 /**
+ * Initializes an event representing a trigger to the lambda caused by No-Proxy API Trigger
+ * @param {object} event The event the lambda was triggered with
+ * @param {proto.event_pb.Event} trigger An Event to initialize as the trigger
+ */
+function createNoProxyAPIGatewayTrigger(event, trigger) {
+    const resource = trigger.getResource();
+    trigger.setId(event.context['request-id']);
+    resource.setName(event.context['resource-path']);
+    resource.setOperation(event.context['http-method']);
+    eventInterface.addToMetadata(trigger, {
+        stage: event.context.stage,
+        query_string_parameters: JSON.stringify(event.params.querystring),
+        path_parameters: JSON.stringify(event.params.path),
+    }, {
+        body: JSON.stringify(event['body-json']),
+        headers: JSON.stringify(event.params.header),
+    });
+}
+
+/**
  * Initializes an event representing a trigger to the lambda caused by Events
  * @param {object} event The event the lambda was triggered with
  * @param {proto.event_pb.Event} trigger An Event to initialize as the trigger
@@ -193,6 +213,7 @@ const resourceTypeToFactoryMap = {
     sns: createSNSTrigger,
     sqs: createSQSTrigger,
     api_gateway: createAPIGatewayTrigger,
+    api_gateway_no_proxy: createNoProxyAPIGatewayTrigger,
     dynamodb: createDynamoDBTrigger,
 };
 
@@ -219,6 +240,8 @@ module.exports.createFromEvent = function createFromEvent(event, context) {
             triggerService = event.source.split('.').pop();
         } else if ('httpMethod' in event) {
             triggerService = 'api_gateway';
+        } else if (('context' in event) && ('http-method' in event.context)) {
+            triggerService = 'api_gateway_no_proxy';
         } else if ('dynamodb' in event) {
             triggerService = 'dynamodb';
         }
