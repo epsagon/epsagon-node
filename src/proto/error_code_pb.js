@@ -18,7 +18,8 @@ goog.exportSymbol('proto.ErrorCode', null, global);
 proto.ErrorCode = {
   OK: 0,
   ERROR: 1,
-  EXCEPTION: 2
+  EXCEPTION: 2,
+  TIMEOUT: 3
 };
 
 goog.object.extend(exports, proto);

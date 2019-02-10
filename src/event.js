@@ -29,6 +29,14 @@ module.exports.setException = function setException(event, error) {
 };
 
 /**
+ * Add timeout indication to a given event
+ * @param {proto.event_pb.Event} event The event the timeout is set on
+ */
+module.exports.setTimeout = function setTimeout(event) {
+    event.setErrorCode(errorCode.ErrorCode.TIMEOUT);
+};
+
+/**
  * Adds items from a map to a resource Metadata
  * @param {proto.event_pb.Event} event The event to add the items to
  * @param {object} map The map containing the objects
