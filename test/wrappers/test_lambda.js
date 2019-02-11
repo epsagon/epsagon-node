@@ -1,5 +1,6 @@
 const { expect } = require('chai');
 const sinon = require('sinon');
+const lolex = require('lolex');
 const proxyquire = require('proxyquire').noPreserveCache();
 const tracer = require('../../src/tracer.js');
 const eventInterface = require('../../src/event.js');
@@ -9,6 +10,7 @@ const lambdaWrapper = require('../../src/wrappers/lambda.js');
 const errorCode = require('../../src/proto/error_code_pb.js');
 const config = require('../../src/config.js');
 
+const DEFAULT_TIMEOUT = 10000;
 const RETURN_VALUE = { result: 1 };
 
 // Helpers functions
@@ -32,6 +34,11 @@ function getReturnValue(addRunnerStub) {
 describe('lambdaWrapper tests', () => {
     beforeEach(() => {
         config.setConfig({ metadataOnly: false });
+        const now = (new Date()).getTime();
+        this.clock = lolex.install({
+            now,
+            shouldAdvanceTime: true,
+        });
         this.createFromEventStub = sinon.stub(
             awsLambdaTrigger,
             'createFromEvent'
@@ -53,7 +60,6 @@ describe('lambdaWrapper tests', () => {
         );
 
         this.addExceptionStub = sinon.stub(
-
             tracer,
             'addException'
         );
@@ -73,10 +79,16 @@ describe('lambdaWrapper tests', () => {
             'setException'
         );
 
+        this.markAsTimeoutStub = sinon.stub(
+            eventInterface,
+            'markAsTimeout'
+        );
+
         this.stubFunction = sinon.stub().callsArgWith(2, null, RETURN_VALUE);
         this.wrappedStub = lambdaWrapper.lambdaWrapper(this.stubFunction);
         this.callbackStub = sinon.stub();
         this.context = {
+            getRemainingTimeInMillis() { return DEFAULT_TIMEOUT; },
             callbackWaitsForEmptyEventLoop: true,
             fail() {},
             succeed() {},
@@ -86,6 +98,7 @@ describe('lambdaWrapper tests', () => {
     });
 
     afterEach(() => {
+        this.clock.uninstall();
         this.createFromEventStub.restore();
         this.addEventStub.restore();
         this.addExceptionStub.restore();
@@ -94,6 +107,7 @@ describe('lambdaWrapper tests', () => {
         this.restartStub.restore();
         this.addRunnerStub.restore();
         this.setExceptionStub.restore();
+        this.markAsTimeoutStub.restore();
     });
 
     it('lambdaWrapper: return a function', () => {
@@ -258,7 +272,7 @@ describe('lambdaWrapper tests', () => {
     });
 
     it('lambdaWrapper: callback not called', (done) => {
-        this.stubFunction = sinon.spy(() => { done(); });
+        this.stubFunction = sinon.spy(() => { });
         this.wrappedStub = lambdaWrapper.lambdaWrapper(this.stubFunction);
         expect(this.wrappedStub({}, null, this.callbackStub)).to.equal(undefined);
         expect(this.restartStub.callCount).to.equal(1);
@@ -269,10 +283,14 @@ describe('lambdaWrapper tests', () => {
         expect(this.stubFunction.callCount).to.equal(1);
         expect(this.callbackStub.called).to.be.false;
         expect(this.setExceptionStub.called).to.be.false;
+        done();
     });
 
     it('lambdaWrapper: return called', (done) => {
-        this.stubFunction = sinon.spy(() => { done(); return 42; });
+        this.stubFunction = sinon.spy(() => {
+            done();
+            return 42;
+        });
         this.wrappedStub = lambdaWrapper.lambdaWrapper(this.stubFunction);
         expect(this.wrappedStub({}, null, this.callbackStub)).to.equal(42);
         expect(this.restartStub.callCount).to.equal(1);
@@ -307,6 +325,51 @@ describe('lambdaWrapper tests', () => {
             expect(this.setExceptionStub.called).to.be.false;
             done();
         }, 1);
+    });
+
+    it('lambdaWrapper: return called', (done) => {
+        this.stubFunction = sinon.spy(() => 42);
+        this.wrappedStub = lambdaWrapper.lambdaWrapper(this.stubFunction);
+        expect(this.wrappedStub({}, null, this.callbackStub)).to.equal(42);
+        expect(this.restartStub.callCount).to.equal(1);
+        expect(this.createFromEventStub.callCount).to.equal(0);
+        expect(this.addEventStub.callCount).to.equal(0);
+        expect(this.addExceptionStub.called).to.be.false;
+        expect(this.sendTraceStub.callCount).to.equal(0);
+        expect(this.stubFunction.callCount).to.equal(1);
+        expect(this.callbackStub.called).to.be.false;
+        expect(this.setExceptionStub.called).to.be.false;
+        done();
+    });
+
+    it('lambdaWrapper: sanity with timeout being called', (done) => {
+        this.stubFunction = sinon.spy(() => {
+            this.clock.tick(DEFAULT_TIMEOUT - lambdaWrapper.TIMEOUT_WINDOW);
+            return 17;
+        });
+        this.wrappedStub = lambdaWrapper.lambdaWrapper(this.stubFunction);
+        expect(this.wrappedStub({}, this.context, this.callbackStub)).to.equal(17);
+        expect(this.markAsTimeoutStub.callCount).to.equal(1);
+        setTimeout(() => {
+            expect(this.sendTraceSyncStub.callCount).to.equal(1);
+            expect(this.sendTraceStub.callCount).to.equal(0);
+        }, 1);
+        done();
+    });
+
+    it('lambdaWrapper: sanity without timeout being called', (done) => {
+        this.stubFunction = sinon.spy(() => {
+            this.clock.tick((DEFAULT_TIMEOUT - lambdaWrapper.TIMEOUT_WINDOW) / 2);
+            return 17;
+        });
+        this.wrappedStub = lambdaWrapper.lambdaWrapper(this.stubFunction);
+        expect(this.wrappedStub({}, this.context, this.callbackStub)).to.equal(17);
+        expect(this.markAsTimeoutStub.callCount).to.equal(0);
+        setTimeout(() => {
+            expect(this.sendTraceStub.callCount).to.equal(1);
+            expect(this.sendTraceSyncStub.callCount).to.equal(0);
+        }, 1);
+        done();
     });
 });
 
@@ -367,6 +430,7 @@ describe('stepLambdaWrapper tests', () => {
         this.wrappedStub = this.lambdaWithPatchedDeps.stepLambdaWrapper(this.stubFunction);
         this.callbackStub = sinon.stub();
         this.context = {
+            getRemainingTimeInMillis() { return DEFAULT_TIMEOUT; },
             callbackWaitsForEmptyEventLoop: true,
             fail() {},
             succeed() {},

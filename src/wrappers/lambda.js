@@ -12,6 +12,9 @@ const lambdaRunner = require('../runners/aws_lambda.js');
 const { STEP_ID_NAME } = require('../consts.js');
 
 const FAILED_TO_SERIALIZE_MESSAGE = 'Unable to stringify response body as json';
+const TIMEOUT_WINDOW = 200;
+
+module.exports.TIMEOUT_WINDOW = TIMEOUT_WINDOW;
 module.exports.FAILED_TO_SERIALIZE_MESSAGE = FAILED_TO_SERIALIZE_MESSAGE;
 
 /**
@@ -35,6 +38,8 @@ function baseLambdaWrapper(
     return (originalEvent, originalContext, originalCallback) => {
         tracer.restart();
         let runner;
+        let timeoutHandler;
+        let tracesSent = false;
         let callbackCalled = false;
 
         try {
@@ -83,7 +88,9 @@ function baseLambdaWrapper(
         };
 
         const handleUserExecutionDone = (error, result, sendSync) => {
-            if (callbackCalled) {
+            clearTimeout(timeoutHandler);
+
+            if (tracesSent || callbackCalled) {
                 return Promise.resolve();
             }
             callbackCalled = true;
@@ -105,6 +112,9 @@ function baseLambdaWrapper(
             // Restoring empty event loop handling.
             // eslint-disable-next-line no-underscore-dangle
             process._events.beforeExit = originalBeforeExit;
+
+            // Mark trace as sent.
+            tracesSent = true;
 
             // If the user is waiting for the rest of the events, we can send async. Otherwise
             // don't wait ourselves and send sync.
@@ -180,6 +190,11 @@ function baseLambdaWrapper(
         });
 
         try {
+            timeoutHandler = setTimeout(() => {
+                tracesSent = true;
+                eventInterface.markAsTimeout(runner);
+                tracer.sendTraceSync();
+            }, patchedContext.getRemainingTimeInMillis() - TIMEOUT_WINDOW);
             runner.setStartTime(utils.createTimestampFromTime(startTime));
             let result = (
                 shouldPassRunner ?
