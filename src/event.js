@@ -70,7 +70,7 @@ module.exports.addObjectToMetadata = function addObjectToMetadata(
     dataFields = []
 ) {
     let objectToAdd = object;
-    if (config.metadataOnly && dataFields.length > 0) {
+    if (config.getConfig().metadataOnly && dataFields.length > 0) {
         const fields = Object.getOwnPropertyNames(object).filter(
             field => !dataFields.includes(field)
         );
