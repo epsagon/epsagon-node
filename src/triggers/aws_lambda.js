@@ -137,6 +137,7 @@ function createAPIGatewayTrigger(event, trigger) {
     }, {
         body: JSON.stringify(event.body),
         headers: JSON.stringify(event.headers),
+        requestContext: JSON.stringify(event.requestContext),
     });
 }
 
