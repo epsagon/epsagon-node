@@ -35,10 +35,10 @@ function mysqlQueryWrapper(wrappedFunction) {
             this.config,
             'mysql'
         );
-        if (typeof sql === 'string') {
-            callback = patchedCallback;
-        } else {
+        if (sql.onResult) {
             sql.onResult = patchedCallback; // eslint-disable-line
+        } else {
+            callback = patchedCallback;
         }
         return wrappedFunction.apply(this, [sql, params, callback]);
     };
