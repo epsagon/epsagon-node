@@ -43,6 +43,20 @@ function handler(event, context, callback) {
 }
 ```
 
+## Custom errors
+
+You can set a trace as an error (although handled correctly) by sending an Error object:
+```node
+function handler(event, context, callback) {
+    try {
+        // something bad happens
+    } catch (err) {
+        epsagon.setError(err);
+    }
+    callback(null, 'It worked!')
+}
+```
+
 ## Copyright
 
 Provided under the MIT license. See LICENSE for details.
