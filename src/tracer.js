@@ -235,8 +235,7 @@ module.exports.sendTraceSync = function sendTraceSync() {
  */
 module.exports.label = function addLabel(key, value) {
     // convert numbers to string
-    let updatedValue = value;
-    if (typeof value === 'number') updatedValue = value.toString();
+    const updatedValue = (typeof value === 'number') ? value.toString() : value;
 
     if (typeof key !== 'string' || typeof updatedValue !== 'string') {
         return;
