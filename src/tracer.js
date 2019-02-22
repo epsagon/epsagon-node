@@ -235,13 +235,14 @@ module.exports.sendTraceSync = function sendTraceSync() {
  */
 module.exports.label = function addLabel(key, value) {
     // convert numbers to string
-    if (typeof value === 'number') value = value.toString();
+    let updatedValue = value;
+    if (typeof value === 'number') updatedValue = value.toString();
 
-    if (typeof key !== 'string' || typeof value !== 'string') {
+    if (typeof key !== 'string' || typeof updatedValue !== 'string') {
         return;
     }
 
-    eventInterface.addLabelToMetadata(currRunner, key, value);
+    eventInterface.addLabelToMetadata(currRunner, key, updatedValue);
 };
 
 /**
