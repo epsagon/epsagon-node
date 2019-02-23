@@ -234,9 +234,20 @@ module.exports.sendTraceSync = function sendTraceSync() {
  * @param {string} value value for the added label
  */
 module.exports.label = function addLabel(key, value) {
-    if (typeof key !== 'string' || typeof value !== 'string') {
+    // convert numbers to string
+    const updatedValue = (typeof value === 'number') ? value.toString() : value;
+
+    if (typeof key !== 'string' || typeof updatedValue !== 'string') {
         return;
     }
 
-    eventInterface.addLabelToMetadata(currRunner, key, value);
+    eventInterface.addLabelToMetadata(currRunner, key, updatedValue);
+};
+
+/**
+ * Set runner as an error.
+ * @param {Error} err error data
+ */
+module.exports.setError = function setRunnerError(err) {
+    eventInterface.setException(currRunner, err);
 };

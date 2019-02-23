@@ -243,6 +243,12 @@ describe('tracer module tests', () => {
         checkException(tracer.tracer.getExceptionList()[1], secondError);
     });
 
+    it('setError: setting an error to runner', () => {
+        const firstError = Error('this is an error');
+        tracer.setError(firstError);
+        checkException(tracer.tracer.getEventList()[0].getException(), firstError);
+    });
+
     it('sendTrace: post when no events pending', () => {
         let sendPromise = tracer.sendTrace(() => {});
         expect(sendPromise).to.be.a('promise');

@@ -14,6 +14,7 @@ module.exports = {
     nodeWrapper: f => f,
     wrapBatchJob: f => f,
     label: f => f,
+    setError: f => f,
 };
 
 if (!config.getConfig().isEpsagonDisabled) {
@@ -22,6 +23,7 @@ if (!config.getConfig().isEpsagonDisabled) {
     module.exports.nodeWrapper = nodeWrapper.nodeWrapper;
     module.exports.wrapBatchJob = batchWrapper.wrapBatchJob;
     module.exports.label = tracer.label;
+    module.exports.setError = tracer.setError;
 }
 
 module.exports.wrapper = lambdaEnvWrapper.wrapper;
