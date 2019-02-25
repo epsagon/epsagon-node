@@ -193,6 +193,7 @@ function baseLambdaWrapper(
             timeoutHandler = setTimeout(() => {
                 tracesSent = true;
                 eventInterface.markAsTimeout(runner);
+                runnerSendUpdateHandler();
                 tracer.sendTraceSync();
             }, patchedContext.getRemainingTimeInMillis() - TIMEOUT_WINDOW);
             runner.setStartTime(utils.createTimestampFromTime(startTime));
