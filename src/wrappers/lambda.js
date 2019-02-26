@@ -254,7 +254,7 @@ function createStepIdAddWrapper(functionToWrap) {
         const updateStepResult = (result) => {
             if (typeof result === 'object') {
                 if (!step) {
-                    if (originalEvent && STEP_ID_NAME in originalEvent) {
+                    if (originalEvent && originalEvent[STEP_ID_NAME]) {
                         step = Object.assign({}, originalEvent[STEP_ID_NAME]);
                         step.step_num += 1;
                     } else {
