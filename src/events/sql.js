@@ -112,5 +112,5 @@ module.exports.wrapSqlQuery = function wrapSqlQuery(queryString, params, callbac
         tracer.addException(error);
     }
 
-    return patchedCallback;
+    return patchedCallback || callback;
 };
