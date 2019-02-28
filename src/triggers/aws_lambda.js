@@ -2,9 +2,9 @@
  * @fileoverview Trigger creation for aws-Lambda function invocations
  */
 const uuid4 = require('uuid4');
-const tryRequire = require('try-require');
 const md5 = require('md5');
 JSON.sortify = require('json.sortify');
+const tryRequire = require('../try_require.js');
 const serverlessEvent = require('../proto/event_pb.js');
 const errorCode = require('../proto/error_code_pb.js');
 const eventInterface = require('../event.js');
