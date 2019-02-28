@@ -1,4 +1,4 @@
-const tryRequire = require('try-require');
+const tryRequire = require('../try_require.js');
 const lambda = require('./lambda.js');
 
 /**
