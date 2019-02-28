@@ -3,9 +3,9 @@
  */
 const md5 = require('md5');
 const uuid4 = require('uuid4');
-const tryRequire = require('try-require');
 const shimmer = require('shimmer');
 JSON.sortify = require('json.sortify');
+const tryRequire = require('../try_require.js');
 const utils = require('../utils.js');
 const tracer = require('../tracer');
 const serverlessEvent = require('../proto/event_pb.js');

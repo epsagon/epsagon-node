@@ -14,7 +14,9 @@ module.exports = {
             throwOnError: true,
             throwOnWarning: true,
         }) : null),
-        commonjs(),
+        commonjs({
+            ignore: ['conditional-runtime-dependency'],
+        }),
         json(),
         (process.env.NODE_ENV === 'production' ? terser({
             warnings: 'verbose',
