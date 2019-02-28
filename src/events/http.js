@@ -33,6 +33,17 @@ function isBlacklistURL(url) {
 }
 
 /**
+ * Set the duration of the event, and resolves the promise using the given function.
+ * @param {object} awsEvent The current event
+ * @param {Function} resolveFunction Function that will be used to resolve the promise
+ * @param {integer} startTime The time the event started at
+ */
+function resolveHttpPromise(awsEvent, resolveFunction, startTime) {
+    awsEvent.setDuration(utils.createDurationTimestamp(startTime));
+    resolveFunction();
+}
+
+/**
  * Wraps the http's module request function with tracing
  * @param {Function} wrappedFunction The http's request module
  * @returns {Function} The wrapped function
@@ -150,8 +161,11 @@ function httpWrapper(wrappedFunction) {
                 });
 
                 clientRequest.on('close', () => {
-                    awsEvent.setDuration(utils.createDurationTimestamp(startTime));
-                    resolve();
+                    resolveHttpPromise(awsEvent, resolve, startTime);
+                });
+
+                clientRequest.on('response', () => {
+                    resolveHttpPromise(awsEvent, resolve, startTime);
                 });
             }).catch((err) => {
                 tracer.addException(err);
