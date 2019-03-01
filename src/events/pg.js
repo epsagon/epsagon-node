@@ -1,5 +1,5 @@
 const shimmer = require('shimmer');
-const tryRequire = require('try-require');
+const tryRequire = require('../try_require.js');
 const sqlWrapper = require('./sql.js');
 
 const pg = tryRequire('pg');
