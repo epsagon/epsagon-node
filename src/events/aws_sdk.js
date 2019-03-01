@@ -125,7 +125,8 @@ const SNSEventCreator = {
     requestHandler(request, event) {
         const parameters = request.params || {};
         const resource = event.getResource();
-        resource.setName(`${parameters.TopicArn.split(':').pop()}` || 'N/A');
+        const paramArn = parameters.TopicArn || parameters.TargetArn;
+        resource.setName(`${paramArn.split(':').pop()}` || 'N/A');
         eventInterface.addToMetadata(event, {}, {
             'Notification Message': `${parameters.Message}`,
         });
