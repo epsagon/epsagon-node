@@ -4,6 +4,10 @@ branches:
   only:
     - master
 
+install:
+  - npm install
+  - npm install -g serverless
+
 node_js:
   - "6.10"
   - "8.10"
@@ -15,6 +19,11 @@ script:
 
 jobs:
   include:
+    - stage: acceptance
+      node_js: "8.10"
+      script:
+        - ./test/acceptance/run.sh $TRAVIS_BUILD_NUMBER
+
     - stage: build-and-deploy
       node_js: "8.10"
       script:
@@ -22,6 +31,6 @@ jobs:
 
 stages:
   - Test
+  - acceptance
   - name: build-and-deploy
     if: branch = master AND type = push
-

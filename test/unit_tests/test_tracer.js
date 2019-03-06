@@ -3,10 +3,10 @@ const chaiAsPromised = require('chai-as-promised');
 const { expect } = require('chai');
 const sinon = require('sinon');
 const axios = require('axios');
-const serverlessEvent = require('../src/proto/event_pb.js');
-const consts = require('../src/consts.js');
-const tracer = require('../src/tracer.js');
-const config = require('../src/config.js');
+const serverlessEvent = require('../../src/proto/event_pb.js');
+const consts = require('../../src/consts.js');
+const tracer = require('../../src/tracer.js');
+const config = require('../../src/config.js');
 
 chai.use(chaiAsPromised);
 

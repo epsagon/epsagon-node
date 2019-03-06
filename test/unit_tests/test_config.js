@@ -1,6 +1,6 @@
 const { expect } = require('chai');
-const consts = require('../src/consts.js');
-const config = require('../src/config.js');
+const consts = require('../../src/consts.js');
+const config = require('../../src/config.js');
 
 
 describe('tracer config tests', () => {

@@ -15,7 +15,7 @@
   "author": "Epsagon Team <support@epsagon.com>",
   "license": "MIT",
   "scripts": {
-    "test": "mocha --recursive test/",
+    "test": "mocha --recursive test/unit_tests",
     "lint:js": "eslint --max-warnings=0 ./src/ ./examples/ ./test/ ./index.js -f table --ext .js --ext .jsx",
     "lint": "npm run lint:js",
     "build:dev": "rollup -c",

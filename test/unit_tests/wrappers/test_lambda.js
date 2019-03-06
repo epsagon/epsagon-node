@@ -2,13 +2,13 @@ const { expect } = require('chai');
 const sinon = require('sinon');
 const lolex = require('lolex');
 const proxyquire = require('proxyquire').noPreserveCache();
-const tracer = require('../../src/tracer.js');
-const eventInterface = require('../../src/event.js');
-const consts = require('../../src/consts.js');
-const awsLambdaTrigger = require('../../src/triggers/aws_lambda.js');
-const lambdaWrapper = require('../../src/wrappers/lambda.js');
-const errorCode = require('../../src/proto/error_code_pb.js');
-const config = require('../../src/config.js');
+const tracer = require('../../../src/tracer.js');
+const eventInterface = require('../../../src/event.js');
+const consts = require('../../../src/consts.js');
+const awsLambdaTrigger = require('../../../src/triggers/aws_lambda.js');
+const lambdaWrapper = require('../../../src/wrappers/lambda.js');
+const errorCode = require('../../../src/proto/error_code_pb.js');
+const config = require('../../../src/config.js');
 
 const DEFAULT_TIMEOUT = 10000;
 const RETURN_VALUE = { result: 1 };
@@ -417,12 +417,12 @@ describe('stepLambdaWrapper tests', () => {
 
         this.uuid4Stub = sinon.stub().returns(1);
         this.lambdaWithPatchedDeps = proxyquire(
-            '../../src/wrappers/lambda.js',
+            '../../../src/wrappers/lambda.js',
             {
                 uuid4: this.uuid4Stub,
-                '../tracer.js': tracer,
-                '../event.js': eventInterface,
-                '../triggers/aws_lambda.js': awsLambdaTrigger,
+                '../../tracer.js': tracer,
+                '../../event.js': eventInterface,
+                '../../triggers/aws_lambda.js': awsLambdaTrigger,
             }
         );
 
