@@ -73,8 +73,7 @@
     "rollup-plugin-terser": "^3.0.0",
     "semantic-release": "^15.9.16",
     "sinon": "^4.3.0",
-    "uglify-es": "^3.3.9",
-    "just-extend": ">=4.0.0"
+    "uglify-es": "^3.3.9"
   },
   "dependencies": {
     "axios": "^0.18.0",
