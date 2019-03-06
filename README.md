@@ -53,8 +53,14 @@ function handler(event, context, callback) {
     } catch (err) {
         epsagon.setError(err);
     }
-    
-    // Or manually specify
+
+    callback(null, 'It worked!')
+}
+```
+
+Or manually specify Error object:
+```node
+function handler(event, context, callback) {
     epsagon.setError(Error('My custom error'));
     callback(null, 'It worked!')
 }
