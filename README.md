@@ -45,7 +45,7 @@ function handler(event, context, callback) {
 
 ## Custom errors
 
-You can set a trace as an error (although handled correctly) by sending an Error object:
+You can set a trace as an error (although handled correctly) by catching an error:
 ```node
 function handler(event, context, callback) {
     try {
