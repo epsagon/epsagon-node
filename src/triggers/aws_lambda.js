@@ -248,8 +248,6 @@ const resourceTypeToFactoryMap = {
 module.exports.createFromEvent = function createFromEvent(event, context) {
     let triggerService = 'json';
     if (event) {
-        // eslint-disable-next-line
-        console.log(event);
         if ('Records' in event) {
             if ('EventSource' in event.Records[0]) {
                 triggerService = event.Records[0].EventSource.split(':').pop();
