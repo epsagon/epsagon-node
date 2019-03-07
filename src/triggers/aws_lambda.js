@@ -206,6 +206,25 @@ function createDynamoDBTrigger(event, trigger) {
     });
 }
 
+/**
+ * Initializes an event representing a trigger to the lambda caused by API Trigger
+ * @param {object} event The event the lambda was triggered with
+ * @param {proto.event_pb.Event} trigger An Event to initialize as the trigger
+ */
+function createElbTrigger(event, trigger) {
+    const resource = trigger.getResource();
+    trigger.setId(`elb-${uuid4()}`);
+    resource.setName(event.path);
+    resource.setOperation(event.httpMethod);
+    eventInterface.addToMetadata(trigger, {
+        query_string_parameters: JSON.stringify(event.queryStringParameters),
+        target_group_arn: event.requestContext.elb.targetGroupArn,
+    }, {
+        body: JSON.stringify(event.body),
+        headers: JSON.stringify(event.headers),
+    });
+}
+
 const resourceTypeToFactoryMap = {
     s3: createS3Trigger,
     json: createJSONTrigger,
@@ -216,6 +235,7 @@ const resourceTypeToFactoryMap = {
     api_gateway: createAPIGatewayTrigger,
     api_gateway_no_proxy: createNoProxyAPIGatewayTrigger,
     dynamodb: createDynamoDBTrigger,
+    elastic_load_balancer: createElbTrigger,
 };
 
 
@@ -227,7 +247,6 @@ const resourceTypeToFactoryMap = {
  */
 module.exports.createFromEvent = function createFromEvent(event, context) {
     let triggerService = 'json';
-
     if (event) {
         if ('Records' in event) {
             if ('EventSource' in event.Records[0]) {
@@ -239,6 +258,8 @@ module.exports.createFromEvent = function createFromEvent(event, context) {
             }
         } else if ('source' in event) {
             triggerService = event.source.split('.').pop();
+        } else if (('requestContext' in event) && ('elb' in event.requestContext)) {
+            triggerService = 'elastic_load_balancer';
         } else if ('httpMethod' in event) {
             triggerService = 'api_gateway';
         } else if (('context' in event) && ('http-method' in event.context)) {
