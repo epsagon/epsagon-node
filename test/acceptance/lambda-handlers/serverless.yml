@@ -1,4 +1,4 @@
-service: epsagon-acceptance-node-${self:custom.buildNumber}
+service: acceptance-node-${self:custom.buildNumber}
 
 provider:
   name: aws
@@ -24,3 +24,91 @@ functions:
     handler: handler.sanity
   labels:
     handler: handler.labels
+
+  sync_no_param_promise:
+    handler: handler.sync_no_param_promise
+  sync_no_param_promise_e:
+    handler: handler.sync_no_param_promise_e
+  sync_no_param_simple_return:
+    handler: handler.sync_no_param_simple_return
+  sync_no_param_simple_return_e:
+    handler: handler.sync_no_param_simple_return_e
+  sync_no_param_no_return:
+    handler: handler.sync_no_param_no_return
+  sync_no_param_no_return_e:
+    handler: handler.sync_no_param_no_return_e
+
+  sync_1_param_promise:
+    handler: handler.sync_1_param_promise
+  sync_1_param_promise_e:
+    handler: handler.sync_1_param_promise_e
+  sync_1_param_simple_return:
+    handler: handler.sync_1_param_simple_return
+  sync_1_param_simple_return_e:
+    handler: handler.sync_1_param_simple_return_e
+  sync_1_param_no_return:
+    handler: handler.sync_1_param_no_return
+  sync_1_param_no_return_e:
+    handler: handler.sync_1_param_no_return_e
+
+  sync_2_param_succeed:
+    handler: handler.sync_2_param_succeed
+  sync_2_param_succeed_e:
+    handler: handler.sync_2_param_succeed_e
+  sync_2_param_fail:
+    handler: handler.sync_2_param_fail
+  sync_2_param_fail_e:
+    handler: handler.sync_2_param_fail_e
+  sync_2_param_done:
+    handler: handler.sync_2_param_done
+  sync_2_param_done_e:
+    handler: handler.sync_2_param_done_e
+  sync_2_param_promise:
+    handler: handler.sync_2_param_promise
+  sync_2_param_promise_e:
+    handler: handler.sync_2_param_promise_e
+  sync_2_param_simple_return:
+    handler: handler.sync_2_param_simple_return
+  sync_2_param_simple_return_e:
+    handler: handler.sync_2_param_simple_return_e
+  sync_2_param_no_return:
+    handler: handler.sync_2_param_no_return
+  sync_2_param_no_return_e:
+    handler: handler.sync_2_param_no_return_e
+
+  sync_3_param_succeed:
+    handler: handler.sync_3_param_succeed
+  sync_3_param_succeed_e:
+    handler: handler.sync_3_param_succeed_e
+  sync_3_param_fail:
+    handler: handler.sync_3_param_fail
+  sync_3_param_fail_e:
+    handler: handler.sync_3_param_fail_e
+  sync_3_param_done:
+    handler: handler.sync_3_param_done
+  sync_3_param_done_e:
+    handler: handler.sync_3_param_done_e
+  sync_3_param_promise:
+    handler: handler.sync_3_param_promise
+  sync_3_param_promise_e:
+    handler: handler.sync_3_param_promise_e
+  sync_3_param_simple_return:
+    handler: handler.sync_3_param_simple_return
+  sync_3_param_simple_return_e:
+    handler: handler.sync_3_param_simple_return_e
+  sync_3_param_no_return:
+    handler: handler.sync_3_param_no_return
+  sync_3_param_no_return_e:
+    handler: handler.sync_3_param_no_return_e
+  sync_3_param_callback:
+    handler: handler.sync_3_param_callback
+  sync_3_param_callback_e:
+    handler: handler.sync_3_param_callback_e
+  sync_3_param_callback_error:
+    handler: handler.sync_3_param_callback_error
+  sync_3_param_callback_error_e:
+    handler: handler.sync_3_param_callback_error_e
+  sync_3_param_callback_then_fail:
+    handler: handler.sync_3_param_callback_then_fail
+  sync_3_param_callback_then_fail_e:
+    handler: handler.sync_3_param_callback_then_fail_e
