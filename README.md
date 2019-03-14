@@ -45,7 +45,7 @@ function handler(event, context, callback) {
 
 ## Custom errors
 
-You can set a trace as an error (although handled correctly) by sending an Error object:
+You can set a trace as an error (although handled correctly) by catching an error:
 ```node
 function handler(event, context, callback) {
     try {
@@ -53,6 +53,15 @@ function handler(event, context, callback) {
     } catch (err) {
         epsagon.setError(err);
     }
+
+    callback(null, 'It worked!')
+}
+```
+
+Or manually specify Error object:
+```node
+function handler(event, context, callback) {
+    epsagon.setError(Error('My custom error'));
     callback(null, 'It worked!')
 }
 ```
