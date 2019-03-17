@@ -1,10 +1,10 @@
 const { expect } = require('chai');
 const sinon = require('sinon');
 const axios = require('axios');
-const batchRunner = require('../../src/runners/aws_batch.js');
-const errorCode = require('../../src/proto/error_code_pb.js');
-const tracer = require('../../src/tracer.js');
-const config = require('../../src/config.js');
+const batchRunner = require('../../../src/runners/aws_batch.js');
+const errorCode = require('../../../src/proto/error_code_pb.js');
+const tracer = require('../../../src/tracer.js');
+const config = require('../../../src/config.js');
 
 describe('AWS Batch createRunner tests', () => {
     before(() => {

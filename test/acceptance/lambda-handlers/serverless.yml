@@ -1,0 +1,26 @@
+service: epsagon-acceptance-node-${self:custom.buildNumber}
+
+provider:
+  name: aws
+  runtime: ${opt:runtime}
+  region: ${opt:region, 'us-east-1'}
+  stage: dev
+  environment:
+    STAGE: dev
+    EPSAGON_DEBUG: TRUE
+  package:
+    exclude:
+    - './**'
+    - 'node_modules/**'
+
+custom:
+  buildNumber: ${opt:buildNumber}
+  pythonRequirements:
+    dockerizePip: non-linux
+    dockerSsh: true
+
+functions:
+  sanity:
+    handler: handler.sanity
+  labels:
+    handler: handler.labels

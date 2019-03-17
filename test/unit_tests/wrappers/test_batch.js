@@ -1,10 +1,10 @@
 const { expect } = require('chai');
 const sinon = require('sinon');
-const tracer = require('../../src/tracer.js');
-const eventInterface = require('../../src/event.js');
-const batchWrapper = require('../../src/wrappers/batch.js');
-const batchRunner = require('../../src/runners/aws_batch.js');
-const serverlessEvent = require('../../src/proto/event_pb.js');
+const tracer = require('../../../src/tracer.js');
+const eventInterface = require('../../../src/event.js');
+const batchWrapper = require('../../../src/wrappers/batch.js');
+const batchRunner = require('../../../src/runners/aws_batch.js');
+const serverlessEvent = require('../../../src/proto/event_pb.js');
 
 describe('batchWrapper tests', () => {
     beforeEach(() => {

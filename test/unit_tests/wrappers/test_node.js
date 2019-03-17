@@ -1,10 +1,10 @@
 const { expect } = require('chai');
 const sinon = require('sinon');
-const tracer = require('../../src/tracer.js');
-const eventInterface = require('../../src/event.js');
-const consts = require('../../src/consts.js');
-const nodeWrapper = require('../../src/wrappers/node.js');
-const errorCode = require('../../src/proto/error_code_pb.js');
+const tracer = require('../../../src/tracer.js');
+const eventInterface = require('../../../src/event.js');
+const consts = require('../../../src/consts.js');
+const nodeWrapper = require('../../../src/wrappers/node.js');
+const errorCode = require('../../../src/proto/error_code_pb.js');
 
 describe('nodeWrapper tests', () => {
     beforeEach(() => {
