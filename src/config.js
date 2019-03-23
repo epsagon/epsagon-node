@@ -10,7 +10,7 @@ const config = {
     token: process.env.EPSAGON_TOKEN || '',
     appName: process.env.EPSAGON_APP_NAME || 'Application',
     metadataOnly: (process.env.EPSAGON_METADATA || '').toUpperCase() === 'TRUE',
-    useSSL: (process.env.EPSAGON_SSL || '').toUpperCase() === 'TRUE',
+    useSSL: (process.env.EPSAGON_SSL || 'TRUE').toUpperCase() === 'TRUE',
     traceCollectorURL: consts.TRACE_COLLECTOR_URL,
     isEpsagonDisabled: (process.env.DISABLE_EPSAGON || '').toUpperCase() === 'TRUE',
     /**
