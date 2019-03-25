@@ -81,6 +81,7 @@ async function basicTest(lambdaName, input) {
 async function basicNoReturn(lambdaName, input) {
     const response = await invoke(lambdaName, input);
     expect(response.StatusCode).to.equal(200);
+    expect(response.Payload).to.equal('null');
 }
 
 /**
