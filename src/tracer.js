@@ -189,7 +189,6 @@ function sendCurrentTrace(traceSender) {
 function postTrace(traceObject) {
     utils.debugLog(`Posting trace to ${config.getConfig().traceCollectorURL}`);
     utils.debugLog(`trace: ${JSON.stringify(traceObject, null, 2)}`);
-    console.log('asdasd12321')
     return module.exports.sessionPost(
         config.getConfig().traceCollectorURL,
         traceObject
