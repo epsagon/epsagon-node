@@ -3,6 +3,8 @@
  */
 const uuid4 = require('uuid4');
 const axios = require('axios');
+const http = require('http');
+const https = require('https');
 const trace = require('./proto/trace_pb.js');
 const exception = require('./proto/exception_pb.js');
 const utils = require('./utils.js');
@@ -31,9 +33,19 @@ let currRunner = null;
 const pendingEvents = new Map();
 
 /**
- * The timeout to send for send operations (both sync and asyc)
+ * The timeout to send for send operations (both sync and async)
  */
-const sendTimeoutMiliseconds = 1000;
+const sendTimeoutMilliseconds = 1000;
+
+/**
+ * Session for the post requests to the collector
+ */
+const session = axios.create({
+    timeout: sendTimeoutMilliseconds,
+    httpAgent: new http.Agent({ keepAlive: true }),
+    httpsAgent: new https.Agent({ keepAlive: true }),
+});
+module.exports.sessionPost = session.post;
 
 
 /**
@@ -177,10 +189,10 @@ function sendCurrentTrace(traceSender) {
 function postTrace(traceObject) {
     utils.debugLog(`Posting trace to ${config.getConfig().traceCollectorURL}`);
     utils.debugLog(`trace: ${JSON.stringify(traceObject, null, 2)}`);
-    return axios.post(
+    console.log('asdasd12321')
+    return module.exports.sessionPost(
         config.getConfig().traceCollectorURL,
-        traceObject,
-        { timeout: sendTimeoutMiliseconds }
+        traceObject
     ).then((res) => {
         utils.debugLog('Trace posted!');
         return res;

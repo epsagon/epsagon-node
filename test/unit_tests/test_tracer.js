@@ -2,7 +2,6 @@ const chai = require('chai');
 const chaiAsPromised = require('chai-as-promised');
 const { expect } = require('chai');
 const sinon = require('sinon');
-const axios = require('axios');
 const serverlessEvent = require('../../src/proto/event_pb.js');
 const consts = require('../../src/consts.js');
 const tracer = require('../../src/tracer.js');
@@ -54,8 +53,8 @@ describe('tracer module tests', () => {
         tracer.restart();
         tracer.addRunner(runner);
         this.postStub = sinon.stub(
-            axios,
-            'post'
+            tracer,
+            'sessionPost'
         ).returns(Promise.resolve(true));
         this.setConfigStub = sinon.stub(
             config,
@@ -154,10 +153,10 @@ describe('tracer module tests', () => {
         tracer.addEvent(eventToAdd, stubPromise);
         expect(tracer.tracer.getEventList()[1]).to.equal(eventToAdd);
         tracer.sendTrace(() => {}).then(() => {
-            expect(axios.post.called).to.be.true;
+            expect(this.postStub.called).to.be.true;
             doneCallback();
         });
-        expect(axios.post.called).to.be.false;
+        expect(this.postStub.called).to.be.false;
         shouldPromiseResolve = true;
     });
 
@@ -253,10 +252,10 @@ describe('tracer module tests', () => {
         let sendPromise = tracer.sendTrace(() => {});
         expect(sendPromise).to.be.a('promise');
         sendPromise = sendPromise.then(() => {
-            expect(axios.post.called).to.be.true;
+            expect(tracer.session.called).to.be.true;
         });
 
-        expect(axios.post.called).to.be.false;
+        expect(this.postStub.called).to.be.false;
     });
 
     it('sendTrace: post after all events resolved', (doneCallback) => {
@@ -278,11 +277,11 @@ describe('tracer module tests', () => {
         let sendPromise = tracer.sendTrace(() => {});
         expect(sendPromise).to.be.a('promise');
         sendPromise = sendPromise.then(() => {
-            expect(axios.post.called).to.be.true;
+            expect(this.postStub.called).to.be.true;
             doneCallback();
         });
 
-        expect(axios.post.called).to.be.false;
+        expect(this.postStub.called).to.be.false;
         shouldPromiseResolve = true;
     });
 
@@ -305,11 +304,11 @@ describe('tracer module tests', () => {
         let sendPromise = tracer.sendTrace(() => {});
         expect(sendPromise).to.be.a('promise');
         sendPromise = sendPromise.then(() => {
-            expect(axios.post.called).to.be.true;
+            expect(this.postStub.called).to.be.true;
             doneCallback();
         });
 
-        expect(axios.post.called).to.be.false;
+        expect(this.postStub.called).to.be.false;
         shouldPromiseEnd = true;
     });
 
@@ -347,13 +346,13 @@ describe('tracer module tests', () => {
         let sendPromise = tracer.sendTrace(() => {});
         expect(sendPromise).to.be.a('promise');
         sendPromise = sendPromise.then(() => {
-            expect(axios.post.called).to.be.true;
+            expect(this.postStub.called).to.be.true;
             doneCallback();
         });
 
-        expect(axios.post.called).to.be.false;
+        expect(this.postStub.called).to.be.false;
         shouldPromiseEnd1 = true;
-        expect(axios.post.called).to.be.false;
+        expect(this.postStub.called).to.be.false;
         shouldPromiseEnd2 = true;
     });
 
@@ -391,13 +390,13 @@ describe('tracer module tests', () => {
         let sendPromise = tracer.sendTrace(() => {});
         expect(sendPromise).to.be.a('promise');
         sendPromise = sendPromise.then(() => {
-            expect(axios.post.called).to.be.true;
+            expect(this.postStub.called).to.be.true;
             doneCallback();
         });
 
-        expect(axios.post.called).to.be.false;
+        expect(this.postStub.called).to.be.false;
         shouldPromiseEnd1 = true;
-        expect(axios.post.called).to.be.false;
+        expect(this.postStub.called).to.be.false;
         shouldPromiseEnd2 = true;
     });
 
@@ -408,7 +407,7 @@ describe('tracer module tests', () => {
 
         expect(tracer.sendTrace(() => {})).to.eventually.equal(error);
 
-        expect(axios.post.called).to.be.false;
+        expect(this.postStub.called).to.be.false;
     });
 
     it('sendTrace: calling set runner duration function', () => {
@@ -431,8 +430,8 @@ describe('sendTraceSync function tests', () => {
             'setConfig'
         );
         this.postStub = sinon.stub(
-            axios,
-            'post'
+            tracer,
+            'sessionPost'
         ).returns(Promise.resolve(true));
     });
 
