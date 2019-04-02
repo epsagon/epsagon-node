@@ -54,7 +54,7 @@ describe('tracer module tests', () => {
         tracer.addRunner(runner);
         this.postStub = sinon.stub(
             tracer,
-            'sessionPost'
+            'postTrace'
         ).returns(Promise.resolve(true));
         this.setConfigStub = sinon.stub(
             config,
@@ -68,7 +68,7 @@ describe('tracer module tests', () => {
     });
 
     afterEach(() => {
-        this.postStub.restore();
+        if (this.postStub) this.postStub.restore();
         this.setConfigStub.restore();
         this.getConfigStub.restore();
     });
@@ -431,7 +431,7 @@ describe('sendTraceSync function tests', () => {
         );
         this.postStub = sinon.stub(
             tracer,
-            'sessionPost'
+            'postTrace'
         ).returns(Promise.resolve(true));
     });
 

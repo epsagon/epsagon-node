@@ -45,7 +45,6 @@ const session = axios.create({
     httpAgent: new http.Agent({ keepAlive: true }),
     httpsAgent: new https.Agent({ keepAlive: true }),
 });
-module.exports.sessionPost = session.post;
 
 
 /**
@@ -186,10 +185,10 @@ function sendCurrentTrace(traceSender) {
  * @param {*} traceObject The trace data to send.
  * @returns {Promise} a promise that is resolved after the trace is posted.
  *  */
-function postTrace(traceObject) {
+module.exports.postTrace = function postTrace(traceObject) {
     utils.debugLog(`Posting trace to ${config.getConfig().traceCollectorURL}`);
     utils.debugLog(`trace: ${JSON.stringify(traceObject, null, 2)}`);
-    return module.exports.sessionPost(
+    return session.post(
         config.getConfig().traceCollectorURL,
         traceObject
     ).then((res) => {
@@ -200,7 +199,7 @@ function postTrace(traceObject) {
         utils.debugLog(err.stack);
         return err;
     }); // Always resolve.
-}
+};
 
 /**
  * Sends the trace to epsagon's infrastructure when all pending events are finished.
@@ -212,7 +211,7 @@ module.exports.sendTrace = function sendTrace(runnerUpdateFunc) {
     return Promise.all(pendingEvents.values()).then(() => {
         // Setting runner's duration.
         runnerUpdateFunc();
-        return sendCurrentTrace(traceObject => postTrace(traceObject));
+        return sendCurrentTrace(traceObject => module.exports.postTrace(traceObject));
     });
 };
 
@@ -236,7 +235,7 @@ module.exports.sendTraceSync = function sendTraceSync() {
         }
     });
 
-    return sendCurrentTrace(traceObject => postTrace(traceObject));
+    return sendCurrentTrace(traceObject => module.exports.postTrace(traceObject));
 };
 
 /**
