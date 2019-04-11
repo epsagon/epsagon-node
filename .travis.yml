@@ -22,6 +22,7 @@ jobs:
     - stage: acceptance
       node_js: "8.10"
       script:
+        - npm run build
         - ./test/acceptance/run.sh $TRAVIS_BUILD_NUMBER
 
     - stage: build-and-deploy

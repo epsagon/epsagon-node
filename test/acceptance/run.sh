@@ -16,7 +16,7 @@ function run_acceptance_test() {
     echo "deploying of ${runtime} [build: ${build_num}]"
     cp -r test/acceptance/ /tmp/acceptance/
     cd /tmp/acceptance/lambda-handlers/
-    npm install epsagon
+    npm install $INITIAL_PWD
     serverless deploy --runtime ${runtime} --buildNumber ${build_num} || {  echo "deployment of ${runtime} [build: ${build_num}] failed" ; result=1; }
     cd -
     TRAVIS_BUILD_NUMBER=${build_num} RUNTIME=${runtime} mocha -t 30000 test/acceptance/acceptance.js || {  echo "tests ${runtime} [build: ${build_num}] failed" ; result=1; }
