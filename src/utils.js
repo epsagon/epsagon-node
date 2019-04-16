@@ -51,8 +51,17 @@ function debugLog(...args) {
     }
 }
 
+/**
+ * Detects if code is running on Lambda environment
+ * @return {Boolean} true if running on Lambda, otherwise false
+ */
+function isLambdaEnv() {
+    return !!process.env.LAMBDA_TASK_ROOT;
+}
+
 module.exports.createTimestampFromTime = createTimestampFromTime;
 module.exports.createTimestamp = createTimestamp;
 module.exports.createDurationTimestamp = createDurationTimestamp;
 module.exports.reflectPromise = reflectPromise;
 module.exports.debugLog = debugLog;
+module.exports.isLambdaEnv = isLambdaEnv;

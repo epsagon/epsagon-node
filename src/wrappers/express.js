@@ -45,6 +45,7 @@ function expressWrapper(wrappedFunction) {
             } catch (err) {
                 tracer.addException(err);
             }
+            tracer.sendTrace(() => {});
         });
 
         return result;

@@ -55,12 +55,11 @@ function finishRunner(expressEvent, res, startTime) {
     }, {
         response_headers: this.headers,
     });
-    if (this.statusCode >= 300) {
+    if (this.statusCode >= 500) {
         expressEvent.setErrorCode(errorCode.ErrorCode.EXCEPTION);
     }
     expressEvent.setDuration(utils.createDurationTimestamp(startTime));
     tracer.addRunner(expressEvent);
-    tracer.sendTrace(() => {});
 }
 
 module.exports.createRunner = createRunner;
