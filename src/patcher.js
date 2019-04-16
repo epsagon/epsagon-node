@@ -9,6 +9,7 @@ const pgPatcher = require('./events/pg.js');
 const mysqlPatcher = require('./events/mysql.js');
 const redisPatcher = require('./events/redis.js');
 const mongoPatcher = require('./events/mongodb.js');
+const expressPatcher = require('./events/express.js');
 
 
 if (!config.getConfig().isEpsagonPatchDisabled) {
@@ -19,6 +20,7 @@ if (!config.getConfig().isEpsagonPatchDisabled) {
         mysqlPatcher,
         redisPatcher,
         mongoPatcher,
+        expressPatcher,
     ].forEach((patcher) => {
         try {
             patcher.init();

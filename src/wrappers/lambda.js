@@ -9,10 +9,12 @@ const { getConfig } = require('../config.js');
 const awsLambdaTrigger = require('../triggers/aws_lambda.js');
 const eventInterface = require('../event.js');
 const lambdaRunner = require('../runners/aws_lambda.js');
+const expressPatcher = require('../events/express.js');
 const { STEP_ID_NAME } = require('../consts.js');
 
 const FAILED_TO_SERIALIZE_MESSAGE = 'Unable to stringify response body as json';
 const TIMEOUT_WINDOW = 200;
+let UNPATCHED_CALLED = false;
 
 module.exports.TIMEOUT_WINDOW = TIMEOUT_WINDOW;
 module.exports.FAILED_TO_SERIALIZE_MESSAGE = FAILED_TO_SERIALIZE_MESSAGE;
@@ -36,6 +38,12 @@ function baseLambdaWrapper(
 ) {
     // eslint-disable-next-line consistent-return
     return (originalEvent, originalContext, originalCallback) => {
+        // Disable Express patch to avoid duplication of traces
+        if (!UNPATCHED_CALLED) {
+            expressPatcher.unpatch();
+            UNPATCHED_CALLED = true;
+        }
+
         tracer.restart();
         let runner;
         let timeoutHandler;
