@@ -61,12 +61,4 @@ module.exports = {
             shimmer.wrap(express.Router, 'handle', expressWrapper);
         }
     },
-    /**
-     * Un-patches the Express tracer
-     */
-    unpatch() {
-        if (express && express.Router) {
-            shimmer.unwrap(express.Router, 'handle');
-        }
-    },
 };
