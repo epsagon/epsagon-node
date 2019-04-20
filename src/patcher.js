@@ -22,7 +22,7 @@ function patch(patcher) {
         patcher.init();
     } catch (error) {
         if ((process.env.EPSAGON_DEBUG || '').toUpperCase() === 'TRUE') {
-            console.log(error); // eslint-disable-line no-console
+            utils.debugLog(error);
         }
     }
 }

@@ -78,6 +78,7 @@
   },
   "dependencies": {
     "axios": "^0.18.0",
+    "cls-hooked": "^4.2.2",
     "google-protobuf": "^3.5.0",
     "json.sortify": "^2.2.2",
     "md5": "^2.2.1",

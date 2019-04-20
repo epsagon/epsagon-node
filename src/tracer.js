@@ -11,26 +11,38 @@ const utils = require('./utils.js');
 const config = require('./config.js');
 const eventInterface = require('./event.js');
 const consts = require('./consts.js');
+const traceContext = require('./trace_context.js');
+
+
+/**
+ * Creates a new Trace object
+ * @returns {Trace} new Trace
+ */
+module.exports.createTracer = function createTracer() {
+    const tracerObj = new trace.Trace([
+        '',
+        '',
+        [],
+        [],
+        consts.VERSION,
+        `node ${process.versions.node}`,
+    ]);
+    tracerObj.currRunner = null;
+
+    // The requests promises pending to resolve. All must be resolved before sending the trace.
+    // A Map containing (event, promise) pairs.
+    tracerObj.pendingEvents = new Map();
+    return tracerObj;
+};
+
+
+const getTracer = tracer => tracer || traceContext.getTracer() || module.exports.tracer;
+
 
 /**
  * The tracer singleton, used to manage the trace and send it at the end of the function invocation
  */
-module.exports.tracer = new trace.Trace([
-    '',
-    '',
-    [],
-    [],
-    consts.VERSION,
-    `node ${process.versions.node}`,
-]);
-
-let currRunner = null;
-
-/**
- * The requests promises pending to resolve. All must be resolved before sending the trace.
- * A Map containing (event, promise) pairs.
- */
-const pendingEvents = new Map();
+module.exports.tracer = module.exports.createTracer();
 
 /**
  * The timeout to send for send operations (both sync and async)
@@ -51,21 +63,24 @@ const session = axios.create({
  * Adds an event to the tracer
  * @param {proto.event_pb.Event} event The event to add
  * @param {Promise} [promise] A promise that resolves when the event handling is Done, if required.
+ * @param {Trace} tracer Optional tracer
  */
-module.exports.addEvent = function addEvent(event, promise) {
+module.exports.addEvent = function addEvent(event, promise, tracer) {
+    const tracerObj = getTracer(tracer);
     if (promise !== undefined) {
-        pendingEvents.set(event, utils.reflectPromise(promise));
+        tracerObj.pendingEvents.set(event, utils.reflectPromise(promise));
     }
 
-    module.exports.tracer.addEvent(event);
+    tracerObj.addEvent(event);
 };
 
 /**
  * Adds an exception to the tracer
  * @param {Error} error The error object describing the exception
  * @param {Object} additionalData Additional data to send with the error. A map of <string: string>
+ * @param {Trace} tracer Optional tracer
  */
-module.exports.addException = function addException(error, additionalData) {
+module.exports.addException = function addException(error, additionalData, tracer) {
     const raisedException = new exception.Exception([
         error.name,
         error.message,
@@ -83,7 +98,8 @@ module.exports.addException = function addException(error, additionalData) {
         });
     }
 
-    module.exports.tracer.addException(raisedException);
+    const tracerObj = getTracer(tracer);
+    tracerObj.addException(raisedException);
 };
 
 /**
@@ -102,26 +118,25 @@ module.exports.initTrace = function initTrace(
  * @param {object} runner The runner of the current trace
  * @param {Promise} runnerPromise A promise that resolves when the event handling is Done,
  *      if required.
+ * @param {Trace} tracer Optional tracer
  */
-module.exports.addRunner = function addRunner(runner, runnerPromise) {
-    const { tracer } = module.exports;
-    tracer.addEvent(runner, runnerPromise);
-    currRunner = runner;
+module.exports.addRunner = function addRunner(runner, runnerPromise, tracer) {
+    const tracerObj = getTracer(tracer);
+    tracerObj.addEvent(runner, runnerPromise);
+    tracerObj.currRunner = runner;
 };
 
 /**
  * Restarts the tracer. Has to be called after a trace has been sent to reset the tracer
  * and start collecting a new trace
- * @param {object} runner The runner of the current trace
- * @param {Promise} runnerPromise A promise that resolves when the event handling is Done,
- *      if required.
+ * @param {Trace} tracer Optional tracer
  */
-module.exports.restart = function restart() {
-    const { tracer } = module.exports;
-    tracer.clearExceptionList();
-    tracer.clearEventList();
-    tracer.setAppName(config.getConfig().appName);
-    tracer.setToken(config.getConfig().token);
+module.exports.restart = function restart(tracer) {
+    const tracerObj = getTracer(tracer);
+    tracerObj.clearExceptionList();
+    tracerObj.clearEventList();
+    tracerObj.setAppName(config.getConfig().appName);
+    tracerObj.setToken(config.getConfig().token);
 };
 
 /**
@@ -130,14 +145,15 @@ module.exports.restart = function restart() {
  * handled
  * @param {function} traceSender: The function to use to send the trace. Gets the trace object
  *     as a parameter and sends a JSON version of it to epsagon's infrastructure
+ * @param {Trace} tracer  Optional tracer
  * @return {*} traceSender's result
  */
-function sendCurrentTrace(traceSender) {
-    const { tracer } = module.exports;
+function sendCurrentTrace(traceSender, tracer) {
+    const tracerObj = getTracer(tracer);
     const traceJson = {
-        app_name: tracer.getAppName(),
-        token: tracer.getToken(),
-        events: tracer.getEventList().map(entry => ({
+        app_name: tracerObj.getAppName(),
+        token: tracerObj.getToken(),
+        events: tracerObj.getEventList().map(entry => ({
             id: entry.getId(),
             start_time: entry.getStartTime(),
             resource: entry.hasResource() ? {
@@ -160,7 +176,7 @@ function sendCurrentTrace(traceSender) {
                 time: entry.getException().getTime(),
             } : {},
         })),
-        exceptions: tracer.getExceptionList().map(entry => ({
+        exceptions: tracerObj.getExceptionList().map(entry => ({
             type: entry.getType(),
             message: entry.getMessage(),
             traceback: entry.getTraceback(),
@@ -171,12 +187,12 @@ function sendCurrentTrace(traceSender) {
                 return map;
             }, {}),
         })),
-        version: tracer.getVersion(),
-        platform: tracer.getPlatform(),
+        version: tracerObj.getVersion(),
+        platform: tracerObj.getPlatform(),
     };
 
     const sendResult = traceSender(traceJson);
-    pendingEvents.clear();
+    tracerObj.pendingEvents.clear();
     return sendResult;
 }
 
@@ -204,26 +220,30 @@ module.exports.postTrace = function postTrace(traceObject) {
 /**
  * Sends the trace to epsagon's infrastructure when all pending events are finished.
  * @param {function} runnerUpdateFunc function that sets the duration of the runner.
+ * @param {Trace} tracer Optional tracer
  * @returns {Promise} a promise that is resolved when the trace transmission ends.
  */
-module.exports.sendTrace = function sendTrace(runnerUpdateFunc) {
+module.exports.sendTrace = function sendTrace(runnerUpdateFunc, tracer) {
     utils.debugLog('Sending trace async');
-    return Promise.all(pendingEvents.values()).then(() => {
+    const tracerObj = getTracer(tracer);
+    return Promise.all(tracerObj.pendingEvents.values()).then(() => {
         // Setting runner's duration.
         runnerUpdateFunc();
-        return sendCurrentTrace(traceObject => module.exports.postTrace(traceObject));
+        return sendCurrentTrace(traceObject => module.exports.postTrace(traceObject), tracer);
     });
 };
 
 /**
  * Sends the trace to epsagon's infrastructure, marking all the pending promises as
  * failures.
+ * @param {Trace} tracer  Optional tracer
  * @returns {Promise} a promise that is resolved when the trace transmission ends.
  */
-module.exports.sendTraceSync = function sendTraceSync() {
+module.exports.sendTraceSync = function sendTraceSync(tracer) {
     utils.debugLog('Sending trace sync');
+    const tracerObj = getTracer(tracer);
 
-    pendingEvents.forEach((promise, event) => {
+    tracerObj.pendingEvents.forEach((promise, event) => {
         if (event.getId() === '') {
             // Consider changing to report a different type of error. Maybe a new error code
             // describing an unknown operation state
@@ -235,15 +255,16 @@ module.exports.sendTraceSync = function sendTraceSync() {
         }
     });
 
-    return sendCurrentTrace(traceObject => module.exports.postTrace(traceObject));
+    return sendCurrentTrace(traceObject => module.exports.postTrace(traceObject), tracer);
 };
 
 /**
  * Add a custom label to the runner of the current trace.
  * @param {string} key key for the added label
  * @param {string} value value for the added label
+ * @param {Trace} tracer Optional tracer
  */
-module.exports.label = function addLabel(key, value) {
+module.exports.label = function addLabel(key, value, tracer) {
     // convert numbers to string
     const updatedValue = (typeof value === 'number') ? value.toString() : value;
 
@@ -251,13 +272,16 @@ module.exports.label = function addLabel(key, value) {
         return;
     }
 
-    eventInterface.addLabelToMetadata(currRunner, key, updatedValue);
+    const tracerObj = getTracer(tracer);
+    eventInterface.addLabelToMetadata(tracerObj.currRunner, key, updatedValue);
 };
 
 /**
  * Set runner as an error.
  * @param {Error} err error data
+ * @param {Trace} tracer Optional tracer
  */
-module.exports.setError = function setRunnerError(err) {
-    eventInterface.setException(currRunner, err);
+module.exports.setError = function setRunnerError(err, tracer) {
+    const tracerObj = getTracer(tracer);
+    eventInterface.setException(tracerObj.currRunner, err);
 };

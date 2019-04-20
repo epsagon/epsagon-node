@@ -6,7 +6,6 @@ const utils = require('../utils.js');
 const serverlessEvent = require('../proto/event_pb.js');
 const eventInterface = require('../event.js');
 const errorCode = require('../proto/error_code_pb.js');
-const tracer = require('../tracer.js');
 
 /**
  * Creates an Event representing the running Express (runner)
@@ -25,19 +24,12 @@ function createRunner(req, startTime) {
     ]);
 
     const resource = new serverlessEvent.Resource([
-        req.route.path,
+        req.path,
         'express',
         req.method,
     ]);
 
     expressEvent.setResource(resource);
-    eventInterface.addToMetadata(expressEvent, {
-        url: `${req.protocol}://${req.hostname}${req.path}`,
-        query: req.query,
-    }, {
-        request_headers: req.headers,
-        params: req.params,
-    });
 
     return expressEvent;
 }
@@ -47,19 +39,26 @@ function createRunner(req, startTime) {
  * Terminates the running Express (runner)
  * @param {Object} expressEvent runner's express event
  * @param {Response} res response data
+ * @param {Request} req The Express's request data
  * @param {Int} startTime Runner start time
  */
-function finishRunner(expressEvent, res, startTime) {
+function finishRunner(expressEvent, res, req, startTime) {
+    expressEvent.getResource().setName(req.route.path);
     eventInterface.addToMetadata(expressEvent, {
-        status_code: this.statusCode,
+        url: `${req.protocol}://${req.hostname}${req.path}`,
+        query: req.query,
+        status_code: res.statusCode,
     }, {
-        response_headers: this.headers,
+        request_headers: req.headers,
+        params: req.params,
+        response_headers: res.getHeaders(),
     });
-    if (this.statusCode >= 500) {
+
+    if (res.statusCode >= 500) {
         expressEvent.setErrorCode(errorCode.ErrorCode.EXCEPTION);
     }
+
     expressEvent.setDuration(utils.createDurationTimestamp(startTime));
-    tracer.addRunner(expressEvent);
 }
 
 module.exports.createRunner = createRunner;
