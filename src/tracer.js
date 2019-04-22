@@ -27,20 +27,28 @@ module.exports.createTracer = function createTracer() {
         consts.VERSION,
         `node ${process.versions.node}`,
     ]);
-    tracerObj.currRunner = null;
-
     // The requests promises pending to resolve. All must be resolved before sending the trace.
     // A Map containing (event, promise) pairs.
-    tracerObj.pendingEvents = new Map();
-    return tracerObj;
+    return {
+        trace: tracerObj,
+        currRunner: null,
+        pendingEvents: new Map(),
+    };
 };
 
 
+/**
+ * Returns the relevant tracer. If got one as a param, or from active context, or singleton.
+ * @param {Trace} tracer Optional tracer
+ * @returns {Trace} active tracer
+ */
 const getTracer = tracer => tracer || traceContext.getTracer() || module.exports.tracer;
 
 
 /**
- * The tracer singleton, used to manage the trace and send it at the end of the function invocation
+ * The tracer singleton, used to manage the trace and send it at the end of the function invocation.
+ * In a Lambda environment we use this singleton, while in other environment we use the one from
+ * the context.
  */
 module.exports.tracer = module.exports.createTracer();
 
@@ -71,7 +79,7 @@ module.exports.addEvent = function addEvent(event, promise, tracer) {
         tracerObj.pendingEvents.set(event, utils.reflectPromise(promise));
     }
 
-    tracerObj.addEvent(event);
+    tracerObj.trace.addEvent(event);
 };
 
 /**
@@ -99,7 +107,7 @@ module.exports.addException = function addException(error, additionalData, trace
     }
 
     const tracerObj = getTracer(tracer);
-    tracerObj.addException(raisedException);
+    tracerObj.trace.addException(raisedException);
 };
 
 /**
@@ -122,7 +130,7 @@ module.exports.initTrace = function initTrace(
  */
 module.exports.addRunner = function addRunner(runner, runnerPromise, tracer) {
     const tracerObj = getTracer(tracer);
-    tracerObj.addEvent(runner, runnerPromise);
+    tracerObj.trace.addEvent(runner, runnerPromise);
     tracerObj.currRunner = runner;
 };
 
@@ -133,10 +141,10 @@ module.exports.addRunner = function addRunner(runner, runnerPromise, tracer) {
  */
 module.exports.restart = function restart(tracer) {
     const tracerObj = getTracer(tracer);
-    tracerObj.clearExceptionList();
-    tracerObj.clearEventList();
-    tracerObj.setAppName(config.getConfig().appName);
-    tracerObj.setToken(config.getConfig().token);
+    tracerObj.trace.clearExceptionList();
+    tracerObj.trace.clearEventList();
+    tracerObj.trace.setAppName(config.getConfig().appName);
+    tracerObj.trace.setToken(config.getConfig().token);
 };
 
 /**
@@ -151,9 +159,9 @@ module.exports.restart = function restart(tracer) {
 function sendCurrentTrace(traceSender, tracer) {
     const tracerObj = getTracer(tracer);
     const traceJson = {
-        app_name: tracerObj.getAppName(),
-        token: tracerObj.getToken(),
-        events: tracerObj.getEventList().map(entry => ({
+        app_name: tracerObj.trace.getAppName(),
+        token: tracerObj.trace.getToken(),
+        events: tracerObj.trace.getEventList().map(entry => ({
             id: entry.getId(),
             start_time: entry.getStartTime(),
             resource: entry.hasResource() ? {
@@ -176,7 +184,7 @@ function sendCurrentTrace(traceSender, tracer) {
                 time: entry.getException().getTime(),
             } : {},
         })),
-        exceptions: tracerObj.getExceptionList().map(entry => ({
+        exceptions: tracerObj.trace.getExceptionList().map(entry => ({
             type: entry.getType(),
             message: entry.getMessage(),
             traceback: entry.getTraceback(),
@@ -187,8 +195,8 @@ function sendCurrentTrace(traceSender, tracer) {
                 return map;
             }, {}),
         })),
-        version: tracerObj.getVersion(),
-        platform: tracerObj.getPlatform(),
+        version: tracerObj.trace.getVersion(),
+        platform: tracerObj.trace.getPlatform(),
     };
 
     const sendResult = traceSender(traceJson);

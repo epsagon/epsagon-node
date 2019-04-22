@@ -40,7 +40,7 @@ function expressMiddleware(req, res, next) {
 
 
     // Run the request, activate the context, and ignore request if no route found
-    traceContext.activateContext(tracerObj, next);
+    traceContext.RunInContext(tracerObj, next);
     if (!req.route) {
         return;
     }

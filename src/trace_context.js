@@ -9,15 +9,15 @@ const namespace = cls.createNamespace(namespaceId);
 
 
 /**
- * Creates an active context for tracer
+ * Creates an active context for tracer and run the handle
  * @param {Trace} tracer object
- * @param {Request} next The Express's next function
+ * @param {Function} handle function to run the context in
  * @param {Function} The runner event
  */
-function activateContext(tracer, next) {
+function RunInContext(tracer, handle) {
     namespace.run(() => {
         namespace.set('tracer', tracer);
-        next();
+        handle();
     });
 }
 
@@ -32,5 +32,5 @@ function getTracer() {
 
 module.exports = {
     getTracer,
-    activateContext,
+    RunInContext,
 };

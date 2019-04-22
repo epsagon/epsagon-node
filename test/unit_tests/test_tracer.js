@@ -14,8 +14,8 @@ describe('tracer restart tests - if these fail the others will too', () => {
         tracer.restart();
         const runnerToAdd = new serverlessEvent.Event();
         tracer.addRunner(runnerToAdd);
-        expect(tracer.tracer.getEventList().length).to.equal(1);
-        expect(tracer.tracer.getExceptionList()).to.be.empty;
+        expect(tracer.tracer.trace.getEventList().length).to.equal(1);
+        expect(tracer.tracer.trace.getExceptionList()).to.be.empty;
     });
 
     it('restart: restart when trace is not empty', () => {
@@ -24,10 +24,10 @@ describe('tracer restart tests - if these fail the others will too', () => {
         tracer.addException(Error('test error'));
         tracer.restart();
         tracer.addRunner(new serverlessEvent.Event());
-        expect(tracer.tracer.getEventList().length).to.equal(1);
-        expect(tracer.tracer.getExceptionList()).to.be.empty;
-        expect(tracer.tracer.getAppName()).to.equal('app');
-        expect(tracer.tracer.getToken()).to.equal('token');
+        expect(tracer.tracer.trace.getEventList().length).to.equal(1);
+        expect(tracer.tracer.trace.getExceptionList()).to.be.empty;
+        expect(tracer.tracer.trace.getAppName()).to.equal('app');
+        expect(tracer.tracer.trace.getToken()).to.equal('token');
     });
 });
 
@@ -74,12 +74,12 @@ describe('tracer module tests', () => {
     });
 
     function validateTrace(token, appName) {
-        expect(tracer.tracer.getToken()).to.equal(token);
-        expect(tracer.tracer.getAppName()).to.equal(appName);
-        expect(tracer.tracer.getEventList().length).to.equal(1);
-        expect(tracer.tracer.getExceptionList()).to.be.empty;
-        expect(tracer.tracer.getVersion()).to.equal(consts.VERSION);
-        expect(tracer.tracer.getPlatform()).to.equal(
+        expect(tracer.tracer.trace.getToken()).to.equal(token);
+        expect(tracer.tracer.trace.getAppName()).to.equal(appName);
+        expect(tracer.tracer.trace.getEventList().length).to.equal(1);
+        expect(tracer.tracer.trace.getExceptionList()).to.be.empty;
+        expect(tracer.tracer.trace.getVersion()).to.equal(consts.VERSION);
+        expect(tracer.tracer.trace.getPlatform()).to.equal(
             `node ${process.versions.node}`
         );
     }
@@ -122,18 +122,18 @@ describe('tracer module tests', () => {
     it('addEvent: add the event to the tracer', () => {
         const eventToAdd = new serverlessEvent.Event();
         tracer.addEvent(eventToAdd);
-        expect(tracer.tracer.getEventList()[1]).to.equal(eventToAdd);
+        expect(tracer.tracer.trace.getEventList()[1]).to.equal(eventToAdd);
     });
 
     it('addEvent: add more then one event', () => {
         const firstEventToAdd = new serverlessEvent.Event();
         tracer.addEvent(firstEventToAdd);
-        expect(tracer.tracer.getEventList()[1]).to.equal(firstEventToAdd);
+        expect(tracer.tracer.trace.getEventList()[1]).to.equal(firstEventToAdd);
 
         const secondEventToAdd = new serverlessEvent.Event();
         tracer.addEvent(secondEventToAdd);
-        expect(tracer.tracer.getEventList()[1]).to.equal(firstEventToAdd);
-        expect(tracer.tracer.getEventList()[2]).to.equal(secondEventToAdd);
+        expect(tracer.tracer.trace.getEventList()[1]).to.equal(firstEventToAdd);
+        expect(tracer.tracer.trace.getEventList()[2]).to.equal(secondEventToAdd);
     });
 
     it('addEvent: add an event and a result promise to the tracer', (doneCallback) => {
@@ -151,7 +151,7 @@ describe('tracer module tests', () => {
         });
 
         tracer.addEvent(eventToAdd, stubPromise);
-        expect(tracer.tracer.getEventList()[1]).to.equal(eventToAdd);
+        expect(tracer.tracer.trace.getEventList()[1]).to.equal(eventToAdd);
         tracer.sendTrace(() => {}).then(() => {
             expect(this.postStub.called).to.be.true;
             doneCallback();
@@ -162,21 +162,21 @@ describe('tracer module tests', () => {
 
     it('addLabel: Add a label to the trace', () => {
         tracer.label('label1', 'value1');
-        const labels = JSON.parse(tracer.tracer.getEventList()[0].getResource().getMetadataMap().get('labels'));
+        const labels = JSON.parse(tracer.tracer.trace.getEventList()[0].getResource().getMetadataMap().get('labels'));
         expect(labels.label1).to.equal('value1');
     });
 
     it('addLabel: Override existing label', () => {
         tracer.label('label1', 'value1');
         tracer.label('label1', 'value2');
-        const labels = JSON.parse(tracer.tracer.getEventList()[0].getResource().getMetadataMap().get('labels'));
+        const labels = JSON.parse(tracer.tracer.trace.getEventList()[0].getResource().getMetadataMap().get('labels'));
         expect(labels.label1).to.equal('value2');
     });
 
     it('addLabel: Labels too big - 1 label', () => {
         const bigString = 'x'.repeat(100 * 1024);
         tracer.label('label1', bigString);
-        const labels = tracer.tracer.getEventList()[0].getResource().getMetadataMap().get('labels');
+        const labels = tracer.tracer.trace.getEventList()[0].getResource().getMetadataMap().get('labels');
         expect(labels).to.equal(undefined);
     });
 
@@ -186,7 +186,7 @@ describe('tracer module tests', () => {
         tracer.label('label1', expectedLabel1);
         tracer.label('label2', 'x'.repeat(40 * 1024));
 
-        const labels = JSON.parse(tracer.tracer.getEventList()[0].getResource().getMetadataMap().get('labels'));
+        const labels = JSON.parse(tracer.tracer.trace.getEventList()[0].getResource().getMetadataMap().get('labels'));
         expect(labels.label1).to.equal(expectedLabel1);
         expect(labels.label2).to.equal(undefined);
     });
@@ -212,21 +212,21 @@ describe('tracer module tests', () => {
     it('addException: adds an exception to the tracer', () => {
         const error = Error('this is an error');
         tracer.addException(error);
-        checkException(tracer.tracer.getExceptionList()[0], error);
+        checkException(tracer.tracer.trace.getExceptionList()[0], error);
     });
 
     it('addException: adds an exception to the tracer with additional data', () => {
         const error = Error('this is an error');
         const additionalData = { key: 'value', key2: 'value2' };
         tracer.addException(error, additionalData);
-        checkException(tracer.tracer.getExceptionList()[0], error, additionalData);
+        checkException(tracer.tracer.trace.getExceptionList()[0], error, additionalData);
     });
     it('addException: adds an exception to the tracer with additional data undefined', () => {
         const error = Error('this is an error');
         const additionalData = { key: 'value', key2: undefined };
         tracer.addException(error, additionalData);
         checkException(
-            tracer.tracer.getExceptionList()[0],
+            tracer.tracer.trace.getExceptionList()[0],
             error,
             { key: 'value', key2: 'undefined' }
         );
@@ -235,17 +235,17 @@ describe('tracer module tests', () => {
     it('addException: add more then one exception', () => {
         const firstError = Error('this is an error');
         tracer.addException(firstError);
-        checkException(tracer.tracer.getExceptionList()[0], firstError);
+        checkException(tracer.tracer.trace.getExceptionList()[0], firstError);
 
         const secondError = Error('this is an error');
         tracer.addException(secondError);
-        checkException(tracer.tracer.getExceptionList()[1], secondError);
+        checkException(tracer.tracer.trace.getExceptionList()[1], secondError);
     });
 
     it('setError: setting an error to runner', () => {
         const firstError = Error('this is an error');
         tracer.setError(firstError);
-        checkException(tracer.tracer.getEventList()[0].getException(), firstError);
+        checkException(tracer.tracer.trace.getEventList()[0].getException(), firstError);
     });
 
     it('sendTrace: post when no events pending', () => {

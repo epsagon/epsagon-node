@@ -3,7 +3,7 @@
  */
 const uuid4 = require('uuid4');
 const utils = require('../utils.js');
-const serverlessEvent = require('../proto/event_pb.js');
+const event = require('../proto/event_pb.js');
 const eventInterface = require('../event.js');
 const errorCode = require('../proto/error_code_pb.js');
 
@@ -14,7 +14,7 @@ const errorCode = require('../proto/error_code_pb.js');
  * @return {Object} The runner event
  */
 function createRunner(req, startTime) {
-    const expressEvent = new serverlessEvent.Event([
+    const expressEvent = new event.Event([
         `express-${uuid4()}`,
         utils.createTimestampFromTime(startTime),
         null,
@@ -23,7 +23,7 @@ function createRunner(req, startTime) {
         errorCode.ErrorCode.OK,
     ]);
 
-    const resource = new serverlessEvent.Resource([
+    const resource = new event.Resource([
         req.path,
         'express',
         req.method,
