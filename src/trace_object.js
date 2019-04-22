@@ -1,5 +1,7 @@
-const trace = require('./proto/trace_pb.js');
-const consts = require('./consts.js');
+/**
+ * @fileoverview holds tracer singleton.
+ */
+const tracerModule = require('./tracer.js');
 
 /**
  * The tracer singleton, used to manage the trace and send it at the end of the function invocation.
@@ -10,27 +12,12 @@ module.exports.tracer = null;
 
 
 /**
- * Creates a new Trace object
- * @returns {Trace} new Trace
+ * The tracer singleton getter function
+ * @returns {Object} tracer object
  */
-module.exports.createTracer = function createTracer() {
-    const tracerObj = new trace.Trace([
-        '',
-        '',
-        [],
-        [],
-        consts.VERSION,
-        `node ${process.versions.node}`,
-    ]);
-    // The requests promises pending to resolve. All must be resolved before sending the trace.
-    // A Map containing (event, promise) pairs.
-    return {
-        trace: tracerObj,
-        currRunner: null,
-        pendingEvents: new Map(),
-    };
+module.exports.get = () => {
+    if (!module.exports.tracer) {
+        module.exports.tracer = tracerModule.createTracer();
+    }
+    return module.exports.tracer;
 };
-
-module.exports.get = () => module.exports.tracer;
-
-module.exports.init = () => module.exports.tracer = module.exports.createTracer();

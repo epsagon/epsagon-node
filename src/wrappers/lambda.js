@@ -37,7 +37,6 @@ function baseLambdaWrapper(
 ) {
     // eslint-disable-next-line consistent-return
     return (originalEvent, originalContext, originalCallback) => {
-        traceObject.init();
         tracer.traceGetter = traceObject.get;
         tracer.restart();
         let runner;

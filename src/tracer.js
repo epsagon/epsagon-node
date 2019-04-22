@@ -5,20 +5,18 @@ const uuid4 = require('uuid4');
 const axios = require('axios');
 const http = require('http');
 const https = require('https');
+const trace = require('./proto/trace_pb.js');
 const exception = require('./proto/exception_pb.js');
 const utils = require('./utils.js');
 const config = require('./config.js');
 const eventInterface = require('./event.js');
 const consts = require('./consts.js');
-const traceContext = require('./trace_context.js');
 
 
 /**
  * Returns a function to get the relevant tracer.
- * @returns {Function} function that gets the active tracer
  */
 module.exports.traceGetter = () => {};
-
 
 /**
  * Returns the relevant tracer. If got one as a param, or from active context, or singleton.
@@ -27,7 +25,27 @@ module.exports.traceGetter = () => {};
  */
 const getTracer = tracer => tracer || module.exports.traceGetter();
 
-
+/**
+ * Creates a new Trace object
+ * @returns {Object} new Trace
+ */
+module.exports.createTracer = function createTracer() {
+    const tracerObj = new trace.Trace([
+        '',
+        '',
+        [],
+        [],
+        consts.VERSION,
+        `node ${process.versions.node}`,
+    ]);
+    // The requests promises pending to resolve. All must be resolved before sending the trace.
+    // A Map containing (event, promise) pairs.
+    return {
+        trace: tracerObj,
+        currRunner: null,
+        pendingEvents: new Map(),
+    };
+};
 
 /**
  * The timeout to send for send operations (both sync and async)
@@ -42,7 +60,6 @@ const session = axios.create({
     httpAgent: new http.Agent({ keepAlive: true }),
     httpsAgent: new https.Agent({ keepAlive: true }),
 });
-
 
 /**
  * Adds an event to the tracer
