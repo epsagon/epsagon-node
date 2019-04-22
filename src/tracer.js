@@ -20,8 +20,8 @@ module.exports.traceGetter = () => {};
 
 /**
  * Returns the relevant tracer. If got one as a param, or from active context, or singleton.
- * @param {Trace} tracer Optional tracer
- * @returns {Trace} active tracer
+ * @param {Object} tracer Optional tracer
+ * @returns {Object} active tracer
  */
 const getTracer = tracer => tracer || module.exports.traceGetter();
 
@@ -65,7 +65,7 @@ const session = axios.create({
  * Adds an event to the tracer
  * @param {proto.event_pb.Event} event The event to add
  * @param {Promise} [promise] A promise that resolves when the event handling is Done, if required.
- * @param {Trace} tracer Optional tracer
+ * @param {Object} tracer Optional tracer
  */
 module.exports.addEvent = function addEvent(event, promise, tracer) {
     const tracerObj = getTracer(tracer);
@@ -80,7 +80,7 @@ module.exports.addEvent = function addEvent(event, promise, tracer) {
  * Adds an exception to the tracer
  * @param {Error} error The error object describing the exception
  * @param {Object} additionalData Additional data to send with the error. A map of <string: string>
- * @param {Trace} tracer Optional tracer
+ * @param {Object} tracer Optional tracer
  */
 module.exports.addException = function addException(error, additionalData, tracer) {
     const raisedException = new exception.Exception([
@@ -120,7 +120,7 @@ module.exports.initTrace = function initTrace(
  * @param {object} runner The runner of the current trace
  * @param {Promise} runnerPromise A promise that resolves when the event handling is Done,
  *      if required.
- * @param {Trace} tracer Optional tracer
+ * @param {Object} tracer Optional tracer
  */
 module.exports.addRunner = function addRunner(runner, runnerPromise, tracer) {
     const tracerObj = getTracer(tracer);
@@ -131,7 +131,7 @@ module.exports.addRunner = function addRunner(runner, runnerPromise, tracer) {
 /**
  * Restarts the tracer. Has to be called after a trace has been sent to reset the tracer
  * and start collecting a new trace
- * @param {Trace} tracer Optional tracer
+ * @param {Object} tracer Optional tracer
  */
 module.exports.restart = function restart(tracer) {
     const tracerObj = getTracer(tracer);
@@ -147,7 +147,7 @@ module.exports.restart = function restart(tracer) {
  * handled
  * @param {function} traceSender: The function to use to send the trace. Gets the trace object
  *     as a parameter and sends a JSON version of it to epsagon's infrastructure
- * @param {Trace} tracer  Optional tracer
+ * @param {Object} tracer  Optional tracer
  * @return {*} traceSender's result
  */
 function sendCurrentTrace(traceSender, tracer) {
@@ -222,7 +222,7 @@ module.exports.postTrace = function postTrace(traceObject) {
 /**
  * Sends the trace to epsagon's infrastructure when all pending events are finished.
  * @param {function} runnerUpdateFunc function that sets the duration of the runner.
- * @param {Trace} tracer Optional tracer
+ * @param {Object} tracer Optional tracer
  * @returns {Promise} a promise that is resolved when the trace transmission ends.
  */
 module.exports.sendTrace = function sendTrace(runnerUpdateFunc, tracer) {
@@ -238,7 +238,7 @@ module.exports.sendTrace = function sendTrace(runnerUpdateFunc, tracer) {
 /**
  * Sends the trace to epsagon's infrastructure, marking all the pending promises as
  * failures.
- * @param {Trace} tracer  Optional tracer
+ * @param {Object} tracer  Optional tracer
  * @returns {Promise} a promise that is resolved when the trace transmission ends.
  */
 module.exports.sendTraceSync = function sendTraceSync(tracer) {
@@ -264,7 +264,7 @@ module.exports.sendTraceSync = function sendTraceSync(tracer) {
  * Add a custom label to the runner of the current trace.
  * @param {string} key key for the added label
  * @param {string} value value for the added label
- * @param {Trace} tracer Optional tracer
+ * @param {Object} tracer Optional tracer
  */
 module.exports.label = function addLabel(key, value, tracer) {
     // convert numbers to string
@@ -281,7 +281,7 @@ module.exports.label = function addLabel(key, value, tracer) {
 /**
  * Set runner as an error.
  * @param {Error} err error data
- * @param {Trace} tracer Optional tracer
+ * @param {Object} tracer Optional tracer
  */
 module.exports.setError = function setRunnerError(err, tracer) {
     const tracerObj = getTracer(tracer);
