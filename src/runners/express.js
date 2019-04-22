@@ -24,7 +24,7 @@ function createRunner(req, startTime) {
     ]);
 
     const resource = new event.Resource([
-        req.path,
+        req.hostname,
         'express',
         req.method,
     ]);
@@ -43,9 +43,9 @@ function createRunner(req, startTime) {
  * @param {Int} startTime Runner start time
  */
 function finishRunner(expressEvent, res, req, startTime) {
-    expressEvent.getResource().setName(req.route.path);
     eventInterface.addToMetadata(expressEvent, {
         url: `${req.protocol}://${req.hostname}${req.path}`,
+        route: req.route.path,
         query: req.query,
         status_code: res.statusCode,
     }, {

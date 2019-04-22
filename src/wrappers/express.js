@@ -7,6 +7,7 @@ const shimmer = require('shimmer');
 const tryRequire = require('../try_require.js');
 const utils = require('../utils.js');
 const tracer = require('../tracer.js');
+const traceObject = require('../trace_object.js');
 const traceContext = require('../trace_context.js');
 const expressRunner = require('../runners/express.js');
 
@@ -21,7 +22,8 @@ const express = tryRequire('express');
  */
 function expressMiddleware(req, res, next) {
     // Initialize tracer
-    const tracerObj = tracer.createTracer();
+    const tracerObj = traceObject.createTracer();
+    tracer.traceGetter = traceContext.getTracer;
     tracer.restart(tracerObj);
     let expressEvent;
     const startTime = Date.now();

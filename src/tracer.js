@@ -5,7 +5,6 @@ const uuid4 = require('uuid4');
 const axios = require('axios');
 const http = require('http');
 const https = require('https');
-const trace = require('./proto/trace_pb.js');
 const exception = require('./proto/exception_pb.js');
 const utils = require('./utils.js');
 const config = require('./config.js');
@@ -15,26 +14,10 @@ const traceContext = require('./trace_context.js');
 
 
 /**
- * Creates a new Trace object
- * @returns {Trace} new Trace
+ * Returns a function to get the relevant tracer.
+ * @returns {Function} function that gets the active tracer
  */
-module.exports.createTracer = function createTracer() {
-    const tracerObj = new trace.Trace([
-        '',
-        '',
-        [],
-        [],
-        consts.VERSION,
-        `node ${process.versions.node}`,
-    ]);
-    // The requests promises pending to resolve. All must be resolved before sending the trace.
-    // A Map containing (event, promise) pairs.
-    return {
-        trace: tracerObj,
-        currRunner: null,
-        pendingEvents: new Map(),
-    };
-};
+module.exports.traceGetter = () => {};
 
 
 /**
@@ -42,15 +25,9 @@ module.exports.createTracer = function createTracer() {
  * @param {Trace} tracer Optional tracer
  * @returns {Trace} active tracer
  */
-const getTracer = tracer => tracer || traceContext.getTracer() || module.exports.tracer;
+const getTracer = tracer => tracer || module.exports.traceGetter();
 
 
-/**
- * The tracer singleton, used to manage the trace and send it at the end of the function invocation.
- * In a Lambda environment we use this singleton, while in other environment we use the one from
- * the context.
- */
-module.exports.tracer = module.exports.createTracer();
 
 /**
  * The timeout to send for send operations (both sync and async)

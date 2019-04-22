@@ -4,6 +4,7 @@
 const uuid4 = require('uuid4');
 const util = require('util');
 const tracer = require('../tracer.js');
+const traceObject = require('../trace_object.js');
 const utils = require('../utils.js');
 const { getConfig } = require('../config.js');
 const awsLambdaTrigger = require('../triggers/aws_lambda.js');
@@ -36,6 +37,8 @@ function baseLambdaWrapper(
 ) {
     // eslint-disable-next-line consistent-return
     return (originalEvent, originalContext, originalCallback) => {
+        traceObject.init();
+        tracer.traceGetter = traceObject.get;
         tracer.restart();
         let runner;
         let timeoutHandler;
