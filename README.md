@@ -66,29 +66,6 @@ function handler(event, context, callback) {
 }
 ```
 
-## Express application
-
-If you're running express.js application on any non Lambda environment, you can stiil use Epsagon!
-You can accomplish that with the following example:
-
-```node
-const express = require('express');
-const epsagon = require('epsagon');
-
-epsagon.init({
-    token: 'my-secret-token',
-    appName: 'my-app-name',
-    metadataOnly: false,
-});
-
-const app = express()
-
-app.get('/', (req, res) => res.send('Hello World!'))
-
-app.listen(3000)
-```
-
-
 ## Copyright
 
 Provided under the MIT license. See LICENSE for details.
