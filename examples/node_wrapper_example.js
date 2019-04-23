@@ -1,4 +1,4 @@
-const epsagon = require('epsagon');
+const epsagon = require('../src/index.js');
 
 epsagon.init({
     token: 'my-secret-token',
