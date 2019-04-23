@@ -12,7 +12,6 @@ const redisPatcher = require('./events/redis.js');
 const mongoPatcher = require('./events/mongodb.js');
 const expressPatcher = require('./wrappers/express.js');
 
-
 /**
  * Patches a module
  * @param {Object} patcher module
