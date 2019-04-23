@@ -10,7 +10,6 @@ const mysqlPatcher = require('./events/mysql.js');
 const redisPatcher = require('./events/redis.js');
 const mongoPatcher = require('./events/mongodb.js');
 
-
 if (!config.getConfig().isEpsagonPatchDisabled) {
     [
         awsSDKPatcher,
