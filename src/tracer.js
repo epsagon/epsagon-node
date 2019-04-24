@@ -69,6 +69,7 @@ const session = axios.create({
  */
 module.exports.addEvent = function addEvent(event, promise, tracer) {
     const tracerObj = getTracer(tracer);
+    if (!tracerObj) return;
     if (promise !== undefined) {
         tracerObj.pendingEvents.set(event, utils.reflectPromise(promise));
     }
@@ -101,6 +102,7 @@ module.exports.addException = function addException(error, additionalData, trace
     }
 
     const tracerObj = getTracer(tracer);
+    if (!tracerObj) return;
     tracerObj.trace.addException(raisedException);
 };
 
