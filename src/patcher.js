@@ -11,6 +11,7 @@ const mysqlPatcher = require('./events/mysql.js');
 const redisPatcher = require('./events/redis.js');
 const mongoPatcher = require('./events/mongodb.js');
 const expressPatcher = require('./wrappers/express.js');
+const hapiPatcher = require('./wrappers/hapi.js');
 
 
 /**
@@ -42,6 +43,7 @@ if (!config.getConfig().isEpsagonPatchDisabled) {
     if (!utils.isLambdaEnv()) {
         [
             expressPatcher,
+            hapiPatcher,
         ].forEach(patch);
     }
 }

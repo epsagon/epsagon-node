@@ -68,7 +68,31 @@ function handler(event, context, callback) {
 
 ## Express application
 
-If you're running express.js application on any non Lambda environment, you can stiil use Epsagon!
+If you're running express.js application on any non Lambda environment, you can still use Epsagon!
+Note: Only Express 4 and above is supported
+You can accomplish that with the following example:
+
+```node
+const express = require('express');
+const epsagon = require('epsagon');
+
+epsagon.init({
+    token: 'my-secret-token',
+    appName: 'my-app-name',
+    metadataOnly: false,
+});
+
+const app = express()
+
+app.get('/', (req, res) => res.send('Hello World!'))
+
+app.listen(3000)
+```
+
+## Hapi application
+
+If you're running Hapi.js application on any non Lambda environment, you can still use Epsagon!
+Note: Only Hapi 17 and above is supported
 You can accomplish that with the following example:
 
 ```node

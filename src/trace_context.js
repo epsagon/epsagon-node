@@ -12,12 +12,25 @@ const namespace = cls.createNamespace(namespaceId);
  * Creates an active context for tracer and run the handle
  * @param {Object} tracer object
  * @param {Function} handle function to run the context in
- * @param {Function} The runner event
  */
 function RunInContext(tracer, handle) {
     namespace.run(() => {
         namespace.set('tracer', tracer);
         handle();
+    });
+}
+
+
+/**
+ * Creates an active context for tracer and run the handle. Return the original value
+ * @param {Object} tracer object
+ * @param {Function} handle function to run the context in
+ * @returns {Object} The return value
+ */
+function RunInContextAndReturn(tracer, handle) {
+    return namespace.runAndReturn(() => {
+        namespace.set('tracer', tracer);
+        return handle();
     });
 }
 
@@ -33,4 +46,5 @@ function getTracer() {
 module.exports = {
     getTracer,
     RunInContext,
+    RunInContextAndReturn,
 };
