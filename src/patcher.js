@@ -27,7 +27,6 @@ function patch(patcher) {
     }
 }
 
-
 if (!config.getConfig().isEpsagonPatchDisabled) {
     [
         awsSDKPatcher,
