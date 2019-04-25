@@ -116,6 +116,9 @@ describe('Lambda Wrapper', () => {
         it('works with epsagon labels', async () => {
             await basicTest('labels', input);
         });
+        it('failsafe: event occurs without tracer initialized', async () => {
+            await basicTest('failsafe_no_tracer_init', input);
+        });
     });
 
     const syncOptions = ['sync'];

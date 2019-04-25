@@ -277,6 +277,10 @@ module.exports.label = function addLabel(key, value, tracer) {
     }
 
     const tracerObj = getTracer(tracer);
+    if (!tracerObj) {
+        utils.debugLog('Failed to label without an active tracer');
+        return;
+    }
     eventInterface.addLabelToMetadata(tracerObj.currRunner, key, updatedValue);
 };
 
@@ -287,5 +291,9 @@ module.exports.label = function addLabel(key, value, tracer) {
  */
 module.exports.setError = function setRunnerError(err, tracer) {
     const tracerObj = getTracer(tracer);
+    if (!tracerObj) {
+        utils.debugLog('Failed to setError without an active tracer');
+        return;
+    }
     eventInterface.setException(tracerObj.currRunner, err);
 };

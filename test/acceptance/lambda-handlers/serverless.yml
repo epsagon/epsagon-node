@@ -25,6 +25,9 @@ functions:
   labels:
     handler: handler.labels
 
+  failsafe_no_tracer_init:
+    handler: handler_tracer_test.failsafe_no_tracer_init
+
   sync_no_param_promise:
     handler: handler.sync_no_param_promise
   sync_no_param_promise_e:
