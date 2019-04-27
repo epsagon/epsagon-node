@@ -1,6 +1,6 @@
 /* eslint-disable prefer-rest-params */
 /**
- * @fileoverview Handlers for Express instrumentation
+ * @fileoverview Handlers for Hapi instrumentation
  */
 
 const shimmer = require('shimmer');
@@ -14,10 +14,11 @@ const Hapi = tryRequire('hapi');
 
 
 /**
- * Express requests middleware
- * @param {Request} req The Express's request data
- * @param {Response} res The Express's response data
- * @param {Function} next express function
+ * Hapi requests middleware
+ * @param {Object} request The Hapi's request data
+ * @param {Object} h The Hapi's response data
+ * @param {Function} originalHandler function for the Hapi's route
+ * @return {Object} response
  */
 function hapiMiddleware(request, h, originalHandler) {
     // Initialize tracer
@@ -32,6 +33,7 @@ function hapiMiddleware(request, h, originalHandler) {
         tracer.addRunner(hapiEvent, undefined, tracerObj);
     } catch (err) {
         utils.debugLog(err);
+        return originalHandler(request, h);
     }
 
     // Inject trace functions
@@ -48,34 +50,32 @@ function hapiMiddleware(request, h, originalHandler) {
 
     try {
         hapiRunner.finishRunner(hapiEvent, request, response, startTime);
-//        tracer.sendTrace(() => {}, tracerObj);
+        tracer.sendTrace(() => {}, tracerObj);
     } catch (err) {
         tracer.addException(err, tracerObj);
     }
 
-    return response
+    return response;
 }
 
 
 /**
  * Wraps the Hapi module request function with tracing
- * @param {Function} wrappedFunction Express init function
+ * @param {Function} wrappedFunction Hapi's route init function
  * @return {Function} updated wrapped init
  */
 function hapiRouteWrapper(wrappedFunction) {
     return function internalHapiRouteWrapper() {
-        const originalHandler = arguments[0].handler
-        arguments[0].handler = (request, h) => {
-            return hapiMiddleware(request, h, originalHandler)
-        }
+        const originalHandler = arguments[0].handler;
+        arguments[0].handler = (request, h) => hapiMiddleware(request, h, originalHandler);
         return wrappedFunction.apply(this, arguments);
     };
 }
 
 
 /**
- * Wraps the Express module request function with tracing
- * @param {Function} wrappedFunction Express init function
+ * Wraps the Hapi module request function with tracing
+ * @param {Function} wrappedFunction Hapi init function
  * @return {Function} updated wrapped init
  */
 function hapiServerWrapper(wrappedFunction) {
@@ -91,7 +91,7 @@ function hapiServerWrapper(wrappedFunction) {
 
 module.exports = {
     /**
-     * Initializes the Express tracer
+     * Initializes the Hapi tracer
      */
     init() {
         if (Hapi && Hapi.server) {

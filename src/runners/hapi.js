@@ -8,8 +8,8 @@ const eventInterface = require('../event.js');
 const errorCode = require('../proto/error_code_pb.js');
 
 /**
- * Creates an Event representing the running Express (runner)
- * @param {Request} req The Express's request data
+ * Creates an Event representing the running Hapi (runner)
+ * @param {Object} req The Hapi's request data
  * @param {Int} startTime Runner start time
  * @return {Object} The runner event
  */
@@ -35,10 +35,10 @@ function createRunner(req, startTime) {
 
 
 /**
- * Terminates the running Express (runner)
- * @param {Object} expressEvent runner's express event
+ * Terminates the running Hapi (runner)
+ * @param {Object} hapiEvent runner's Hapi event
+ * @param {Request} req The Hapi's request data
  * @param {Response} res response data
- * @param {Request} req The Express's request data
  * @param {Int} startTime Runner start time
  */
 function finishRunner(hapiEvent, req, res, startTime) {
@@ -57,7 +57,6 @@ function finishRunner(hapiEvent, req, res, startTime) {
     if (res.statusCode >= 500) {
         hapiEvent.setErrorCode(errorCode.ErrorCode.EXCEPTION);
     }
-
 }
 
 module.exports.createRunner = createRunner;

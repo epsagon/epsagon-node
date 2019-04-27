@@ -31,6 +31,8 @@ function expressMiddleware(req, res, next) {
         tracer.addRunner(expressEvent, undefined, tracerObj);
     } catch (err) {
         utils.debugLog(err);
+        next();
+        return;
     }
 
     // Inject trace functions
