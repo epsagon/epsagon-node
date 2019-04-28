@@ -35,7 +35,7 @@ function baseLambdaWrapper(
     shouldPassRunner = false,
     originalFunctionToWrap = null
 ) {
-    tracer.traceGetter = traceObject.get;
+    tracer.getTrace = traceObject.get;
     // eslint-disable-next-line consistent-return
     return (originalEvent, originalContext, originalCallback) => {
         tracer.restart();

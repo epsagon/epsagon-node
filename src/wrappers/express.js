@@ -14,34 +14,30 @@ const express = tryRequire('express');
 
 
 /**
- * Express requests middleware
+ * Express requests middleware that runs in context
  * @param {Request} req The Express's request data
  * @param {Response} res The Express's response data
  * @param {Function} next express function
  */
-function expressMiddleware(req, res, next) {
-    // Initialize tracer
-    const tracerObj = tracer.createTracer();
-    tracer.traceGetter = traceContext.getTracer;
-    tracer.restart(tracerObj);
+function expressMiddlewareContext(req, res, next) {
+    tracer.restart();
     let expressEvent;
     const startTime = Date.now();
     try {
         expressEvent = expressRunner.createRunner(req, startTime);
-        tracer.addRunner(expressEvent, undefined, tracerObj);
+        tracer.addRunner(expressEvent);
     } catch (err) {
         utils.debugLog(err);
     }
 
     // Inject trace functions
+    const { label, setError } = tracer;
     req.epsagon = {
-        label: tracer.label,
-        setError: tracer.setError,
+        label,
+        setError,
     };
 
-
-    // Run the request, activate the context, and ignore request if no route found
-    traceContext.RunInContext(tracerObj, next);
+    next();
     if (!req.route) {
         return;
     }
@@ -51,9 +47,25 @@ function expressMiddleware(req, res, next) {
         try {
             expressRunner.finishRunner(expressEvent, this, req, startTime);
         } catch (err) {
-            tracer.addException(err, tracerObj);
+            tracer.addException(err);
         }
-        tracer.sendTrace(() => {}, tracerObj);
+        tracer.sendTrace(() => {});
+    });
+}
+
+
+/**
+ * Express requests middleware
+ * @param {Request} req The Express's request data
+ * @param {Response} res The Express's response data
+ * @param {Function} next express function
+ */
+function expressMiddleware(req, res, next) {
+    // Initialize tracer
+    const tracerObj = tracer.createTracer();
+    tracer.getTrace = traceContext.get;
+    traceContext.RunInContext(tracerObj, () => {
+        expressMiddlewareContext(req, res, next);
     });
 }
 
