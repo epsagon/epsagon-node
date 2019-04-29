@@ -64,12 +64,10 @@ function hapiRouteWrapper(wrappedFunction) {
     tracer.getTrace = traceContext.get;
     return function internalHapiRouteWrapper() {
         const originalHandler = arguments[0].handler;
-        arguments[0].handler = (request, h) => {
-            return traceContext.RunInContextAndReturn(
-                tracerObj,
-                () => hapiMiddleware(request, h, originalHandler)
-            );
-        }
+        arguments[0].handler = (request, h) => traceContext.RunInContextAndReturn(
+            tracerObj,
+            () => hapiMiddleware(request, h, originalHandler)
+        );
         return wrappedFunction.apply(this, arguments);
     };
 }
