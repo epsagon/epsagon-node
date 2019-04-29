@@ -22,15 +22,13 @@ const Hapi = tryRequire('hapi');
  */
 function hapiMiddleware(request, h, originalHandler) {
     // Initialize tracer
-    const tracerObj = tracer.createTracer();
-    tracer.traceGetter = traceContext.getTracer;
-    tracer.restart(tracerObj);
+    tracer.restart();
 
     let hapiEvent;
     const startTime = Date.now();
     try {
         hapiEvent = hapiRunner.createRunner(request, startTime);
-        tracer.addRunner(hapiEvent, undefined, tracerObj);
+        tracer.addRunner(hapiEvent);
     } catch (err) {
         utils.debugLog(err);
         return originalHandler(request, h);
@@ -43,16 +41,13 @@ function hapiMiddleware(request, h, originalHandler) {
     };
 
     // Run the request, activate the context
-    const response = traceContext.RunInContextAndReturn(
-        tracerObj,
-        () => originalHandler(request, h)
-    );
+    const response = originalHandler(request, h);
 
     try {
         hapiRunner.finishRunner(hapiEvent, request, response, startTime);
-        tracer.sendTrace(() => {}, tracerObj);
+        tracer.sendTrace(() => {});
     } catch (err) {
-        tracer.addException(err, tracerObj);
+        tracer.addException(err);
     }
 
     return response;
@@ -65,9 +60,16 @@ function hapiMiddleware(request, h, originalHandler) {
  * @return {Function} updated wrapped init
  */
 function hapiRouteWrapper(wrappedFunction) {
+    const tracerObj = tracer.createTracer();
+    tracer.getTrace = traceContext.get;
     return function internalHapiRouteWrapper() {
         const originalHandler = arguments[0].handler;
-        arguments[0].handler = (request, h) => hapiMiddleware(request, h, originalHandler);
+        arguments[0].handler = (request, h) => {
+            return traceContext.RunInContextAndReturn(
+                tracerObj,
+                () => hapiMiddleware(request, h, originalHandler)
+            );
+        }
         return wrappedFunction.apply(this, arguments);
     };
 }

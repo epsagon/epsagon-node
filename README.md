@@ -96,7 +96,7 @@ Note: Only Hapi 17 and above is supported
 You can accomplish that with the following example:
 
 ```node
-const express = require('express');
+const Hapi = require('hapi');
 const epsagon = require('epsagon');
 
 epsagon.init({
@@ -105,11 +105,26 @@ epsagon.init({
     metadataOnly: false,
 });
 
-const app = express()
+const init = async () => {
 
-app.get('/', (req, res) => res.send('Hello World!'))
+    const server = Hapi.server({
+        port: 3000,
+        host: 'localhost'
+    });
 
-app.listen(3000)
+    server.route({
+        method: 'GET',
+        path:'/',
+        handler: (request, h) => {
+            return 'Hello World!';
+        }
+    });
+
+    await server.start();
+    console.log('Server running on %ss', server.info.uri);
+};
+
+init();
 ```
 
 
@@ -117,4 +132,4 @@ app.listen(3000)
 
 Provided under the MIT license. See LICENSE for details.
 
-Copyright 2018, Epsagon
+Copyright 2019, Epsagon
