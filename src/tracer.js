@@ -58,11 +58,12 @@ const session = axios.create({
  * Adds an event to the tracer
  * @param {proto.event_pb.Event} event The event to add
  * @param {Promise} [promise] A promise that resolves when the event handling is Done, if required.
- * @param {Object} tracer Optional tracer
  */
 module.exports.addEvent = function addEvent(event, promise) {
     const tracerObj = module.exports.getTrace();
-    if (!tracerObj) return;
+    if (!tracerObj) {
+        return;
+    }
     if (promise !== undefined) {
         tracerObj.pendingEvents.set(event, utils.reflectPromise(promise));
     }
@@ -74,7 +75,6 @@ module.exports.addEvent = function addEvent(event, promise) {
  * Adds an exception to the tracer
  * @param {Error} error The error object describing the exception
  * @param {Object} additionalData Additional data to send with the error. A map of <string: string>
- * @param {Object} tracer Optional tracer
  */
 module.exports.addException = function addException(error, additionalData) {
     const raisedException = new exception.Exception([
@@ -95,7 +95,9 @@ module.exports.addException = function addException(error, additionalData) {
     }
 
     const tracerObj = module.exports.getTrace();
-    if (!tracerObj) return;
+    if (!tracerObj) {
+        return;
+    }
     tracerObj.trace.addException(raisedException);
 };
 
@@ -115,7 +117,6 @@ module.exports.initTrace = function initTrace(
  * @param {object} runner The runner of the current trace
  * @param {Promise} runnerPromise A promise that resolves when the event handling is Done,
  *      if required.
- * @param {Object} tracer Optional tracer
  */
 module.exports.addRunner = function addRunner(runner, runnerPromise) {
     const tracerObj = module.exports.getTrace();
@@ -126,7 +127,6 @@ module.exports.addRunner = function addRunner(runner, runnerPromise) {
 /**
  * Restarts the tracer. Has to be called after a trace has been sent to reset the tracer
  * and start collecting a new trace
- * @param {Object} tracer Optional tracer
  */
 module.exports.restart = function restart() {
     const tracerObj = module.exports.getTrace();
@@ -217,7 +217,6 @@ module.exports.postTrace = function postTrace(traceObject) {
 /**
  * Sends the trace to epsagon's infrastructure when all pending events are finished.
  * @param {function} runnerUpdateFunc function that sets the duration of the runner.
- * @param {Object} tracer Optional tracer
  * @returns {Promise} a promise that is resolved when the trace transmission ends.
  */
 module.exports.sendTrace = function sendTrace(runnerUpdateFunc) {
@@ -259,7 +258,6 @@ module.exports.sendTraceSync = function sendTraceSync() {
  * Add a custom label to the runner of the current trace.
  * @param {string} key key for the added label
  * @param {string} value value for the added label
- * @param {Object} tracer Optional tracer
  */
 module.exports.label = function addLabel(key, value) {
     // convert numbers to string
@@ -280,7 +278,6 @@ module.exports.label = function addLabel(key, value) {
 /**
  * Set runner as an error.
  * @param {Error} err error data
- * @param {Object} tracer Optional tracer
  */
 module.exports.setError = function setRunnerError(err) {
     const tracerObj = module.exports.getTrace();

@@ -19,7 +19,7 @@ const express = tryRequire('express');
  * @param {Response} res The Express's response data
  * @param {Function} next express function
  */
-function expressMiddlewareContext(req, res, next) {
+function expressMiddleware(req, res, next) {
     tracer.restart();
     let expressEvent;
     const startTime = Date.now();
@@ -55,30 +55,21 @@ function expressMiddlewareContext(req, res, next) {
 
 
 /**
- * Express requests middleware
- * @param {Request} req The Express's request data
- * @param {Response} res The Express's response data
- * @param {Function} next express function
- */
-function expressMiddleware(req, res, next) {
-    // Initialize tracer
-    const tracerObj = tracer.createTracer();
-    tracer.getTrace = traceContext.get;
-    traceContext.RunInContext(tracerObj, () => {
-        expressMiddlewareContext(req, res, next);
-    });
-}
-
-
-/**
  * Wraps the Express module request function with tracing
  * @param {Function} wrappedFunction Express init function
  * @return {Function} updated wrapped init
  */
 function expressWrapper(wrappedFunction) {
+    const tracerObj = tracer.createTracer();
+    tracer.getTrace = traceContext.get;
     return function internalExpressWrapper() {
         const result = wrappedFunction.apply(this, arguments);
-        this.use(expressMiddleware);
+        this.use(
+            (req, res, next) => traceContext.RunInContext(
+                tracerObj,
+                () => expressMiddleware(req, res, next)
+            )
+        );
         return result;
     };
 }
