@@ -39,12 +39,12 @@ function RunInContextAndReturn(tracer, handle) {
  * Returns the active trace
  * @return {Object} tracer object
  */
-function getTracer() {
+function get() {
     return (namespace && namespace.active) ? namespace.get('tracer') : null;
 }
 
 module.exports = {
-    getTracer,
+    get,
     RunInContext,
     RunInContextAndReturn,
 };

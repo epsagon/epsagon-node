@@ -12,7 +12,7 @@ const batchRunner = require('../runners/aws_batch.js');
  * Epsagon's batch Job wrapper, sets tracing on a batch job
  */
 module.exports.wrapBatchJob = function wrapBatchJob() {
-    tracer.traceGetter = traceObject.get;
+    tracer.getTrace = traceObject.get;
     tracer.restart();
     try {
         const { runner, runnerPromise } = batchRunner.createRunner();

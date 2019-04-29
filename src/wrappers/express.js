@@ -14,21 +14,18 @@ const express = tryRequire('express');
 
 
 /**
- * Express requests middleware
+ * Express requests middleware that runs in context
  * @param {Request} req The Express's request data
  * @param {Response} res The Express's response data
  * @param {Function} next express function
  */
 function expressMiddleware(req, res, next) {
-    // Initialize tracer
-    const tracerObj = tracer.createTracer();
-    tracer.traceGetter = traceContext.getTracer;
-    tracer.restart(tracerObj);
+    tracer.restart();
     let expressEvent;
     const startTime = Date.now();
     try {
         expressEvent = expressRunner.createRunner(req, startTime);
-        tracer.addRunner(expressEvent, undefined, tracerObj);
+        tracer.addRunner(expressEvent);
     } catch (err) {
         utils.debugLog(err);
         next();
@@ -36,14 +33,13 @@ function expressMiddleware(req, res, next) {
     }
 
     // Inject trace functions
+    const { label, setError } = tracer;
     req.epsagon = {
-        label: tracer.label,
-        setError: tracer.setError,
+        label,
+        setError,
     };
 
-
-    // Run the request, activate the context, and ignore request if no route found
-    traceContext.RunInContext(tracerObj, next);
+    next();
     if (!req.route) {
         return;
     }
@@ -53,9 +49,9 @@ function expressMiddleware(req, res, next) {
         try {
             expressRunner.finishRunner(expressEvent, this, req, startTime);
         } catch (err) {
-            tracer.addException(err, tracerObj);
+            tracer.addException(err);
         }
-        tracer.sendTrace(() => {}, tracerObj);
+        tracer.sendTrace(() => {});
     });
 }
 
@@ -66,9 +62,16 @@ function expressMiddleware(req, res, next) {
  * @return {Function} updated wrapped init
  */
 function expressWrapper(wrappedFunction) {
+    const tracerObj = tracer.createTracer();
+    tracer.getTrace = traceContext.get;
     return function internalExpressWrapper() {
         const result = wrappedFunction.apply(this, arguments);
-        this.use(expressMiddleware);
+        this.use(
+            (req, res, next) => traceContext.RunInContext(
+                tracerObj,
+                () => expressMiddleware(req, res, next)
+            )
+        );
         return result;
     };
 }

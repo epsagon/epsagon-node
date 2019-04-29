@@ -48,8 +48,8 @@ function createRunner(functionToWrap, args) {
  * @return {function} The original function, wrapped by our tracer
  */
 module.exports.nodeWrapper = function nodeWrapper(functionToWrap) {
+    tracer.getTrace = traceObject.get;
     return (...args) => { // eslint-disable-line consistent-return
-        tracer.traceGetter = traceObject.get;
         tracer.restart();
         let runner;
 

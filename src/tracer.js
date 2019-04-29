@@ -16,14 +16,7 @@ const consts = require('./consts.js');
 /**
  * Returns a function to get the relevant tracer.
  */
-module.exports.traceGetter = () => {};
-
-/**
- * Returns the relevant tracer. If got one as a param, or from active context, or singleton.
- * @param {Object} tracer Optional tracer
- * @returns {Object} active tracer
- */
-const getTracer = tracer => tracer || module.exports.traceGetter();
+module.exports.getTrace = () => {};
 
 /**
  * Creates a new Trace object
@@ -65,11 +58,12 @@ const session = axios.create({
  * Adds an event to the tracer
  * @param {proto.event_pb.Event} event The event to add
  * @param {Promise} [promise] A promise that resolves when the event handling is Done, if required.
- * @param {Object} tracer Optional tracer
  */
-module.exports.addEvent = function addEvent(event, promise, tracer) {
-    const tracerObj = getTracer(tracer);
-    if (!tracerObj) return;
+module.exports.addEvent = function addEvent(event, promise) {
+    const tracerObj = module.exports.getTrace();
+    if (!tracerObj) {
+        return;
+    }
     if (promise !== undefined) {
         tracerObj.pendingEvents.set(event, utils.reflectPromise(promise));
     }
@@ -81,9 +75,8 @@ module.exports.addEvent = function addEvent(event, promise, tracer) {
  * Adds an exception to the tracer
  * @param {Error} error The error object describing the exception
  * @param {Object} additionalData Additional data to send with the error. A map of <string: string>
- * @param {Object} tracer Optional tracer
  */
-module.exports.addException = function addException(error, additionalData, tracer) {
+module.exports.addException = function addException(error, additionalData) {
     const raisedException = new exception.Exception([
         error.name,
         error.message,
@@ -101,8 +94,11 @@ module.exports.addException = function addException(error, additionalData, trace
         });
     }
 
-    const tracerObj = getTracer(tracer);
-    if (!tracerObj) return;
+    const tracerObj = module.exports.getTrace();
+    if (!tracerObj) {
+        return;
+    }
+
     tracerObj.trace.addException(raisedException);
 };
 
@@ -122,10 +118,9 @@ module.exports.initTrace = function initTrace(
  * @param {object} runner The runner of the current trace
  * @param {Promise} runnerPromise A promise that resolves when the event handling is Done,
  *      if required.
- * @param {Object} tracer Optional tracer
  */
-module.exports.addRunner = function addRunner(runner, runnerPromise, tracer) {
-    const tracerObj = getTracer(tracer);
+module.exports.addRunner = function addRunner(runner, runnerPromise) {
+    const tracerObj = module.exports.getTrace();
     tracerObj.trace.addEvent(runner, runnerPromise);
     tracerObj.currRunner = runner;
 };
@@ -133,10 +128,9 @@ module.exports.addRunner = function addRunner(runner, runnerPromise, tracer) {
 /**
  * Restarts the tracer. Has to be called after a trace has been sent to reset the tracer
  * and start collecting a new trace
- * @param {Object} tracer Optional tracer
  */
-module.exports.restart = function restart(tracer) {
-    const tracerObj = getTracer(tracer);
+module.exports.restart = function restart() {
+    const tracerObj = module.exports.getTrace();
     tracerObj.trace.clearExceptionList();
     tracerObj.trace.clearEventList();
     tracerObj.trace.setAppName(config.getConfig().appName);
@@ -152,8 +146,8 @@ module.exports.restart = function restart(tracer) {
  * @param {Object} tracer  Optional tracer
  * @return {*} traceSender's result
  */
-function sendCurrentTrace(traceSender, tracer) {
-    const tracerObj = getTracer(tracer);
+function sendCurrentTrace(traceSender) {
+    const tracerObj = module.exports.getTrace();
     const traceJson = {
         app_name: tracerObj.trace.getAppName(),
         token: tracerObj.trace.getToken(),
@@ -224,16 +218,15 @@ module.exports.postTrace = function postTrace(traceObject) {
 /**
  * Sends the trace to epsagon's infrastructure when all pending events are finished.
  * @param {function} runnerUpdateFunc function that sets the duration of the runner.
- * @param {Object} tracer Optional tracer
  * @returns {Promise} a promise that is resolved when the trace transmission ends.
  */
-module.exports.sendTrace = function sendTrace(runnerUpdateFunc, tracer) {
+module.exports.sendTrace = function sendTrace(runnerUpdateFunc) {
     utils.debugLog('Sending trace async');
-    const tracerObj = getTracer(tracer);
+    const tracerObj = module.exports.getTrace();
     return Promise.all(tracerObj.pendingEvents.values()).then(() => {
         // Setting runner's duration.
         runnerUpdateFunc();
-        return sendCurrentTrace(traceObject => module.exports.postTrace(traceObject), tracer);
+        return sendCurrentTrace(traceObject => module.exports.postTrace(traceObject));
     });
 };
 
@@ -243,9 +236,9 @@ module.exports.sendTrace = function sendTrace(runnerUpdateFunc, tracer) {
  * @param {Object} tracer  Optional tracer
  * @returns {Promise} a promise that is resolved when the trace transmission ends.
  */
-module.exports.sendTraceSync = function sendTraceSync(tracer) {
+module.exports.sendTraceSync = function sendTraceSync() {
     utils.debugLog('Sending trace sync');
-    const tracerObj = getTracer(tracer);
+    const tracerObj = module.exports.getTrace();
 
     tracerObj.pendingEvents.forEach((promise, event) => {
         if (event.getId() === '') {
@@ -259,16 +252,15 @@ module.exports.sendTraceSync = function sendTraceSync(tracer) {
         }
     });
 
-    return sendCurrentTrace(traceObject => module.exports.postTrace(traceObject), tracer);
+    return sendCurrentTrace(traceObject => module.exports.postTrace(traceObject));
 };
 
 /**
  * Add a custom label to the runner of the current trace.
  * @param {string} key key for the added label
  * @param {string} value value for the added label
- * @param {Object} tracer Optional tracer
  */
-module.exports.label = function addLabel(key, value, tracer) {
+module.exports.label = function addLabel(key, value) {
     // convert numbers to string
     const updatedValue = (typeof value === 'number') ? value.toString() : value;
 
@@ -276,16 +268,23 @@ module.exports.label = function addLabel(key, value, tracer) {
         return;
     }
 
-    const tracerObj = getTracer(tracer);
+    const tracerObj = module.exports.getTrace();
+    if (!tracerObj) {
+        utils.debugLog('Failed to label without an active tracer');
+        return;
+    }
     eventInterface.addLabelToMetadata(tracerObj.currRunner, key, updatedValue);
 };
 
 /**
  * Set runner as an error.
  * @param {Error} err error data
- * @param {Object} tracer Optional tracer
  */
-module.exports.setError = function setRunnerError(err, tracer) {
-    const tracerObj = getTracer(tracer);
+module.exports.setError = function setRunnerError(err) {
+    const tracerObj = module.exports.getTrace();
+    if (!tracerObj) {
+        utils.debugLog('Failed to setError without an active tracer');
+        return;
+    }
     eventInterface.setException(tracerObj.currRunner, err);
 };
