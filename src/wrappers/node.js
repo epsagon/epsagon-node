@@ -3,6 +3,7 @@
  */
 const uuid4 = require('uuid4');
 const tracer = require('../tracer.js');
+const traceObject = require('../trace_object.js');
 const utils = require('../utils.js');
 const consts = require('../consts');
 const serverlessEvent = require('../proto/event_pb.js');
@@ -47,6 +48,7 @@ function createRunner(functionToWrap, args) {
  * @return {function} The original function, wrapped by our tracer
  */
 module.exports.nodeWrapper = function nodeWrapper(functionToWrap) {
+    tracer.getTrace = traceObject.get;
     return (...args) => { // eslint-disable-line consistent-return
         tracer.restart();
         let runner;

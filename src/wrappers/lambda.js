@@ -4,6 +4,7 @@
 const uuid4 = require('uuid4');
 const util = require('util');
 const tracer = require('../tracer.js');
+const traceObject = require('../trace_object.js');
 const utils = require('../utils.js');
 const { getConfig } = require('../config.js');
 const awsLambdaTrigger = require('../triggers/aws_lambda.js');
@@ -34,6 +35,7 @@ function baseLambdaWrapper(
     shouldPassRunner = false,
     originalFunctionToWrap = null
 ) {
+    tracer.getTrace = traceObject.get;
     // eslint-disable-next-line consistent-return
     return (originalEvent, originalContext, originalCallback) => {
         tracer.restart();
