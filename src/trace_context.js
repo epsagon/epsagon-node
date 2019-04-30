@@ -27,9 +27,6 @@ function RunInContext(tracer, handle) {
  * @return {Object} tracer object
  */
 function get() {
-    if (!namespace) {
-        namespace = cls.createNamespace(namespaceId);
-    }
     return (namespace && namespace.active) ? namespace.get('tracer') : null;
 }
 
