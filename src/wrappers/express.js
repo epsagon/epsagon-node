@@ -60,6 +60,7 @@ function expressMiddleware(req, res, next) {
  * @return {Function} updated wrapped init
  */
 function expressWrapper(wrappedFunction) {
+    traceContext.init();
     const tracerObj = tracer.createTracer();
     tracer.getTrace = traceContext.get;
     return function internalExpressWrapper() {

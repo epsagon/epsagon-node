@@ -5,7 +5,7 @@
 const cls = require('cls-hooked');
 
 const namespaceId = 'epsagon-context';
-const namespace = cls.createNamespace(namespaceId);
+let namespace;
 
 
 /**
@@ -27,10 +27,23 @@ function RunInContext(tracer, handle) {
  * @return {Object} tracer object
  */
 function get() {
+    if (!namespace) {
+        namespace = cls.createNamespace(namespaceId);
+    }
     return (namespace && namespace.active) ? namespace.get('tracer') : null;
 }
 
+
+/**
+ * Initialize context namespace
+ */
+function init() {
+    namespace = cls.createNamespace(namespaceId);
+}
+
+
 module.exports = {
     get,
+    init,
     RunInContext,
 };

@@ -10,6 +10,7 @@ const pgPatcher = require('./events/pg.js');
 const mysqlPatcher = require('./events/mysql.js');
 const redisPatcher = require('./events/redis.js');
 const mongoPatcher = require('./events/mongodb.js');
+const expressPatcher = require('./wrappers/express.js');
 
 
 /**
@@ -38,8 +39,6 @@ if (!config.getConfig().isEpsagonPatchDisabled) {
 
     // Conditional patching that depends on the environment
     if (!utils.isLambdaEnv()) {
-        // eslint-disable-next-line global-require
-        const expressPatcher = require('./wrappers/express.js');
         [
             expressPatcher,
         ].forEach(patch);
