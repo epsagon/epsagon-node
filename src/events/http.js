@@ -75,6 +75,7 @@ function httpWrapper(wrappedFunction) {
             const headers = options.headers || {};
             const body = options.body || '';
             const path = options.path || '/';
+            const pathname = options.pathname || '/';
 
             protocol = protocol.slice(0, -1);
             const method = options.method || 'GET';
@@ -97,8 +98,9 @@ function httpWrapper(wrappedFunction) {
 
             awsEvent.setResource(resource);
             eventInterface.addToMetadata(awsEvent, {
-                url: `${protocol}://${hostname}${path}`,
+                url: `${protocol}://${hostname}${pathname}`,
             }, {
+                path,
                 request_headers: headers,
                 request_body: body,
             });
