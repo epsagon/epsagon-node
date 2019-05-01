@@ -4,13 +4,13 @@
  */
 const config = require('./config.js');
 const utils = require('./utils.js');
+const tryRequire = require('./try_require.js');
 const awsSDKPatcher = require('./events/aws_sdk.js');
 const httpPatcher = require('./events/http.js');
 const pgPatcher = require('./events/pg.js');
 const mysqlPatcher = require('./events/mysql.js');
 const redisPatcher = require('./events/redis.js');
 const mongoPatcher = require('./events/mongodb.js');
-const expressPatcher = require('./wrappers/express.js');
 
 
 /**
@@ -27,6 +27,19 @@ function patch(patcher) {
     }
 }
 
+/**
+ * Try to require a patcher module, otherwise return an empty init.
+ * @param {String} modulePath patcher module path
+ * @returns {Object} module
+ */
+function tryRequirePatch(modulePath) {
+    let patchModule = tryRequire(modulePath);
+    if (!patchModule) {
+        patchModule = { init: () => {} };
+    }
+    return patchModule;
+}
+
 if (!config.getConfig().isEpsagonPatchDisabled) {
     [
         awsSDKPatcher,
@@ -39,6 +52,8 @@ if (!config.getConfig().isEpsagonPatchDisabled) {
 
     // Conditional patching that depends on the environment
     if (!utils.isLambdaEnv()) {
+        const expressPatcher = tryRequirePatch('./wrappers/express.js');
+
         [
             expressPatcher,
         ].forEach(patch);
