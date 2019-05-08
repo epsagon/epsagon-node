@@ -63,13 +63,12 @@ function expressMiddleware(req, res, next) {
  */
 function expressWrapper(wrappedFunction) {
     traceContext.init();
-    const tracerObj = tracer.createTracer();
     tracer.getTrace = traceContext.get;
     return function internalExpressWrapper() {
         const result = wrappedFunction.apply(this, arguments);
         this.use(
             (req, res, next) => traceContext.RunInContext(
-                tracerObj,
+                tracer.createTracer,
                 () => expressMiddleware(req, res, next)
             )
         );

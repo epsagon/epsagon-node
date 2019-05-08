@@ -8,6 +8,7 @@ const tryRequire = require('../try_require.js');
 const utils = require('../utils.js');
 const tracer = require('../tracer.js');
 const traceContext = require('../trace_context.js');
+const eventInterface = require('../event.js');
 const hapiRunner = require('../runners/hapi.js');
 
 const Hapi = tryRequire('hapi');
@@ -35,37 +36,50 @@ function hapiMiddleware(request, h, originalHandler) {
     }
 
     // Inject trace functions
+    const { label, setError } = tracer;
     request.epsagon = {
-        label: tracer.label,
-        setError: tracer.setError,
+        label,
+        setError,
     };
 
     // Run the request, activate the context
     const response = originalHandler(request, h);
 
-    try {
-        hapiRunner.finishRunner(hapiEvent, request, response, startTime);
+    // Handle response
+    response.then(() => {
+        try {
+            hapiRunner.finishRunner(hapiEvent, request, response, startTime);
+        } catch (err) {
+            tracer.addException(err);
+        }
         tracer.sendTrace(() => {});
-    } catch (err) {
-        tracer.addException(err);
-    }
+    }).catch((err) => {
+        try {
+            hapiRunner.finishRunner(hapiEvent, request, response, startTime);
+            eventInterface.setException(hapiEvent, err);
+        } catch (epsagonErr) {
+            tracer.addException(epsagonErr);
+        }
+        tracer.sendTrace(() => {});
+    });
 
     return response;
 }
 
 
 /**
- * Wraps the Hapi module request function with tracing
+ * Wraps the Hapi route function with tracing
  * @param {Function} wrappedFunction Hapi's route init function
  * @return {Function} updated wrapped init
  */
 function hapiRouteWrapper(wrappedFunction) {
-    const tracerObj = tracer.createTracer();
+    traceContext.init();
     tracer.getTrace = traceContext.get;
     return function internalHapiRouteWrapper() {
         const originalHandler = arguments[0].handler;
+        // Changing the original handler to the middleware
         arguments[0].handler = (request, h) => traceContext.RunInContextAndReturn(
-            tracerObj,
+            tracer.createTracer,
             () => hapiMiddleware(request, h, originalHandler)
         );
         return wrappedFunction.apply(this, arguments);
