@@ -28,7 +28,7 @@ INITIAL_PWD=`pwd`
 build_num=$1
 result=0
 
-run_acceptance_test ${build_num} nodejs8.10 nodejs810
-run_acceptance_test ${build_num} nodejs6.10 nodejs610
+run_acceptance_test ${build_num} nodejs8.10 njs8
+run_acceptance_test ${build_num} nodejs6.10 njs6
 
 exit ${result}
