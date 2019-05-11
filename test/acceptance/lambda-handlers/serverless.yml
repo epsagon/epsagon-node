@@ -1,13 +1,14 @@
-service: acceptance-node-${self:custom.buildNumber}
+service: acceptance-node-${self:custom.buildNumber}-${opt:runtimeName}
 
 provider:
   name: aws
   runtime: ${opt:runtime}
   region: ${opt:region, 'us-east-1'}
   stage: dev
+  role: nodeAcceptanceRole
   environment:
     STAGE: dev
-    EPSAGON_DEBUG: TRUE
+    EPSAGON_DEBUG: "TRUE"
   package:
     exclude:
     - './**'
@@ -15,9 +16,6 @@ provider:
 
 custom:
   buildNumber: ${opt:buildNumber}
-  pythonRequirements:
-    dockerizePip: non-linux
-    dockerSsh: true
 
 functions:
   sanity:
@@ -115,3 +113,46 @@ functions:
     handler: handler.sync_3_param_callback_then_fail
   sync_3_param_callback_then_fail_e:
     handler: handler.sync_3_param_callback_then_fail_e
+
+resources:
+  Resources:
+    nodeAcceptanceRole:
+      Type: AWS::IAM::Role
+      Properties:
+        RoleName: nodeAcceptanceRole-${self:custom.buildNumber}-${opt:runtimeName}
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service:
+                  - lambda.amazonaws.com
+              Action: sts:AssumeRole
+        ManagedPolicyArns:
+          - arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole
+        Policies:
+          - PolicyName: myPolicyName
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - logs:CreateLogGroup
+                    - logs:CreateLogStream
+                    - logs:PutLogEvents
+                  Resource:
+                    - 'Fn::Join':
+                      - ':'
+                      -
+                        - 'arn:aws:logs'
+                        - Ref: 'AWS::Region'
+                        - Ref: 'AWS::AccountId'
+                        - 'log-group:/aws/lambda/*:*:*'
+                -  Effect: "Allow"
+                   Action:
+                     - "s3:PutObject"
+                   Resource:
+                     Fn::Join:
+                       - ""
+                       - - "arn:aws:s3:::"
+                         - "Ref" : "ServerlessDeploymentBucket"
