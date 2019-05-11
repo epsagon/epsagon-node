@@ -12,22 +12,9 @@ let namespace;
  * Creates an active context for tracer and run the handle
  * @param {Function} createTracer create a tracer object
  * @param {Function} handle function to run the context in
- */
-function RunInContext(createTracer, handle) {
-    namespace.run(() => {
-        namespace.set('tracer', createTracer());
-        handle();
-    });
-}
-
-
-/**
- * Creates an active context for tracer and run the handle. Return the original value
- * @param {Function} createTracer create a tracer object
- * @param {Function} handle function to run the context in
  * @returns {Object} The return value
  */
-function RunInContextAndReturn(createTracer, handle) {
+function RunInContext(createTracer, handle) {
     return namespace.runAndReturn(() => {
         namespace.set('tracer', createTracer());
         return handle();
@@ -56,5 +43,4 @@ module.exports = {
     get,
     init,
     RunInContext,
-    RunInContextAndReturn,
 };
