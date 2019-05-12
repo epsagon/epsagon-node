@@ -7,7 +7,7 @@ const AWS = require('aws-sdk');
 
 chai.use(chaiAsPromised);
 
-const SERVICE_PREFIX = `acceptance-node-${process.env.TRAVIS_BUILD_NUMBER}-${process.env.RUNTIME_NAME}-dev-`;
+const SERVICE_PREFIX = `acceptance-node-${process.env.TRAVIS_BUILD_NUMBER}-${process.env.RUNTIME_NAME}-`;
 const RUNTIME = process.env.RUNTIME || 'nodejs8.10'
 
 /**
