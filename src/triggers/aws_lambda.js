@@ -191,8 +191,8 @@ function createDynamoDBTrigger(event, trigger) {
         // in case of a delete - hash only the key.
         const item = (
             record.eventName === 'REMOVE' ?
-                AWS.DynamoDB.Converter.unmarshall(record.dynamodb.NewImage) :
-                AWS.DynamoDB.Converter.unmarshall(record.dynamodb.Keys)
+                AWS.DynamoDB.Converter.unmarshall(record.dynamodb.Keys) :
+                AWS.DynamoDB.Converter.unmarshall(record.dynamodb.NewImage)
         );
         itemHash = md5(JSON.sortify(item));
     }
