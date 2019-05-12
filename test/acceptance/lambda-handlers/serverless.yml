@@ -1,13 +1,13 @@
-service: acceptance-node-${self:custom.buildNumber}
+service: acceptance-node
 
 provider:
   name: aws
   runtime: ${opt:runtime}
   region: ${opt:region, 'us-east-1'}
-  stage: dev
+  stage: ${self:custom.buildNumber}-${opt:runtimeName}
   environment:
     STAGE: dev
-    EPSAGON_DEBUG: TRUE
+    EPSAGON_DEBUG: "TRUE"
   package:
     exclude:
     - './**'
@@ -15,9 +15,6 @@ provider:
 
 custom:
   buildNumber: ${opt:buildNumber}
-  pythonRequirements:
-    dockerizePip: non-linux
-    dockerSsh: true
 
 functions:
   sanity:

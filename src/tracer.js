@@ -203,7 +203,8 @@ module.exports.postTrace = function postTrace(traceObject) {
     utils.debugLog(`trace: ${JSON.stringify(traceObject, null, 2)}`);
     return session.post(
         config.getConfig().traceCollectorURL,
-        traceObject
+        traceObject,
+        { headers: { Authorization: `Bearer ${config.getConfig().token}` } }
     ).then((res) => {
         utils.debugLog('Trace posted!');
         return res;

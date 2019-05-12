@@ -53,9 +53,11 @@ if (!config.getConfig().isEpsagonPatchDisabled) {
     // Conditional patching that depends on the environment
     if (!utils.isLambdaEnv()) {
         const expressPatcher = tryRequirePatch('./wrappers/express.js');
+        const hapiPatcher = tryRequirePatch('./wrappers/hapi.js');
 
         [
             expressPatcher,
+            hapiPatcher,
         ].forEach(patch);
     }
 }

@@ -10,14 +10,14 @@ let namespace;
 
 /**
  * Creates an active context for tracer and run the handle
- * @param {Object} tracer object
+ * @param {Function} createTracer create a tracer object
  * @param {Function} handle function to run the context in
- * @param {Function} The runner event
+ * @returns {Object} The return value
  */
-function RunInContext(tracer, handle) {
-    namespace.run(() => {
-        namespace.set('tracer', tracer);
-        handle();
+function RunInContext(createTracer, handle) {
+    return namespace.runAndReturn(() => {
+        namespace.set('tracer', createTracer());
+        return handle();
     });
 }
 
