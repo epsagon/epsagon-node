@@ -164,6 +164,17 @@ describe('lambdaWrapper tests', () => {
         expect(resource.getMetadataMap().get('aws_account')).to.equal('4');
     });
 
+    it('lambdaWrapper: create runner event with alias', () => {
+        const contextData = {
+            invokedFunctionArn: '0:1:2:3:4:5:6:7',
+        };
+        Object.assign(this.context, contextData);
+
+        this.wrappedStub({}, this.context, this.callbackStub);
+        const resource = getRunner(this.addRunnerStub).getResource();
+        expect(resource.getMetadataMap().get('function_alias')).to.equal('7');
+    });
+
     it('lambdaWrapper: trigger creation failure', (done) => {
         this.createFromEventStub.reset();
         this.createFromEventStub.throws();

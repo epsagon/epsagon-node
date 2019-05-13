@@ -33,18 +33,25 @@ function createRunner(originalContext, resourceType = 'lambda') {
     ]);
 
     runner.setResource(runnerResource);
-    const AWSAccountNumber = (originalContext.invokedFunctionArn) ?
-        originalContext.invokedFunctionArn.split(':')[4] : '';
+    const arnSplit = (originalContext.invokedFunctionArn || '').split(':');
+    const AWSAccountNumber = (arnSplit.length > 4) ? arnSplit[4] : '';
 
     eventInterface.addToMetadata(runner, {
         log_stream_name: `${originalContext.logStreamName}`,
         log_group_name: `${originalContext.logGroupName}`,
         function_version: `${originalContext.functionVersion}`,
-        aws_account: `${AWSAccountNumber}`,
+        aws_account: AWSAccountNumber,
         cold_start: `${consts.COLD_START}`,
         memory: `${originalContext.memoryLimitInMB}`,
         region: consts.REGION,
     });
+
+    // Extract function alias if present
+    if (arnSplit.length === 8) {
+        eventInterface.addToMetadata(runner, {
+            function_alias: arnSplit[7],
+        });
+    }
 
     consts.COLD_START = false;
     return runner;
