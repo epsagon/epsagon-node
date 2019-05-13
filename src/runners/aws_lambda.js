@@ -46,7 +46,7 @@ function createRunner(originalContext, resourceType = 'lambda') {
         region: consts.REGION,
     });
 
-    // Extract function alias if present
+    // Extract function alias if present.
     if (arnSplit.length === 8) {
         eventInterface.addToMetadata(runner, {
             function_alias: arnSplit[7],
