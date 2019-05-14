@@ -5,6 +5,7 @@
 const uuid4 = require('uuid4');
 const shimmer = require('shimmer');
 const http = require('http');
+const https = require('https');
 const utils = require('../utils.js');
 const tracer = require('../tracer.js');
 const serverlessEvent = require('../proto/event_pb.js');
@@ -173,7 +174,6 @@ function httpWrapper(wrappedFunction) {
                 tracer.addException(err);
             });
 
-
             tracer.addEvent(awsEvent, responsePromise);
         } catch (error) {
             tracer.addException(error);
@@ -193,5 +193,6 @@ module.exports = {
      */
     init() {
         shimmer.wrap(http, 'request', httpWrapper);
+        shimmer.wrap(https, 'request', httpWrapper);
     },
 };
