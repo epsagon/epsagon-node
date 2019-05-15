@@ -4,6 +4,7 @@ provider:
   name: aws
   runtime: ${opt:runtime}
   region: ${opt:region, 'us-east-1'}
+  role: acceptanceRole
   stage: ${self:custom.buildNumber}-${opt:runtimeName}
   environment:
     STAGE: dev
@@ -112,3 +113,31 @@ functions:
     handler: handler.sync_3_param_callback_then_fail
   sync_3_param_callback_then_fail_e:
     handler: handler.sync_3_param_callback_then_fail_e
+
+resources:
+  Resources:
+    acceptanceRole:
+      Type: AWS::IAM::Role
+      Properties:
+        RoleName: acceptanceRole-${self:custom.buildNumber}-${opt:runtimeName}
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service:
+                  - lambda.amazonaws.com
+              Action: sts:AssumeRole
+        Policies:
+          - PolicyName: acceptancePolicyName-${self:custom.buildNumber}-${opt:runtimeName}
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                -  Effect: "Allow"
+                   Action:
+                     - "s3:PutObject"
+                   Resource:
+                     Fn::Join:
+                       - ""
+                       - - "arn:aws:s3:::"
+                         - "Ref" : "ServerlessDeploymentBucket"
