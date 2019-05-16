@@ -120,6 +120,9 @@ describe('Lambda Wrapper', () => {
             await basicTest('failsafe_no_tracer_init', input);
         });
     });
+    it('http wreck test', async () => {
+        await basicTestNoInput('wreck_test', 'hello');
+    });
 
     const syncOptions = ['sync'];
     const paramOptions = ['no', '1', '2', '3'];

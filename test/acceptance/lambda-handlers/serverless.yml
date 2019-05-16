@@ -114,6 +114,20 @@ functions:
   sync_3_param_callback_then_fail_e:
     handler: handler.sync_3_param_callback_then_fail_e
 
+  wreck_test:
+    handler: oauth_handler.wreck_test
+    events:
+      - http:
+          path: http_test
+          method: get
+
+  echo:
+    handler: oauth_handler.echo
+    events:
+      - http:
+          path: echo
+          method: post
+
 resources:
   Resources:
     acceptanceRole:
