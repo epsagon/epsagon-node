@@ -20,3 +20,5 @@ module.exports.COLD_START = true;
 module.exports.STEP_ID_NAME = 'Epsagon';
 
 module.exports.MAX_LABEL_SIZE = 100 * 1024;
+
+module.exports.MAX_TRACE_SIZE_BYTES = 64 * 1024;

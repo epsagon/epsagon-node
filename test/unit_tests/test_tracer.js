@@ -560,4 +560,57 @@ describe('sendTraceSync function tests', () => {
         tracer.sendTraceSync();
         expect(this.postStub.calledOnce).to.be.true;
     });
+
+    it('sendTraceSync: send too big trace', () => {
+        const eventToAdd1 = new serverlessEvent.Event([
+            'x'.repeat(100 * 1024),
+            0,
+            null,
+            'operation',
+            0,
+            0,
+        ]);
+
+        let shouldPromiseEnd1 = false;
+        const stubPromise1 = new Promise((resolve) => {
+            function checkFlag() {
+                if (!shouldPromiseEnd1) {
+                    setTimeout(checkFlag, 10);
+                } else {
+                    resolve();
+                }
+            }
+            checkFlag();
+        });
+
+        tracer.addEvent(eventToAdd1, stubPromise1);
+
+        const eventToAdd2 = new serverlessEvent.Event([
+            'id_123',
+            0,
+            null,
+            'runner',
+            0,
+            0,
+        ]);
+
+        let shouldPromiseEnd2 = false;
+        const stubPromise2 = new Promise((resolve) => {
+            function checkFlag() {
+                if (!shouldPromiseEnd2) {
+                    setTimeout(checkFlag, 10);
+                } else {
+                    resolve();
+                }
+            }
+            checkFlag();
+        });
+
+        tracer.addEvent(eventToAdd2, stubPromise2);
+
+        tracer.sendTraceSync();
+        expect(this.postStub.calledOnce).to.be.true;
+        shouldPromiseEnd1 = true;
+        shouldPromiseEnd2 = true;
+    });
 });
