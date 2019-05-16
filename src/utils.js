@@ -59,9 +59,46 @@ function isLambdaEnv() {
     return !!process.env.LAMBDA_TASK_ROOT;
 }
 
+/**
+ * This function allow you to modify a JS Promise by adding some status properties.
+ * Based on: http://stackoverflow.com/questions/21485545/is-there-a-way-to-tell-if-an-es6-promise-is-fulfilled-rejected-resolved
+ * But modified according to the specs of promises : https://promisesaplus.com/
+ * @param {Promise} promise the promise to make queryable
+ * @return {Promise} the queryable promise
+ */
+function makeQueryablePromise(promise) {
+    // Don't modify any promise that has been already modified.
+    if (promise.isResolved) return promise;
+
+    // Set initial state
+    let isPending = true;
+    let isRejected = false;
+    let isFulfilled = false;
+
+    // Observe the promise, saving the fulfillment in a closure scope.
+    const result = promise.then(
+        (v) => {
+            isFulfilled = true;
+            isPending = false;
+            return v;
+        },
+        (e) => {
+            isRejected = true;
+            isPending = false;
+            throw e;
+        }
+    );
+
+    result.isFulfilled = () => isFulfilled;
+    result.isPending = () => isPending;
+    result.isRejected = () => isRejected;
+    return result;
+}
+
 module.exports.createTimestampFromTime = createTimestampFromTime;
 module.exports.createTimestamp = createTimestamp;
 module.exports.createDurationTimestamp = createDurationTimestamp;
 module.exports.reflectPromise = reflectPromise;
 module.exports.debugLog = debugLog;
 module.exports.isLambdaEnv = isLambdaEnv;
+module.exports.makeQueryablePromise = makeQueryablePromise;
