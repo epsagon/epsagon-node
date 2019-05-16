@@ -5,6 +5,7 @@
 const uuid4 = require('uuid4');
 const shimmer = require('shimmer');
 const http = require('http');
+const https = require('https');
 const utils = require('../utils.js');
 const tracer = require('../tracer.js');
 const serverlessEvent = require('../proto/event_pb.js');
@@ -34,12 +35,12 @@ function isBlacklistURL(url) {
 
 /**
  * Set the duration of the event, and resolves the promise using the given function.
- * @param {object} awsEvent The current event
+ * @param {object} httpEvent The current event
  * @param {Function} resolveFunction Function that will be used to resolve the promise
  * @param {integer} startTime The time the event started at
  */
-function resolveHttpPromise(awsEvent, resolveFunction, startTime) {
-    awsEvent.setDuration(utils.createDurationTimestamp(startTime));
+function resolveHttpPromise(httpEvent, resolveFunction, startTime) {
+    httpEvent.setDuration(utils.createDurationTimestamp(startTime));
     resolveFunction();
 }
 
@@ -87,7 +88,7 @@ function httpWrapper(wrappedFunction) {
             ]);
 
             const startTime = Date.now();
-            const awsEvent = new serverlessEvent.Event([
+            const httpEvent = new serverlessEvent.Event([
                 `http-${uuid4()}`,
                 utils.createTimestampFromTime(startTime),
                 null,
@@ -96,8 +97,8 @@ function httpWrapper(wrappedFunction) {
                 errorCode.ErrorCode.OK,
             ]);
 
-            awsEvent.setResource(resource);
-            eventInterface.addToMetadata(awsEvent, {
+            httpEvent.setResource(resource);
+            eventInterface.addToMetadata(httpEvent, {
                 url: `${protocol}://${hostname}${pathname}`,
             }, {
                 path,
@@ -111,15 +112,19 @@ function httpWrapper(wrappedFunction) {
                     // This field is used to identify responses from 'Express'
                     metadataFields = { response_headers: { 'x-powered-by': res.headers['x-powered-by'] } };
                 }
+                eventInterface.addToMetadata(httpEvent, { status: res.statusCode });
+                if (res.statusCode >= 400) {
+                    eventInterface.setException(httpEvent, new Error(`Response code: ${res.statusCode}`));
+                }
                 // The complete headers will override metadata only when needed
-                eventInterface.addToMetadata(awsEvent, metadataFields, {
+                eventInterface.addToMetadata(httpEvent, metadataFields, {
                     response_headers: res.headers,
                 });
 
                 if ('x-amzn-requestid' in res.headers) {
                     // This is a request to AWS API Gateway
                     resource.setType('api_gateway');
-                    eventInterface.addToMetadata(awsEvent, {
+                    eventInterface.addToMetadata(httpEvent, {
                         request_trace_id: res.headers['x-amzn-requestid'],
                     });
                 }
@@ -131,7 +136,7 @@ function httpWrapper(wrappedFunction) {
                     });
                 }
                 res.on('end', () => {
-                    eventInterface.addToMetadata(awsEvent, {}, {
+                    eventInterface.addToMetadata(httpEvent, {}, {
                         response_body: data,
                     });
                 });
@@ -159,22 +164,21 @@ function httpWrapper(wrappedFunction) {
                     if (clientRequest.aborted) {
                         patchedError.message += '\nRequest aborted';
                     }
-                    eventInterface.setException(awsEvent, patchedError);
+                    eventInterface.setException(httpEvent, patchedError);
                 });
 
                 clientRequest.on('close', () => {
-                    resolveHttpPromise(awsEvent, resolve, startTime);
+                    resolveHttpPromise(httpEvent, resolve, startTime);
                 });
 
                 clientRequest.on('response', () => {
-                    resolveHttpPromise(awsEvent, resolve, startTime);
+                    resolveHttpPromise(httpEvent, resolve, startTime);
                 });
             }).catch((err) => {
                 tracer.addException(err);
             });
 
-
-            tracer.addEvent(awsEvent, responsePromise);
+            tracer.addEvent(httpEvent, responsePromise);
         } catch (error) {
             tracer.addException(error);
         }
@@ -193,5 +197,6 @@ module.exports = {
      */
     init() {
         shimmer.wrap(http, 'request', httpWrapper);
+        shimmer.wrap(https, 'request', httpWrapper);
     },
 };

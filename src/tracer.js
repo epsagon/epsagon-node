@@ -65,7 +65,10 @@ module.exports.addEvent = function addEvent(event, promise) {
         return;
     }
     if (promise !== undefined) {
-        tracerObj.pendingEvents.set(event, utils.reflectPromise(promise));
+        tracerObj.pendingEvents.set(
+            event,
+            utils.makeQueryablePromise(utils.reflectPromise(promise))
+        );
     }
 
     tracerObj.trace.addEvent(event);
@@ -263,7 +266,7 @@ module.exports.sendTraceSync = function sendTraceSync() {
     const tracerObj = module.exports.getTrace();
 
     tracerObj.pendingEvents.forEach((promise, event) => {
-        if (event.getId() === '') {
+        if (promise.isPending()) {
             // Consider changing to report a different type of error. Maybe a new error code
             // describing an unknown operation state
             event.setId(uuid4());
@@ -271,6 +274,7 @@ module.exports.sendTraceSync = function sendTraceSync() {
                 event,
                 Error('Operation not completed because of premature Lambda exit')
             );
+            event.setDuration(utils.createDurationTimestamp(event.getStartTime() * 1000));
         }
     });
 
