@@ -66,66 +66,9 @@ function handler(event, context, callback) {
 }
 ```
 
-## Express application
+## Web frameworks
 
-If you're running express.js application on any non Lambda environment, you can still use Epsagon!
-Note: Only Express 4 and above is supported
-You can accomplish that with the following example:
-
-```node
-const express = require('express');
-const epsagon = require('epsagon');
-
-epsagon.init({
-    token: 'my-secret-token',
-    appName: 'my-app-name',
-    metadataOnly: false,
-});
-
-const app = express()
-
-app.get('/', (req, res) => res.send('Hello World!'))
-
-app.listen(3000)
-```
-
-## Hapi application
-
-If you're running Hapi.js application on any non Lambda environment, you can still use Epsagon!
-Note: Only Hapi 17 and above is supported
-You can accomplish that with the following example:
-
-```node
-const Hapi = require('hapi');
-const epsagon = require('epsagon');
-
-epsagon.init({
-    token: 'my-secret-token',
-    appName: 'my-app-name',
-    metadataOnly: false,
-});
-
-const init = async () => {
-
-    const server = Hapi.server({
-        port: 3000,
-        host: 'localhost'
-    });
-
-    server.route({
-        method: 'GET',
-        path:'/',
-        handler: (request, h) => {
-            return 'Hello World!';
-        }
-    });
-
-    await server.start();
-    console.log('Server running on %ss', server.info.uri);
-};
-
-init();
-```
+Support for Express, Hapi, and other frameworks is done through [epsagon-frameworks](https://github.com/epsagon/epsagon-node-frameworks)
 
 
 ## Copyright
