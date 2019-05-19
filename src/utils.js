@@ -52,14 +52,6 @@ function debugLog(...args) {
 }
 
 /**
- * Detects if code is running on Lambda environment
- * @return {Boolean} true if running on Lambda, otherwise false
- */
-function isLambdaEnv() {
-    return !!process.env.LAMBDA_TASK_ROOT;
-}
-
-/**
  * This function allow you to modify a JS Promise by adding some status properties.
  * Based on: http://stackoverflow.com/questions/21485545/is-there-a-way-to-tell-if-an-es6-promise-is-fulfilled-rejected-resolved
  * But modified according to the specs of promises : https://promisesaplus.com/
@@ -100,5 +92,4 @@ module.exports.createTimestamp = createTimestamp;
 module.exports.createDurationTimestamp = createDurationTimestamp;
 module.exports.reflectPromise = reflectPromise;
 module.exports.debugLog = debugLog;
-module.exports.isLambdaEnv = isLambdaEnv;
 module.exports.makeQueryablePromise = makeQueryablePromise;
