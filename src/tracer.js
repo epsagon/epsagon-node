@@ -140,6 +140,24 @@ module.exports.restart = function restart() {
 };
 
 /**
+ * Removes all operations from a given trace. Only runner and trigger are kept.
+ * @param {Json} traceJson: Trace JSON to remove operations from.
+ * @return {*} List of filtered operations
+ */
+function stripOperations(traceJson) {
+    const filteredEvents = [];
+    traceJson.events.forEach((entry) => {
+        if (entry.origin === 'runner' || entry.origin === 'trigger') {
+            filteredEvents.push(entry);
+        } else {
+            utils.debugLog('Too big operation filtered out.');
+        }
+    });
+
+    return filteredEvents;
+}
+
+/**
  * Builds and sends current collected trace
  * Sends the trace to the epsagon infrastructure now, assuming all required event's promises was
  * handled
@@ -190,6 +208,10 @@ function sendCurrentTrace(traceSender) {
         version: tracerObj.trace.getVersion(),
         platform: tracerObj.trace.getPlatform(),
     };
+
+    if (JSON.stringify(traceJson).length > consts.MAX_TRACE_SIZE_BYTES) {
+        traceJson.events = stripOperations(traceJson);
+    }
 
     const sendResult = traceSender(traceJson);
     tracerObj.pendingEvents.clear();
