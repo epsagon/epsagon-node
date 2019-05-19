@@ -6,12 +6,15 @@ const uuid4 = require('uuid4');
 const shimmer = require('shimmer');
 const http = require('http');
 const https = require('https');
+const tryRequire = require('../try_require.js');
 const utils = require('../utils.js');
 const tracer = require('../tracer.js');
 const serverlessEvent = require('../proto/event_pb.js');
 const eventInterface = require('../event.js');
 const errorCode = require('../proto/error_code_pb.js');
 const config = require('../config.js');
+
+const Wreck = tryRequire('wreck');
 
 const URL_BLACKLIST = {
     'tc.epsagon.com': 'endsWith',
@@ -107,6 +110,7 @@ function httpWrapper(wrappedFunction) {
             });
 
             const patchedCallback = (res) => {
+                const { isWreck } = (options.agent || {});
                 let metadataFields = {};
                 if ('x-powered-by' in res.headers) {
                     // This field is used to identify responses from 'Express'
@@ -130,7 +134,7 @@ function httpWrapper(wrappedFunction) {
                 }
 
                 let data = '';
-                if (!config.getConfig().metadataOnly) {
+                if (!config.getConfig().metadataOnly && !isWreck) {
                     res.on('data', (chunk) => {
                         data += chunk;
                     });
@@ -191,6 +195,32 @@ function httpWrapper(wrappedFunction) {
     };
 }
 
+
+/**
+ * Wraps Wreck's request to add "isWreck" flag.
+ * This flag is used to mark to not extract the data from the response since we override it.
+ * @param {Function} wrappedFunction The Wreck's request module
+ * @returns {Function} The wrapped function
+ */
+function WreckWrapper(wrappedFunction) {
+    return function internalWreckWrapper() {
+        // Marking all possible agents
+        if (this.agents.https && !this.agents.https.isWreck) {
+            this.agents.https.isWreck = true;
+            utils.debugLog('Setting Wreck flag on https');
+        }
+        if (this.agents.http && !this.agents.http.isWreck) {
+            this.agents.http.isWreck = true;
+            utils.debugLog('Setting Wreck flag on http');
+        }
+        if (this.agents.httpsAllowUnauthorized && !this.agents.httpsAllowUnauthorized.isWreck) {
+            this.agents.httpsAllowUnauthorized.isWreck = true;
+            utils.debugLog('Setting Wreck flag on httpsAllowUnauthorized');
+        }
+        return wrappedFunction.apply(this, arguments); // eslint-disable-line prefer-rest-params
+    };
+}
+
 module.exports = {
     /**
      * Initializes the http tracer
@@ -198,5 +228,8 @@ module.exports = {
     init() {
         shimmer.wrap(http, 'request', httpWrapper);
         shimmer.wrap(https, 'request', httpWrapper);
+        if (Wreck) {
+            shimmer.wrap(Wreck, 'request', WreckWrapper);
+        }
     },
 };
