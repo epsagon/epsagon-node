@@ -26,12 +26,12 @@ describe('batchWrapper tests', () => {
         this.sendTraceStub = sinon.stub(
             tracer,
             'sendTrace'
-        );
+        ).returns(Promise.resolve('success'));
 
         this.sendTraceSyncStub = sinon.stub(
             tracer,
             'sendTraceSync'
-        );
+        ).returns(Promise.resolve('success'));
 
         this.setExceptionStub = sinon.stub(
             eventInterface,
