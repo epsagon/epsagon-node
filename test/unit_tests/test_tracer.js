@@ -141,7 +141,7 @@ describe('tracer module tests', () => {
         expect(tracerObj.get().trace.getEventList()[2]).to.equal(secondEventToAdd);
     });
 
-    it('addEvent: add an event and a result promise to the tracer', (doneCallback) => {
+    it('addEvent: add an event and a result promise to the tracer', () => {
         tracer.getTrace = tracerObj.get;
         const eventToAdd = new serverlessEvent.Event();
         let shouldPromiseResolve = false;
@@ -158,12 +158,12 @@ describe('tracer module tests', () => {
 
         tracer.addEvent(eventToAdd, stubPromise);
         expect(tracerObj.get().trace.getEventList()[1]).to.equal(eventToAdd);
-        tracer.sendTrace(() => {}).then(() => {
+        const sendTracePromise = tracer.sendTrace(() => {}).then(() => {
             expect(this.postStub.called).to.be.true;
-            doneCallback();
         });
         expect(this.postStub.called).to.be.false;
         shouldPromiseResolve = true;
+        return sendTracePromise;
     });
 
     it('addLabel: Add a label to the trace', () => {
@@ -267,13 +267,14 @@ describe('tracer module tests', () => {
         let sendPromise = tracer.sendTrace(() => {});
         expect(sendPromise).to.be.a('promise');
         sendPromise = sendPromise.then(() => {
-            expect(tracer.session.called).to.be.true;
+            expect(this.postStub.called).to.be.true;
         });
 
         expect(this.postStub.called).to.be.false;
+        return sendPromise;
     });
 
-    it('sendTrace: post after all events resolved', (doneCallback) => {
+    it('sendTrace: post after all events resolved', () => {
         const eventToAdd = new serverlessEvent.Event();
         let shouldPromiseResolve = false;
         const stubPromise = new Promise((resolve) => {
@@ -293,14 +294,14 @@ describe('tracer module tests', () => {
         expect(sendPromise).to.be.a('promise');
         sendPromise = sendPromise.then(() => {
             expect(this.postStub.called).to.be.true;
-            doneCallback();
         });
 
         expect(this.postStub.called).to.be.false;
         shouldPromiseResolve = true;
+        return sendPromise;
     });
 
-    it('sendTrace: post even if event rejected', (doneCallback) => {
+    it('sendTrace: post even if event rejected', () => {
         const eventToAdd = new serverlessEvent.Event();
         let shouldPromiseEnd = false;
         const stubPromise = new Promise((resolve, reject) => {
@@ -320,14 +321,14 @@ describe('tracer module tests', () => {
         expect(sendPromise).to.be.a('promise');
         sendPromise = sendPromise.then(() => {
             expect(this.postStub.called).to.be.true;
-            doneCallback();
         });
 
         expect(this.postStub.called).to.be.false;
         shouldPromiseEnd = true;
+        return sendPromise;
     });
 
-    it('sendTrace: wait for more then 1 event', (doneCallback) => {
+    it('sendTrace: wait for more then 1 event', () => {
         const eventToAdd1 = new serverlessEvent.Event();
         let shouldPromiseEnd1 = false;
         const stubPromise1 = new Promise((resolve) => {
@@ -362,16 +363,16 @@ describe('tracer module tests', () => {
         expect(sendPromise).to.be.a('promise');
         sendPromise = sendPromise.then(() => {
             expect(this.postStub.called).to.be.true;
-            doneCallback();
         });
 
         expect(this.postStub.called).to.be.false;
         shouldPromiseEnd1 = true;
         expect(this.postStub.called).to.be.false;
         shouldPromiseEnd2 = true;
+        return sendPromise;
     });
 
-    it('sendTrace: wait for more then 1 event even if some rejects', (doneCallback) => {
+    it('sendTrace: wait for more then 1 event even if some rejects', () => {
         const eventToAdd1 = new serverlessEvent.Event();
         let shouldPromiseEnd1 = false;
         const stubPromise1 = new Promise((resolve) => {
@@ -406,33 +407,24 @@ describe('tracer module tests', () => {
         expect(sendPromise).to.be.a('promise');
         sendPromise = sendPromise.then(() => {
             expect(this.postStub.called).to.be.true;
-            doneCallback();
         });
 
         expect(this.postStub.called).to.be.false;
         shouldPromiseEnd1 = true;
         expect(this.postStub.called).to.be.false;
         shouldPromiseEnd2 = true;
-    });
-
-    it('sendTrace: request post fails', () => {
-        this.postStub.reset();
-        const error = new Error();
-        this.postStub.returns(Promise.reject(error));
-
-        expect(tracer.sendTrace(() => {})).to.eventually.equal(error);
-
-        expect(this.postStub.called).to.be.false;
+        return sendPromise;
     });
 
     it('sendTrace: calling set runner duration function', () => {
         const callback = sinon.stub();
 
-        tracer.sendTrace(callback).then(() => {
+        const sendPromise = tracer.sendTrace(callback).then(() => {
             expect(callback.called).to.be.true;
         });
 
         expect(callback.called).to.be.false;
+        return sendPromise;
     });
 });
 
@@ -551,14 +543,6 @@ describe('sendTraceSync function tests', () => {
 
         expect(this.postStub.calledOnce).to.be.true;
         shouldPromiseEnd1 = true;
-    });
-
-    it('sendTraceSync: post fails', () => {
-        this.postStub.reset();
-        this.postStub.returns(Promise.reject(new Error()));
-
-        tracer.sendTraceSync();
-        expect(this.postStub.calledOnce).to.be.true;
     });
 
     it('sendTraceSync: send too big trace', () => {
