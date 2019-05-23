@@ -54,6 +54,12 @@ function resolveHttpPromise(httpEvent, resolveFunction, startTime) {
  */
 function httpWrapper(wrappedFunction) {
     return function internalHttpWrapper(options, callback) {
+        if (callback && callback.__epsagonCallback) { // eslint-disable no-underscore-dangle
+            // we are already tracing this request. can happen in
+            // https->http cases
+            return wrappedFunction.apply(this, [options, callback]);
+        }
+
         let clientRequest = null;
         try {
             const hostname = (
@@ -148,6 +154,7 @@ function httpWrapper(wrappedFunction) {
                     callback(res);
                 }
             };
+            patchedCallback.__epsagonCallback = true; // eslint-disable no-underscore-dangle
 
             clientRequest = wrappedFunction.apply(this, [options, patchedCallback]);
 
@@ -157,7 +164,7 @@ function httpWrapper(wrappedFunction) {
                     isTimeout = true;
                 });
 
-                clientRequest.on('error', (error) => {
+                clientRequest.once('error', (error) => {
                     const patchedError = new Error();
                     patchedError.message = error.message;
                     patchedError.stack = error.stack;
@@ -169,6 +176,13 @@ function httpWrapper(wrappedFunction) {
                         patchedError.message += '\nRequest aborted';
                     }
                     eventInterface.setException(httpEvent, patchedError);
+                    resolveHttpPromise(httpEvent, resolve, startTime);
+
+                    // if there are no listeners on eventEmitter.error, the process
+                    // should explode. let's simulate that.
+                    if (clientRequest.listenerCount('error') === 0) {
+                        throw error; // no error listener, we should explode
+                    }
                 });
 
                 clientRequest.on('close', () => {
@@ -195,7 +209,6 @@ function httpWrapper(wrappedFunction) {
     };
 }
 
-
 /**
  * Wraps Wreck's request to add "isWreck" flag.
  * This flag is used to mark to not extract the data from the response since we override it.
@@ -221,12 +234,29 @@ function WreckWrapper(wrappedFunction) {
     };
 }
 
+/**
+ * We have to replace http.get since it uses a closure to reference
+ * the requeset
+ * @param {Module} module The module to use (http or https)
+ * @return {Function} the wrapped function
+ */
+function httpGetWrapper(module) {
+    return function internalHttpGetWrapper(input, options, callback) {
+        const req = module.request(input, options, callback);
+        req.end();
+        return req;
+    };
+}
+
 module.exports = {
     /**
      * Initializes the http tracer
      */
     init() {
+        shimmer.wrap(http, 'get', () => httpGetWrapper(http));
         shimmer.wrap(http, 'request', httpWrapper);
+
+        shimmer.wrap(https, 'get', () => httpGetWrapper(https));
         shimmer.wrap(https, 'request', httpWrapper);
         if (Wreck) {
             shimmer.wrap(Wreck, 'request', WreckWrapper);

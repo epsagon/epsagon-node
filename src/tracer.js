@@ -7,6 +7,7 @@ const http = require('http');
 const https = require('https');
 const trace = require('./proto/trace_pb.js');
 const exception = require('./proto/exception_pb.js');
+const errorCode = require('./proto/error_code_pb.js');
 const utils = require('./utils.js');
 const config = require('./config.js');
 const eventInterface = require('./event.js');
@@ -269,12 +270,18 @@ module.exports.sendTraceSync = function sendTraceSync() {
         if (promise.isPending()) {
             // Consider changing to report a different type of error. Maybe a new error code
             // describing an unknown operation state
-            event.setId(uuid4());
-            eventInterface.setException(
-                event,
-                Error('Operation not completed because of premature Lambda exit')
-            );
-            event.setDuration(utils.createDurationTimestamp(event.getStartTime() * 1000));
+            if (!event.getId()) {
+                event.setId(uuid4());
+            }
+            if (event.getErrorCode() === errorCode.ErrorCode.OK) {
+                eventInterface.setException(
+                    event,
+                    Error('Operation not completed because of premature Lambda exit')
+                );
+            }
+            if (event.getDuration() === 0) {
+                event.setDuration(utils.createDurationTimestamp(event.getStartTime() * 1000));
+            }
         }
     });
 
