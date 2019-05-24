@@ -54,7 +54,7 @@ function resolveHttpPromise(httpEvent, resolveFunction, startTime) {
  */
 function httpWrapper(wrappedFunction) {
     return function internalHttpWrapper(options, callback) {
-        if (callback && callback.__epsagonCallback) { // eslint-disable no-underscore-dangle
+        if (callback && callback.__epsagonCallback) { // eslint-disable-line no-underscore-dangle
             // we are already tracing this request. can happen in
             // https->http cases
             return wrappedFunction.apply(this, [options, callback]);
@@ -154,7 +154,7 @@ function httpWrapper(wrappedFunction) {
                     callback(res);
                 }
             };
-            patchedCallback.__epsagonCallback = true; // eslint-disable no-underscore-dangle
+            patchedCallback.__epsagonCallback = true; // eslint-disable-line no-underscore-dangle
 
             clientRequest = wrappedFunction.apply(this, [options, patchedCallback]);
 
