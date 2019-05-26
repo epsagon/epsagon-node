@@ -7,6 +7,7 @@ const eventInterface = require('../event.js');
 const errorCode = require('../proto/error_code_pb.js');
 
 const MAX_QUERY_SIZE = 2048;
+const MAX_PARAMS_LENGTH = 5;
 
 /**
  * Parse query arguments - get the callback and params
@@ -81,6 +82,11 @@ module.exports.wrapSqlQuery = function wrapSqlQuery(queryString, params, callbac
         }, {
             Query: queryString.substring(0, MAX_QUERY_SIZE),
         });
+        if (params && params.length) {
+            eventInterface.addToMetadata(dbapiEvent, {}, {
+                Params: params.slice(0, MAX_PARAMS_LENGTH),
+            });
+        }
 
         const responsePromise = new Promise((resolve) => {
             patchedCallback = (err, res, fields) => {
@@ -97,11 +103,11 @@ module.exports.wrapSqlQuery = function wrapSqlQuery(queryString, params, callbac
                     eventInterface.addToMetadata(dbapiEvent, { rowCount });
                 }
 
+                resolve();
+
                 if (callback) {
                     callback(err, res, fields);
                 }
-
-                resolve();
             };
         }).catch((err) => {
             tracer.addException(err);

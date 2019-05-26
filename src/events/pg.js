@@ -12,15 +12,61 @@ const Pool = tryRequire('pg-pool');
  */
 function pgClientWrapper(wrappedFunction) {
     return function internalPgClientWrapper(queryString, arg1, arg2) {
-        const { params, callback } = sqlWrapper.parseQueryArgs(arg1, arg2);
-        const patchedCallback = sqlWrapper.wrapSqlQuery(
-            queryString,
-            params,
+        if (queryString && queryString.submit) {
+            // this is a Submittable instance, not supported yet - return as is.
+            return wrappedFunction.apply(this, [queryString, arg1, arg2]);
+        }
+
+        const parseResult = sqlWrapper.parseQueryArgs(arg1, arg2);
+        let { params } = parseResult;
+        const { callback } = parseResult;
+
+        let sqlString = queryString;
+        let sqlParams = params;
+        if (queryString && queryString.text) {
+            // this is a query object, use the values inside it.
+            sqlString = queryString.text;
+            if (queryString.values && params && !params.length) {
+                // values are in the object
+                params = undefined;
+                sqlParams = queryString.values;
+            }
+        }
+
+        let patchedCallback = sqlWrapper.wrapSqlQuery(
+            sqlString,
+            sqlParams,
             callback,
             this.connectionParameters || this._clients[0], // eslint-disable-line
             'pg'
         );
-        return wrappedFunction.apply(this, [queryString, params, patchedCallback]);
+
+
+        if (callback) {
+            // it's safe to use callback, user not expecting a Promise.
+            return wrappedFunction.apply(this, [queryString, params, patchedCallback]);
+        }
+
+        // verify we have a patched callback;
+        patchedCallback = patchedCallback || (() => {});
+        // we need to return a Promise. we can't pass patchedCallback or a Promise won't be returned
+        const responsePromise = wrappedFunction.apply(this, [queryString, params]);
+
+        if (!(responsePromise && typeof responsePromise.then === 'function')) {
+            // the return value is not a promise. This is an old version
+            // call patchedCallback now or it will never be called
+            // using empty result
+            patchedCallback(null, null, null);
+        }
+
+        // we got a promise. call patchedCallback when it resolves/rejects.
+        return responsePromise.then((res) => {
+            patchedCallback(null, res, null);
+            return res;
+        }, (err) => {
+            patchedCallback(err, null, null);
+            throw err;
+        });
     };
 }
 
