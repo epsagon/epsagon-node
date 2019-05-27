@@ -447,10 +447,11 @@ describe('sendTraceSync function tests', () => {
         this.postStub.restore();
     });
 
-    it('sendTraceSync: post when no events pending', () => {
-        tracer.sendTraceSync();
-        expect(this.postStub.calledOnce).to.be.true;
-    });
+    it('sendTraceSync: post when no events pending', () => (
+        tracer.sendTraceSync().then(() => {
+            expect(this.postStub.calledOnce).to.be.true;
+        })
+    ));
 
     it('sendTraceSync: post event if not all events resolved', () => {
         const eventToAdd = new serverlessEvent.Event();
@@ -467,10 +468,10 @@ describe('sendTraceSync function tests', () => {
         });
 
         tracer.addEvent(eventToAdd, stubPromise);
-        tracer.sendTraceSync();
-
-        expect(this.postStub.calledOnce).to.be.true;
-        shouldPromiseEnd = true;
+        return tracer.sendTraceSync().then(() => {
+            expect(this.postStub.calledOnce).to.be.true;
+            shouldPromiseEnd = true;
+        });
     });
 
     it('sendTraceSync: post even if event rejected', () => {
@@ -478,8 +479,9 @@ describe('sendTraceSync function tests', () => {
         const stubPromise = Promise.reject(new Error('failed'));
         tracer.addEvent(eventToAdd, stubPromise);
 
-        tracer.sendTraceSync();
-        expect(this.postStub.calledOnce).to.be.true;
+        return tracer.sendTraceSync().then(() => {
+            expect(this.postStub.calledOnce).to.be.true;
+        });
     });
 
     it('sendTraceSync: send even with for more then 1 event pending', () => {
@@ -512,10 +514,11 @@ describe('sendTraceSync function tests', () => {
         });
 
         tracer.addEvent(eventToAdd2, stubPromise2);
-        tracer.sendTraceSync();
-        expect(this.postStub.calledOnce).to.be.true;
-        shouldPromiseEnd1 = true;
-        shouldPromiseEnd2 = true;
+        return tracer.sendTraceSync().then(() => {
+            expect(this.postStub.calledOnce).to.be.true;
+            shouldPromiseEnd1 = true;
+            shouldPromiseEnd2 = true;
+        });
     });
 
     it('sendTraceSync: there is more then 1 event and some rejects', () => {
@@ -539,10 +542,10 @@ describe('sendTraceSync function tests', () => {
 
         tracer.addEvent(eventToAdd2, stubPromise2);
 
-        tracer.sendTraceSync();
-
-        expect(this.postStub.calledOnce).to.be.true;
-        shouldPromiseEnd1 = true;
+        return tracer.sendTraceSync().then(() => {
+            expect(this.postStub.calledOnce).to.be.true;
+            shouldPromiseEnd1 = true;
+        });
     });
 
     it('sendTraceSync: send too big trace', () => {
@@ -592,9 +595,10 @@ describe('sendTraceSync function tests', () => {
 
         tracer.addEvent(eventToAdd2, stubPromise2);
 
-        tracer.sendTraceSync();
-        expect(this.postStub.calledOnce).to.be.true;
-        shouldPromiseEnd1 = true;
-        shouldPromiseEnd2 = true;
+        return tracer.sendTraceSync().then(() => {
+            expect(this.postStub.calledOnce).to.be.true;
+            shouldPromiseEnd1 = true;
+            shouldPromiseEnd2 = true;
+        });
     });
 });
