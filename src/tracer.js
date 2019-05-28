@@ -266,32 +266,26 @@ module.exports.sendTraceSync = function sendTraceSync() {
     utils.debugLog('Sending trace sync');
     const tracerObj = module.exports.getTrace();
 
-    // we give the promises a chance to update value to resolved.
-    return Promise.race([
-        Promise.all(tracerObj.pendingEvents.values()),
-        Promise.resolve(),
-    ]).then(() => {
-        tracerObj.pendingEvents.forEach((promise, event) => {
-            if (promise.isPending()) {
-                // Consider changing to report a different type of error. Maybe a new error code
-                // describing an unknown operation state
-                if (!event.getId()) {
-                    event.setId(uuid4());
-                }
-                if (event.getErrorCode() === errorCode.ErrorCode.OK) {
-                    eventInterface.setException(
-                        event,
-                        Error('Operation not completed because of premature Lambda exit')
-                    );
-                }
-                if (event.getDuration() === 0) {
-                    event.setDuration(utils.createDurationTimestamp(event.getStartTime() * 1000));
-                }
+    tracerObj.pendingEvents.forEach((promise, event) => {
+        if (promise.isPending()) {
+            // Consider changing to report a different type of error. Maybe a new error code
+            // describing an unknown operation state
+            if (!event.getId()) {
+                event.setId(uuid4());
             }
-        });
-
-        return sendCurrentTrace(traceObject => module.exports.postTrace(traceObject));
+            if (event.getErrorCode() === errorCode.ErrorCode.OK) {
+                eventInterface.setException(
+                    event,
+                    Error('Operation not completed because of premature Lambda exit')
+                );
+            }
+            if (event.getDuration() === 0) {
+                event.setDuration(utils.createDurationTimestamp(event.getStartTime() * 1000));
+            }
+        }
     });
+
+    return sendCurrentTrace(traceObject => module.exports.postTrace(traceObject));
 };
 
 /**
