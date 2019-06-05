@@ -115,14 +115,15 @@ function httpWrapper(wrappedFunction) {
                 errorCode.ErrorCode.OK,
             ]);
 
+            const url = `${protocol}://${hostname}${pathname}`;
+            const fullURL = `${url}${path}`
             httpEvent.setResource(resource);
-            eventInterface.addToMetadata(httpEvent, {
-                url: `${protocol}://${hostname}${pathname}`,
-            }, {
-                path,
-                request_headers: headers,
-                request_body: body,
-            });
+            eventInterface.addToMetadata(httpEvent,
+                { url, }, {
+                    path,
+                    request_headers: headers,
+                    request_body: body,
+                });
 
             const patchedCallback = (res) => {
                 const { isWreck } = (options.agent || {});
@@ -149,10 +150,9 @@ function httpWrapper(wrappedFunction) {
                 }
 
                 let data = '';
-                console.log(options.uri.href); //eslint-disable-line
                 if (!config.getConfig().metadataOnly &&
                     !isWreck &&
-                    !isURLIgnoredByUser(options.uri.href)) {
+                    !isURLIgnoredByUser(fullURL)) {
                     res.on('data', (chunk) => {
                         data += chunk;
                     });
