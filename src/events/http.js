@@ -37,6 +37,16 @@ function isBlacklistURL(url) {
 }
 
 /**
+ * Checks if a URL is in the user-defined blacklist.
+ * @param {string} url The URL to check
+ * @returns {boolean} True if it is in the user-defined blacklist, False otherwise.
+ */
+function isURLIgnoredByUser(url) {
+    return config.getConfig().urlPatternsToIgnore.some(pattern => url.includes(pattern));
+}
+
+
+/**
  * Set the duration of the event, and resolves the promise using the given function.
  * @param {object} httpEvent The current event
  * @param {Function} resolveFunction Function that will be used to resolve the promise
@@ -59,7 +69,6 @@ function httpWrapper(wrappedFunction) {
             // https->http cases
             return wrappedFunction.apply(this, [options, callback]);
         }
-
         let clientRequest = null;
         try {
             const hostname = (
@@ -106,14 +115,15 @@ function httpWrapper(wrappedFunction) {
                 errorCode.ErrorCode.OK,
             ]);
 
+            const url = `${protocol}://${hostname}${pathname}`;
+            const fullURL = `${url}${path}`;
             httpEvent.setResource(resource);
-            eventInterface.addToMetadata(httpEvent, {
-                url: `${protocol}://${hostname}${pathname}`,
-            }, {
-                path,
-                request_headers: headers,
-                request_body: body,
-            });
+            eventInterface.addToMetadata(httpEvent,
+                { url }, {
+                    path,
+                    request_headers: headers,
+                    request_body: body,
+                });
 
             const patchedCallback = (res) => {
                 const { isWreck } = (options.agent || {});
@@ -140,7 +150,9 @@ function httpWrapper(wrappedFunction) {
                 }
 
                 let data = '';
-                if (!config.getConfig().metadataOnly && !isWreck) {
+                if (!config.getConfig().metadataOnly &&
+                    !isWreck &&
+                    !isURLIgnoredByUser(fullURL)) {
                     res.on('data', (chunk) => {
                         data += chunk;
                     });
