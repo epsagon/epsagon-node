@@ -37,6 +37,25 @@ function isBlacklistURL(url) {
 }
 
 /**
+ * Checks if a URL is in the user-defined blacklist.
+ * @param {string} url The URL to check
+ * @returns {boolean} True if it is in the user-defined blacklist, False otherwise.
+ */
+function isURLIgnoredByUser(url) {
+    let found = false;
+    config.getConfig().urlPatternsToIgnore.forEach(
+        // eslint-disable-next-line consistent-return
+        (pattern) => {
+            if (url.includes(pattern)) {
+                found = true;
+            }
+        }
+    );
+    return found;
+}
+
+
+/**
  * Set the duration of the event, and resolves the promise using the given function.
  * @param {object} httpEvent The current event
  * @param {Function} resolveFunction Function that will be used to resolve the promise
@@ -59,7 +78,6 @@ function httpWrapper(wrappedFunction) {
             // https->http cases
             return wrappedFunction.apply(this, [options, callback]);
         }
-
         let clientRequest = null;
         try {
             const hostname = (
@@ -140,7 +158,9 @@ function httpWrapper(wrappedFunction) {
                 }
 
                 let data = '';
-                if (!config.getConfig().metadataOnly && !isWreck) {
+                if (!config.getConfig().metadataOnly &&
+                    !isWreck &&
+                    !isURLIgnoredByUser(options.uri.href)) {
                     res.on('data', (chunk) => {
                         data += chunk;
                     });

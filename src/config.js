@@ -13,6 +13,7 @@ const config = {
     useSSL: (process.env.EPSAGON_SSL || 'TRUE').toUpperCase() === 'TRUE',
     traceCollectorURL: consts.TRACE_COLLECTOR_URL,
     isEpsagonDisabled: (process.env.DISABLE_EPSAGON || '').toUpperCase() === 'TRUE',
+    urlPatternsToIgnore: [],
     /**
      * get isEpsagonPatchDisabled
      * @return {boolean} True if DISABLE_EPSAGON or DISABLE_EPSAGON_PATCH are set to TRUE, false
@@ -59,5 +60,10 @@ module.exports.setConfig = function setConfig(configData) {
     if (configData.useSSL) {
         config.traceCollectorURL = config.traceCollectorURL.replace('http:', 'https:');
         config.useSSL = configData.useSSL;
+    }
+
+    // User-defined URL blacklist.
+    if (configData.urlPatternsToIgnore) {
+        config.urlPatternsToIgnore = configData.urlPatternsToIgnore;
     }
 };
