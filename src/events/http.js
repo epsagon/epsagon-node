@@ -116,10 +116,10 @@ function httpWrapper(wrappedFunction) {
             ]);
 
             const url = `${protocol}://${hostname}${pathname}`;
-            const fullURL = `${url}${path}`
+            const fullURL = `${url}${path}`;
             httpEvent.setResource(resource);
             eventInterface.addToMetadata(httpEvent,
-                { url, }, {
+                { url }, {
                     path,
                     request_headers: headers,
                     request_body: body,
