@@ -24,6 +24,10 @@ const config = {
     },
 };
 
+if (process.env.EPSAGON_URLS_TO_IGNORE) {
+    config.urlPatternsToIgnore = process.env.EPSAGON_URLS_TO_IGNORE.split(',');
+}
+
 /**
  * @returns {object} The config object
  */

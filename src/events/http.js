@@ -42,16 +42,7 @@ function isBlacklistURL(url) {
  * @returns {boolean} True if it is in the user-defined blacklist, False otherwise.
  */
 function isURLIgnoredByUser(url) {
-    let found = false;
-    config.getConfig().urlPatternsToIgnore.forEach(
-        // eslint-disable-next-line consistent-return
-        (pattern) => {
-            if (url.includes(pattern)) {
-                found = true;
-            }
-        }
-    );
-    return found;
+    return config.getConfig().urlPatternsToIgnore.some(pattern => url.includes(pattern));
 }
 
 
@@ -158,6 +149,7 @@ function httpWrapper(wrappedFunction) {
                 }
 
                 let data = '';
+                console.log(options.uri.href); //eslint-disable-line
                 if (!config.getConfig().metadataOnly &&
                     !isWreck &&
                     !isURLIgnoredByUser(options.uri.href)) {
