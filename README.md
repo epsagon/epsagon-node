@@ -71,7 +71,7 @@ function handler(event, context, callback) {
 Support for Express, Hapi, and other frameworks is done through [epsagon-frameworks](https://github.com/epsagon/epsagon-node-frameworks)
 
 
-## Copyright
+## Copyrigh
 
 Provided under the MIT license. See LICENSE for details.
 
