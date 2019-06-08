@@ -17,7 +17,7 @@ const RUNTIME = process.env.RUNTIME || 'nodejs8.10'
  * @returns {hash} The functions output
  */
 function invoke(name, payload) {
-    const lambda = new AWS.Lambda({ region: 'us-east-1' });
+    const lambda = new AWS.Lambda({ region: 'us-east-2' });
     const params = {
         FunctionName: SERVICE_PREFIX + name,
         Payload: JSON.stringify(payload),
