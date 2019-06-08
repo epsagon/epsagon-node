@@ -3,7 +3,7 @@ service: acceptance-node
 provider:
   name: aws
   runtime: ${opt:runtime}
-  region: ${opt:region, 'us-east-1'}
+  region: ${opt:region, 'us-east-2'}
   role: acceptanceRole
   stage: ${self:custom.buildNumber}-${opt:runtimeName}
   environment:
