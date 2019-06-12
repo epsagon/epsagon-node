@@ -69,6 +69,18 @@ function openWhiskWrapper(functionToWrap) {
         try {
             runner.setStartTime(utils.createTimestampFromTime(startTime));
             const result = functionToWrap(originalParams);
+            if (result && typeof result.then === 'function') {
+                return result.then((res) => {
+                    tracer.sendTrace(runnerSendUpdateHandler);
+                    return res;
+                }).catch((err) => {
+                    eventInterface.setException(runner, err);
+                    runnerSendUpdateHandler();
+                    return tracer.sendTraceSync().then(() => {
+                        throw err;
+                    });
+                });
+            }
             tracer.sendTrace(runnerSendUpdateHandler);
             return result;
         } catch (err) {
