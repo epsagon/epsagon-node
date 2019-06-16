@@ -324,11 +324,14 @@ const dynamoDBEventCreator = {
         case 'updateItem':
             eventInterface.addToMetadata(event, {
                 Key: parameters.Key,
-                'Expression Attribute Values': JSON.stringify(
-                    parameters.ExpressionAttributeValue
-                ),
                 'Update Expression': JSON.stringify(
                     parameters.UpdateExpression
+                ),
+                'Expression Attribute Names': JSON.stringify(
+                    parameters.ExpressionAttributeNames
+                ),
+                'Expression Attribute Values': JSON.stringify(
+                    parameters.ExpressionAttributeValues
                 ),
             });
             break;
