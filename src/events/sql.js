@@ -1,5 +1,5 @@
 const uuid4 = require('uuid4');
-const { parse } = require('../resource_utils/sql_utils');
+const { parse } = require('../resource_utils/sql_utils.js');
 const utils = require('../utils.js');
 const tracer = require('../tracer.js');
 const serverlessEvent = require('../proto/event_pb.js');
