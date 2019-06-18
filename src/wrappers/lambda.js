@@ -131,11 +131,13 @@ function baseLambdaWrapper(
 
         let waitForOriginalCallbackPromise = Promise.resolve();
         const wrappedCallback = (error, result) => {
+            utils.debugLog('wrapped callback called', error, result);
             if (callbackCalled) {
                 utils.debugLog('not calling callback since it was already called');
                 return;
             }
             waitForOriginalCallbackPromise = new Promise((resolve) => {
+                utils.debugLog('handling execution done before calling callback');
                 handleUserExecutionDone(error, result).then(() => {
                     utils.debugLog('calling User\'s callback');
                     originalCallback(error, result);
@@ -147,6 +149,7 @@ function baseLambdaWrapper(
         let waitForContextResultHandlersPromise = Promise.resolve();
         const patchedContext = Object.assign({}, originalContext, {
             succeed: (res) => {
+                utils.debugLog('wrapped succeed called');
                 if (callbackCalled) {
                     utils.debugLog('not calling succeed, callback was already called');
                     return;
@@ -159,6 +162,7 @@ function baseLambdaWrapper(
                 });
             },
             fail: (err) => {
+                utils.debugLog('wrapped fail called');
                 if (callbackCalled) {
                     utils.debugLog('not calling fail, callback was already called');
                     return;
@@ -171,6 +175,7 @@ function baseLambdaWrapper(
                 });
             },
             done: (res, err) => {
+                utils.debugLog('wrapped done called');
                 if (callbackCalled) {
                     utils.debugLog('not calling done, callback was already called');
                     return;
@@ -193,6 +198,7 @@ function baseLambdaWrapper(
 
         try {
             timeoutHandler = setTimeout(() => {
+                utils.debugLog('In timeout handler');
                 tracesSent = true;
                 eventInterface.markAsTimeout(runner);
                 runnerSendUpdateHandler();
@@ -212,10 +218,12 @@ function baseLambdaWrapper(
                 let returnValue;
                 result = result
                     .then((res) => {
+                        utils.debugLog('user promise resolved (in then)');
                         returnValue = res;
                         return handleUserExecutionDone(null, res, true);
                     })
                     .catch((err) => {
+                        utils.debugLog('user promise rejected (in catch)');
                         raisedError = err;
                         return handleUserExecutionDone(err, null, true);
                     })
