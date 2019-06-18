@@ -71,7 +71,7 @@
     "rollup-plugin-eslint": "^5.0.0",
     "rollup-plugin-json": "^3.1.0",
     "rollup-plugin-terser": "^3.0.0",
-    "semantic-release": "^15.13.14",
+    "semantic-release": "^15.13.16",
     "sinon": "^4.3.0",
     "uglify-es": "^3.3.9"
   },
@@ -80,7 +80,6 @@
     "google-protobuf": "^3.5.0",
     "json.sortify": "^2.2.2",
     "md5": "^2.2.1",
-    "node-sqlparser": "^1.0.4",
     "shimmer": "^1.2.0",
     "uuid4": "^1.0.0"
   }
