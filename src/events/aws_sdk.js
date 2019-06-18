@@ -261,6 +261,7 @@ const lambdaEventCreator = {
     requestHandler(request, event) {
         const parameters = request.params || {};
         const resource = event.getResource();
+        utils.debugLog(`Got lambda event on function: ${parameters.FunctionName}`);
         const name = (parameters.FunctionName.includes(':')) ?
             parameters.FunctionName.split(':').slice(-1)[0] : parameters.FunctionName;
         resource.setName(name);
