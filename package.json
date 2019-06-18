@@ -18,8 +18,8 @@
     "test": "mocha --recursive test/unit_tests",
     "lint:js": "eslint --max-warnings=0 ./src/ ./examples/ ./test/unit_tests ./index.js -f table --ext .js --ext .jsx",
     "lint": "npm run lint:js",
-    "build:dev": "rollup -c",
-    "build": "NODE_ENV=production rollup -c",
+    "build:dev": "./scripts/build_peg.sh && rollup -c",
+    "build": "./scripts/build_peg.sh && NODE_ENV=production rollup -c",
     "clean": "rm -r dist/",
     "prepublishOnly": "npm run build",
     "semantic-release": "semantic-release"
@@ -62,6 +62,7 @@
     "mongodb": "^3.1.13",
     "mysql": "^2.16.0",
     "mysql2": "^1.6.4",
+    "pegjs": "^0.10.0",
     "pg": "^7.6.0",
     "pg-pool": "^2.0.3",
     "proxyquire": "^2.0.1",
@@ -71,7 +72,7 @@
     "rollup-plugin-eslint": "^5.0.0",
     "rollup-plugin-json": "^3.1.0",
     "rollup-plugin-terser": "^3.0.0",
-    "semantic-release": "^15.13.14",
+    "semantic-release": "^15.13.16",
     "sinon": "^4.3.0",
     "uglify-es": "^3.3.9"
   },
@@ -80,7 +81,6 @@
     "google-protobuf": "^3.5.0",
     "json.sortify": "^2.2.2",
     "md5": "^2.2.1",
-    "node-sqlparser": "^1.0.4",
     "shimmer": "^1.2.0",
     "uuid4": "^1.0.0"
   }
