@@ -1,5 +1,5 @@
 const uuid4 = require('uuid4');
-const { parseQuery } = require('../resource_utils/sql_utils');
+const { parse } = require('../resource_utils/sql_utils');
 const utils = require('../utils.js');
 const tracer = require('../tracer.js');
 const serverlessEvent = require('../proto/event_pb.js');
@@ -43,7 +43,7 @@ module.exports.wrapSqlQuery = function wrapSqlQuery(queryString, params, callbac
             if (queryStringSan.endsWith(';')) {
                 queryStringSan = queryStringSan.substr(0, queryStringSan.length - 1);
             }
-            sqlObj = parseQuery(queryStringSan);
+            sqlObj = parse(queryStringSan);
         } catch (error) {
             sqlObj.type = 'SQL-Command';
         }
