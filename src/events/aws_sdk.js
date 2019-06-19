@@ -773,4 +773,9 @@ module.exports = {
             shimmer.wrap(AWS.Request.prototype, 'promise', AWSSDKWrapper);
         }
     },
+
+    /**
+     * For DAX instrumentation
+     */
+    dynamoDBEventCreator,
 };
