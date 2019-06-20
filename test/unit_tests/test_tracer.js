@@ -1,4 +1,5 @@
 const chai = require('chai');
+const path = require('path');
 const chaiAsPromised = require('chai-as-promised');
 const { expect } = require('chai');
 const sinon = require('sinon');
@@ -7,6 +8,7 @@ const consts = require('../../src/consts.js');
 const tracer = require('../../src/tracer.js');
 const tracerObj = require('../../src/trace_object.js');
 const config = require('../../src/config.js');
+const maxtrace = require('../../src/consts').MAX_TRACE_SIZE_BYTES;
 
 chai.use(chaiAsPromised);
 
@@ -596,5 +598,16 @@ describe('sendTraceSync function tests', () => {
         expect(this.postStub.calledOnce).to.be.true;
         shouldPromiseEnd1 = true;
         shouldPromiseEnd2 = true;
+    });
+
+    it('stripOperations: decreases trace size', () => {
+        const bigtrace = require(path.resolve(__dirname, 'fixtures', 'bigtrace.json'));
+        const smallertrace = tracer.stripOperations(bigtrace);
+
+        const big = JSON.stringify(bigtrace).length;
+        const small = JSON.stringify(smallertrace).length;
+
+        expect(big).to.be.greaterThan(small);
+        expect(small).to.be.lessThan(maxtrace);
     });
 });

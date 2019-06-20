@@ -210,6 +210,8 @@ function sendCurrentTrace(traceSender) {
         platform: tracerObj.trace.getPlatform(),
     };
 
+
+    console.log(JSON.stringify(traceJson));
     if (JSON.stringify(traceJson).length > consts.MAX_TRACE_SIZE_BYTES) {
         traceJson.events = stripOperations(traceJson);
     }
@@ -321,3 +323,5 @@ module.exports.setError = function setRunnerError(err) {
     }
     eventInterface.setException(tracerObj.currRunner, err);
 };
+
+module.exports.stripOperations = stripOperations;
