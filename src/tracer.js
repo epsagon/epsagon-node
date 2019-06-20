@@ -140,18 +140,50 @@ module.exports.restart = function restart() {
     tracerObj.trace.setToken(config.getConfig().token);
 };
 
+const stripfuncs = [
+    (entry) => {
+        // drop the response_body for HTTP requests
+        if (entry && entry.resource && entry.resource.type === 'http') {
+            delete entry.resource.metadata.response_body; // eslint-disable-line no-param-reassign
+        }
+        return entry;
+    },
+    (entry) => {
+        // drop the request_body for HTTP requests
+        if (entry && entry.resource && entry.resource.type === 'http') {
+            delete entry.resource.metadata.request_body; // eslint-disable-line no-param-reassign
+        }
+        return entry;
+    },
+    (entry) => {
+        // drop the exception for HTTP requests
+        if (entry && entry.resource && entry.resource.type === 'http' && entry.exception) {
+            delete entry.exception.traceback; // eslint-disable-line no-param-reassign
+        }
+        return entry;
+    },
+    () => {
+        // last resort: drop the entire entry
+        utils.debugLog('Too big operation filtered out.');
+    },
+];
+
 /**
  * Removes all operations from a given trace. Only runner and trigger are kept.
  * @param {Json} traceJson: Trace JSON to remove operations from.
+ * @param {int} attempt: the filtering iteration number, filters get progressively more aggressive
  * @return {*} List of filtered operations
  */
-function stripOperations(traceJson) {
+function stripOperations(traceJson, attempt) {
     const filteredEvents = [];
     traceJson.events.forEach((entry) => {
         if (entry.origin === 'runner' || entry.origin === 'trigger') {
             filteredEvents.push(entry);
         } else {
-            utils.debugLog('Too big operation filtered out.');
+            const filteredEntry = stripfuncs[attempt](entry);
+            if (filteredEntry) {
+                filteredEvents.push(filteredEntry);
+            }
         }
     });
 
@@ -211,9 +243,10 @@ function sendCurrentTrace(traceSender) {
     };
 
 
-    console.log(JSON.stringify(traceJson));
+    let attempt = 0;
     if (JSON.stringify(traceJson).length > consts.MAX_TRACE_SIZE_BYTES) {
-        traceJson.events = stripOperations(traceJson);
+        traceJson.events = stripOperations(traceJson, attempt);
+        attempt += 1;
     }
 
     const sendResult = traceSender(traceJson);
