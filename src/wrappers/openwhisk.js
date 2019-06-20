@@ -35,6 +35,8 @@ function createRunner(functionName, originalParams) {
     runner.setResource(runnerResource);
     eventInterface.addToMetadata(runner, {
         activation_id: process.env['__OW_ACTIVATION_ID'], // eslint-disable-line dot-notation
+        api_host: process.env['__OW_API_HOST'], // eslint-disable-line dot-notation
+        namespace: process.env['__OW_NAMESPACE'], // eslint-disable-line dot-notation
         params: originalParams,
     });
     return runner;
