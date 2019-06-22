@@ -164,7 +164,7 @@ const stripfuncs = [
     },
     () => {
         // last resort: drop the entire entry
-        utils.debugLog('Too big operation filtered out.');
+        utils.debugLog('Too big operation filtered out');
     },
 ];
 
