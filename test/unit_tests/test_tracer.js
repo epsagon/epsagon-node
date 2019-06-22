@@ -7,6 +7,8 @@ const consts = require('../../src/consts.js');
 const tracer = require('../../src/tracer.js');
 const tracerObj = require('../../src/trace_object.js');
 const config = require('../../src/config.js');
+const maxtrace = require('../../src/consts').MAX_TRACE_SIZE_BYTES;
+const bigtrace = require('./fixtures/bigtrace.json');
 
 chai.use(chaiAsPromised);
 
@@ -596,5 +598,30 @@ describe('sendTraceSync function tests', () => {
         expect(this.postStub.calledOnce).to.be.true;
         shouldPromiseEnd1 = true;
         shouldPromiseEnd2 = true;
+    });
+
+    it('stripOperations: decreases trace size', () => {
+        let smallertrace = tracer.stripOperations(bigtrace, 0);
+
+        let big = JSON.stringify(bigtrace).length;
+        let small = JSON.stringify(smallertrace).length;
+
+        expect(big).to.be.greaterThan(small);
+        expect(smallertrace).to.be.a('array');
+
+        // second iteration
+        smallertrace = tracer.stripOperations({ events: smallertrace }, 1);
+        big = JSON.stringify(bigtrace).length;
+        small = JSON.stringify(smallertrace).length;
+        expect(big).to.be.greaterThan(small);
+
+        // third iteration
+        smallertrace = tracer.stripOperations({ events: smallertrace }, 2);
+        big = JSON.stringify(bigtrace).length;
+        small = JSON.stringify(smallertrace).length;
+        expect(big).to.be.greaterThan(small);
+
+
+        expect(small).to.be.lessThan(maxtrace);
     });
 });
