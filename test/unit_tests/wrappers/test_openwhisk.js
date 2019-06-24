@@ -1,3 +1,4 @@
+/* eslint-disable func-names */
 const request = require('request-promise-native');
 const { expect } = require('chai');
 const epsagon = require('../../../src/index');
