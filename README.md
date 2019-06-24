@@ -13,7 +13,7 @@ From your project directory:
 npm install --save epsagon
 ```
 
-## Getting started
+## Getting started (AWS Lambda)
 
 Simply use the wrapper to send traces from your code:
 
@@ -30,6 +30,31 @@ function handler(event, context, callback) {
 }
 
 handler = epsagon.lambdaWrapper(handler)
+```
+
+## Getting started (Apache OpenWhisk)
+
+You should pass the Epsagon token to your action as a default parameter, so that you don't
+have to expose important credentials in your code. The name of the parameter can be configured using `token_param`, in this example we use `EPSAGON_TOKEN`
+
+```javascript
+const epsagon = require('epsagon');
+
+function main(params) {
+    // your main function
+}
+
+module.exports.main = epsagon.openwhiskWrapper(main, {
+    token_param: 'EPSAGON_TOKEN', // name of the action parameter to take the token from
+    appName: 'my-app-name'
+    metadataOnly: false // Optional, send more trace data
+});
+```
+
+You can then pass the `EPSAGON_TOKEN` as a default parameter into your action using the `wsk` command line client:
+
+```bash
+$ wsk action update <myaction> --parameter EPSAGON_TOKEN <your-epsagon-token>
 ```
 
 ## Custom labels
