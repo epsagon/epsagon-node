@@ -36,6 +36,6 @@ jobs:
 stages:
   - Test
   - name; acceptance
-    if: branch IN (master) AND type = pull_request
+    if: branch = master AND type = pull_request
   - name: build-and-deploy
     if: branch = master AND type = push
