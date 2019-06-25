@@ -3,6 +3,7 @@ language: node_js
 branches:
   only:
     - master
+    - develop
 
 install:
   - npm install
@@ -34,6 +35,7 @@ jobs:
 
 stages:
   - Test
-  - acceptance
+  - name: acceptance
+    if: branch = master AND type = pull_request
   - name: build-and-deploy
     if: branch = master AND type = push
