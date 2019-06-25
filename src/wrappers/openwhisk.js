@@ -45,10 +45,22 @@ function createRunner(functionName, originalParams) {
 /**
  * Epsagon's OpenWhisk wrapper, wrap an action with it to trace it.
  * @param {function} functionToWrap The function to wrap and trace
+ * @param {object} options options used to initialize the Epsagon handler
+ * @param {string} options.token_param name of the parameter passed to the OpenWhisk action
+ * that will contain the Epsagon token. The value is only read when `options.token` is falsy
  * @return {function} The original function, wrapped by our tracer
  */
-function openWhiskWrapper(functionToWrap) {
+function openWhiskWrapper(functionToWrap, options) {
     return (originalParams) => { // eslint-disable-line consistent-return
+        if (options && typeof options === 'object') {
+            if (options.token) {
+                tracer.initTrace(options);
+            } else if (options.token_param) {
+                tracer.initTrace(Object.assign({
+                    token: originalParams[options.token_param],
+                }, options));
+            }
+        }
         tracer.getTrace = traceObject.get;
         tracer.restart();
         let runner;
