@@ -1,3 +1,4 @@
+/* eslint-disable func-names */
 const request = require('request-promise-native');
 const { expect } = require('chai');
 const epsagon = require('../../../src/index');
@@ -40,5 +41,60 @@ describe('openwhiskWrapper tests', () => {
         const wrapped = epsagon.openWhiskWrapper(owrequest);
         const retval = await wrapped();
         expect(retval.body).to.contain('Example Domain');
+    });
+
+    it('openwhiskWrapper: can pass token into wrapper function', async () => {
+        const wrapped = epsagon.openWhiskWrapper(owrequest, { token: 'foobar' });
+
+        let foundtoken;
+        const oldinit = epsagon.tracer.initTrace;
+
+        epsagon.tracer.initTrace = function (options) {
+            foundtoken = options.token;
+            oldinit(options);
+        };
+
+        const retval = await wrapped();
+        expect(retval.body).to.contain('Example Domain');
+
+        epsagon.tracer.initTrace = oldinit;
+        expect(foundtoken).to.equal('foobar');
+    });
+
+    it('openwhiskWrapper: can indirectly pass token into wrapper function', async () => {
+        const wrapped = epsagon.openWhiskWrapper(owrequest, { token_param: 'EPSAGON_TOKEN' });
+
+        let foundtoken;
+        const oldinit = epsagon.tracer.initTrace;
+
+        epsagon.tracer.initTrace = function (options) {
+            foundtoken = options.token;
+            oldinit(options);
+        };
+
+        const retval = await wrapped({ EPSAGON_TOKEN: 'barbaz' });
+        expect(retval.body).to.contain('Example Domain');
+
+        epsagon.tracer.initTrace = oldinit;
+        expect(foundtoken).to.equal('barbaz');
+    });
+
+
+    it('openwhiskWrapper: hard coded token overrides variable token', async () => {
+        const wrapped = epsagon.openWhiskWrapper(owrequest, { token_param: 'EPSAGON_TOKEN', token: 'fooboo' });
+
+        let foundtoken;
+        const oldinit = epsagon.tracer.initTrace;
+
+        epsagon.tracer.initTrace = function (options) {
+            foundtoken = options.token;
+            oldinit(options);
+        };
+
+        const retval = await wrapped({ EPSAGON_TOKEN: 'barbaz' });
+        expect(retval.body).to.contain('Example Domain');
+
+        epsagon.tracer.initTrace = oldinit;
+        expect(foundtoken).to.equal('fooboo');
     });
 });
