@@ -79,6 +79,23 @@ describe('openwhiskWrapper tests', () => {
         expect(foundtoken).to.equal('barbaz');
     });
 
+    it('openwhiskWrapper: wrapper will not fail when called without params', async () => {
+        const wrapped = epsagon.openWhiskWrapper(owrequest, { token_param: 'EPSAGON_TOKEN' });
+
+        let foundtoken;
+        const oldinit = epsagon.tracer.initTrace;
+
+        epsagon.tracer.initTrace = function (options) {
+            foundtoken = options.token;
+            oldinit(options);
+        };
+
+        const retval = await wrapped();
+        expect(retval.body).to.contain('Example Domain');
+
+        epsagon.tracer.initTrace = oldinit;
+        expect(foundtoken).to.be.undefined;
+    });
 
     it('openwhiskWrapper: hard coded token overrides variable token', async () => {
         const wrapped = epsagon.openWhiskWrapper(owrequest, { token_param: 'EPSAGON_TOKEN', token: 'fooboo' });

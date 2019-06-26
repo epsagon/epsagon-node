@@ -55,7 +55,7 @@ function openWhiskWrapper(functionToWrap, options) {
         if (options && typeof options === 'object') {
             if (options.token) {
                 tracer.initTrace(options);
-            } else if (options.token_param) {
+            } else if (options.token_param && originalParams) {
                 tracer.initTrace(Object.assign({
                     token: originalParams[options.token_param],
                 }, options));
