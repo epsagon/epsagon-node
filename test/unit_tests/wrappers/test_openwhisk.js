@@ -97,7 +97,6 @@ describe('openwhiskWrapper tests', () => {
         expect(foundtoken).to.be.undefined;
     });
 
-
     it('openwhiskWrapper: hard coded token overrides variable token', async () => {
         const wrapped = epsagon.openWhiskWrapper(owrequest, { token_param: 'EPSAGON_TOKEN', token: 'fooboo' });
 
