@@ -70,4 +70,9 @@ module.exports.setConfig = function setConfig(configData) {
     if (configData.urlPatternsToIgnore) {
         config.urlPatternsToIgnore = configData.urlPatternsToIgnore;
     }
+
+    // User-defined HTTP minimum status code to be treated as an error.
+    if (configData.httpErrorStatusCode) {
+        consts.HTTP_ERR_CODE = configData.httpErrorStatusCode;
+    }
 };

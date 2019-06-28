@@ -22,3 +22,6 @@ module.exports.STEP_ID_NAME = 'Epsagon';
 module.exports.MAX_LABEL_SIZE = 100 * 1024;
 
 module.exports.MAX_TRACE_SIZE_BYTES = 64 * 1024;
+
+// User-defined HTTP minimum status code to be treated as an error.
+module.exports.HTTP_ERR_CODE = parseInt(process.env.EPSAGON_HTTP_ERR_CODE, 10) || 400;

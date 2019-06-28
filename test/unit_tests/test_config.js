@@ -68,4 +68,10 @@ describe('tracer config tests', () => {
         );
         expect(config.getConfig()).to.contain(updatedConfig);
     });
+
+    it('setConfig: custom HTTP error code', () => {
+        const httpErrorStatusCode = 42;
+        config.setConfig({ httpErrorStatusCode });
+        expect(consts.HTTP_ERR_CODE).to.be.equal(httpErrorStatusCode);
+    });
 });
