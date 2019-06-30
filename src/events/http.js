@@ -133,7 +133,7 @@ function httpWrapper(wrappedFunction) {
                     metadataFields = { response_headers: { 'x-powered-by': res.headers['x-powered-by'] } };
                 }
                 eventInterface.addToMetadata(httpEvent, { status: res.statusCode });
-                if (res.statusCode >= 400) {
+                if (res.statusCode >= config.HTTP_ERR_CODE) {
                     eventInterface.setException(httpEvent, new Error(`Response code: ${res.statusCode}`));
                 }
                 // The complete headers will override metadata only when needed
