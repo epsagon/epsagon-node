@@ -8,7 +8,7 @@ branches:
 install:
   - npm install
   - npm install -g serverless
-  - npm add @babel/runtime
+  - npm install @babel/runtime
 
 node_js:
   - "6.10"
