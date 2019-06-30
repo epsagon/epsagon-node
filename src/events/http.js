@@ -13,7 +13,6 @@ const serverlessEvent = require('../proto/event_pb.js');
 const eventInterface = require('../event.js');
 const errorCode = require('../proto/error_code_pb.js');
 const config = require('../config.js');
-const consts = require('../consts.js');
 
 const Wreck = tryRequire('wreck');
 
@@ -134,7 +133,7 @@ function httpWrapper(wrappedFunction) {
                     metadataFields = { response_headers: { 'x-powered-by': res.headers['x-powered-by'] } };
                 }
                 eventInterface.addToMetadata(httpEvent, { status: res.statusCode });
-                if (res.statusCode >= consts.HTTP_ERR_CODE) {
+                if (res.statusCode >= config.HTTP_ERR_CODE) {
                     eventInterface.setException(httpEvent, new Error(`Response code: ${res.statusCode}`));
                 }
                 // The complete headers will override metadata only when needed

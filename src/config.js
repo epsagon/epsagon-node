@@ -3,6 +3,9 @@
  */
 const consts = require('./consts.js');
 
+// User-defined HTTP minimum status code to be treated as an error.
+module.exports.HTTP_ERR_CODE = parseInt(process.env.EPSAGON_HTTP_ERR_CODE, 10) || 400;
+
 /**
  * configuration singleton. preconfigured with default values.
  */
@@ -73,6 +76,6 @@ module.exports.setConfig = function setConfig(configData) {
 
     // User-defined HTTP minimum status code to be treated as an error.
     if (configData.httpErrorStatusCode) {
-        consts.HTTP_ERR_CODE = configData.httpErrorStatusCode;
+        module.exports.HTTP_ERR_CODE = configData.httpErrorStatusCode;
     }
 };
