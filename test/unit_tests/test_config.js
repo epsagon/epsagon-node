@@ -69,7 +69,7 @@ describe('tracer config tests', () => {
         expect(config.getConfig()).to.contain(updatedConfig);
     });
 
-    it('setConfig: custom HTTP error code', () => {
+    it('setConfig: set custom HTTP error code', () => {
         const httpErrorStatusCode = 42;
         config.setConfig({ httpErrorStatusCode });
         expect(config.HTTP_ERR_CODE).to.be.equal(httpErrorStatusCode);
