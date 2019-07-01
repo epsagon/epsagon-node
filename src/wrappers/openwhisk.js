@@ -1,7 +1,6 @@
 /**
  * @fileoverview Epsagon's Openwhisk wrapper, for tracing actions invocations.
  */
-const uuid4 = require('uuid4');
 const utils = require('../utils.js');
 const tracer = require('../tracer.js');
 const traceObject = require('../trace_object.js');
@@ -18,13 +17,13 @@ const errorCode = require('../proto/error_code_pb.js');
 function createRunner(functionName, originalParams) {
     const runnerResource = new serverlessEvent.Resource([
         functionName,
-        'openwhisk',
+        'openwhisk_action',
         'invoke',
         {},
     ]);
 
     const runner = new serverlessEvent.Event([
-        uuid4(),
+        process.env['__OW_ACTIVATION_ID'], // eslint-disable-line dot-notation
         0,
         null,
         'runner',
