@@ -18,13 +18,13 @@ const errorCode = require('../proto/error_code_pb.js');
 function createRunner(functionName, originalParams) {
     const runnerResource = new serverlessEvent.Resource([
         functionName,
-        'openwhisk',
+        'openwhisk_action',
         'invoke',
         {},
     ]);
 
     const runner = new serverlessEvent.Event([
-        uuid4(),
+        process.env['__OW_ACTIVATION_ID'], // eslint-disable-line dot-notation
         0,
         null,
         'runner',
