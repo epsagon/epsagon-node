@@ -22,7 +22,7 @@ const URL_BLACKLIST = {
     '169.254.169.254': 'startsWith', // EC2 document ip. Have better filtering in the future
 };
 
-const USER_AGENTS_BLACKLIS = ['openwhisk-client-js']
+const USER_AGENTS_BLACKLIS = ['openwhisk-client-js'];
 /**
  * Checks if a URL is in the blacklist
  * @param {string} url The URL to check
@@ -92,7 +92,7 @@ function httpWrapper(wrappedFunction) {
                 return wrappedFunction.apply(this, [options, callback]);
             }
             if (isBlacklistHeader(options.headers)) {
-                utils.debugLog(`filtered blacklist headers ${JSON.stringify(options.headers)}`)
+                utils.debugLog(`filtered blacklist headers ${JSON.stringify(options.headers)}`);
                 return wrappedFunction.apply(this, [options, callback]);
             }
             // eslint-disable-next-line no-underscore-dangle

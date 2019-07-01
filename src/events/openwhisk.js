@@ -17,7 +17,7 @@ const actions = tryRequire('openwhisk/lib/actions.js');
 function openWhiskWrapper(wrappedFunction) {
     return function internalOWWrapper(options, callback) {
         const { name } = options;
-        const fullName = `/${process.env['__OW_NAMESPACE']}/${name || options}`;
+        const fullName = `/${process.env['__OW_NAMESPACE']}/${name || options}`; // eslint-disable-line dot-notation
         const resource = new serverlessEvent.Resource([
             fullName,
             'openwhisk_action',
@@ -43,7 +43,8 @@ function openWhiskWrapper(wrappedFunction) {
                     {
                         activation_id: res.activationId,
                         response: res.response,
-                    });
+                    }
+                );
                 invokeEvent.setDuration(utils.createDurationTimestamp(startTime));
                 resolve();
             });

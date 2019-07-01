@@ -9,7 +9,7 @@ const daxPatcher = require('./events/amazon_dax_client.js');
 const httpPatcher = require('./events/http.js');
 const pgPatcher = require('./events/pg.js');
 const mysqlPatcher = require('./events/mysql.js');
-const openWhiskPatcher = require('./events/openwhisk.js')
+const openWhiskPatcher = require('./events/openwhisk.js');
 const redisPatcher = require('./events/redis.js');
 const mongoPatcher = require('./events/mongodb.js');
 

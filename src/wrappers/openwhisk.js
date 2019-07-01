@@ -1,7 +1,6 @@
 /**
  * @fileoverview Epsagon's Openwhisk wrapper, for tracing actions invocations.
  */
-const uuid4 = require('uuid4');
 const utils = require('../utils.js');
 const tracer = require('../tracer.js');
 const traceObject = require('../trace_object.js');
