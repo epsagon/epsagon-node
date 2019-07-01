@@ -11,7 +11,7 @@ const actions = tryRequire('openwhisk/lib/actions.js');
 
 /**
  * Wraps the openwhisk module.
- * @param {Function} wrappedFunction The pg's module
+ * @param {Function} wrappedFunction The openwhisk module
  * @returns {Function} The wrapped function
  */
 function openWhiskWrapper(wrappedFunction) {
@@ -57,7 +57,7 @@ function openWhiskWrapper(wrappedFunction) {
 
 module.exports = {
     /**
-     * Initializes the pg tracer
+     * Initializes the openwhisk tracer
      */
     init() {
         if (actions) shimmer.wrap(actions.prototype, 'invoke', openWhiskWrapper);
