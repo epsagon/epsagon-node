@@ -91,6 +91,22 @@ function handler(event, context, callback) {
 }
 ```
 
+## Filter sensitive data
+
+You can pass a list of sensitive properties and they will be filtered out:
+
+```node
+epsagon.init({
+    token: 'my-secret-token',
+    appName: 'my-app-name',
+    metadataOnly: false, // Optional, send more trace data
+    ignoredKeys: ['password', ...]
+});
+```
+
+Alternatively you can pass a comma-separated list of sensitive keys using 
+the `EPSAGON_IGNORED_KEYS` environment variable to get the same effect.
+
 ## Web frameworks
 
 Support for Express, Hapi, and other frameworks is done through [epsagon-frameworks](https://github.com/epsagon/epsagon-node-frameworks)
