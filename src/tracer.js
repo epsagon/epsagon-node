@@ -262,21 +262,45 @@ function sendCurrentTrace(traceSender) {
  * @returns {Object}  filtered trace
  */
 module.exports.filterTrace = function filterTrace(traceObject, ignoredKeys) {
+    /**
+     * Check if a given param is an object
+     * @param {*} x   param to check
+     * @returns {boolean}   if `x` is an object
+     */
+    function isObject(x) {
+        return (typeof x === 'object') && x !== null;
+    }
+
+    /**
+     * Recursivly filter object properties
+     * @param {Object} obj  object to filter
+     * @returns {Object} filtered object
+     */
+    function filterObject(obj) {
+        const keys = Object
+            .keys(obj)
+            .map(config.processIgnoredKey)
+            .filter((k => !ignoredKeys.includes(k)));
+
+        const primitive = keys.filter(k => !isObject(obj[k]));
+        const objects = keys
+            .filter(k => isObject(obj[k]))
+            .map(k => ({ [k]: filterObject(obj[k]) }));
+
+        return {
+            ...primitive.reduce((sum, key) => ({ ...sum, [key]: obj[key] }), {}),
+            ...objects.reduce((sum, value) => ({ ...sum, ...value }), {}),
+        };
+    }
+
     const events = traceObject.events.map((event) => {
         if (!(event && event.resource && event.resource.metadata)) {
             return event;
         }
 
-        const metadata = Object
-            .keys(event.resource.metadata)
-            .map(config.processIgnoredKey)
-            .filter(key => !ignoredKeys.includes(key))
-            .reduce((obj, key) => ({
-                ...obj,
-                [key]: event.resource.metadata[key],
-            }), {});
-
-        return { ...event, resource: { ...event.resource, metadata } };
+        const filteredEvent = { ...event };
+        filteredEvent.resource.metadata = filterObject(event.resource.metadata);
+        return filteredEvent;
     });
 
     return { ...traceObject, events };

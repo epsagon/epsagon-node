@@ -73,6 +73,32 @@ describe('filter keys function', () => {
         const filtered = tracer.filterTrace(traceObject, ignoredKeys);
         expect(filtered).to.deep.equal(traceObject);
     });
+
+    it('filterTrace: filter recursively', () => {
+        const traceObject = {
+            events: [{
+                resource: {
+                    metadata: {
+                        field: {
+                            studentId: 'personal',
+                            message: 'not-personal',
+                        },
+                    },
+                },
+            }],
+        };
+        const ignoredKeys = ['studentid'];
+        const filtered = tracer.filterTrace(traceObject, ignoredKeys);
+        const expected = {
+            events: [{
+                resource: {
+                    metadata: { field: { message: 'not-personal' } },
+                },
+            }],
+        };
+
+        expect(filtered).to.deep.equal(expected);
+    });
 });
 
 describe('tracer module tests', () => {
