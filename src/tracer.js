@@ -287,10 +287,9 @@ module.exports.filterTrace = function filterTrace(traceObject, ignoredKeys) {
             .filter(k => isObject(obj[k]))
             .map(k => ({ [k]: filterObject(obj[k]) }));
 
-        return {
-            ...primitive.reduce((sum, key) => ({ ...sum, [key]: obj[key] }), {}),
-            ...objects.reduce((sum, value) => ({ ...sum, ...value }), {}),
-        };
+        return Object.assign({},
+            primitive.reduce((sum, key) => ({ ...sum, [key]: obj[key] }), {}),
+            objects.reduce((sum, value) => ({ ...sum, ...value }), {}));
     }
 
     const events = traceObject.events.map((event) => {
@@ -303,7 +302,7 @@ module.exports.filterTrace = function filterTrace(traceObject, ignoredKeys) {
         return filteredEvent;
     });
 
-    return { ...traceObject, events };
+    return Object.assign({}, traceObject, { events });
 };
 
 /**
