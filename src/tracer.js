@@ -261,17 +261,26 @@ function sendCurrentTrace(traceSender) {
  * @param {Array<String>} ignoredKeys   keys to ignore
  * @returns {Object}  filtered trace
  */
-function filterTrace(traceObject, ignoredKeys) {
+module.exports.filterTrace = function filterTrace(traceObject, ignoredKeys) {
     const events = traceObject.events.map((event) => {
+        if (!(event && event.resource && event.resource.metadata)) {
+            return event;
+        }
+
         const metadata = Object
             .keys(event.resource.metadata)
+            .map(config.processIgnoredKey)
             .filter(key => !ignoredKeys.includes(key))
-            .reduce((obj, key) => ({ ...obj, [key]: event.resource.metadata[key] }));
-        return { ...event, metadata };
+            .reduce((obj, key) => ({
+                ...obj,
+                [key]: event.resource.metadata[key],
+            }), {});
+
+        return { ...event, resource: { ...event.resource, metadata } };
     });
 
     return { ...traceObject, events };
-}
+};
 
 /**
  * Post given trace to epsagon's infrastructure.
@@ -286,7 +295,7 @@ module.exports.postTrace = function postTrace(traceObject) {
     const filteredTrace = ignoredKeys &&
         Array.isArray(ignoredKeys) &&
         ignoredKeys.length > 0 ?
-        filterTrace(traceObject, ignoredKeys) : traceObject;
+        module.exports.filterTrace(traceObject, ignoredKeys) : traceObject;
 
     return session.post(
         config.getConfig().traceCollectorURL,

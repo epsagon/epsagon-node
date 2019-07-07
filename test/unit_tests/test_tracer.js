@@ -36,6 +36,45 @@ describe('tracer restart tests - if these fail the others will too', () => {
     });
 });
 
+describe('filter keys function', () => {
+    it('filterTrace: filter from metadata', () => {
+        const traceObject = {
+            events: [{
+                resource: {
+                    metadata: {
+                        studentId: 'personal',
+                        message: 'not-personal',
+                    },
+                },
+            }],
+        };
+        const ignoredKeys = ['studentid'];
+        const filtered = tracer.filterTrace(traceObject, ignoredKeys);
+        const expected = {
+            events: [{
+                resource: {
+                    metadata: { message: 'not-personal' },
+                },
+            }],
+        };
+
+        expect(filtered).to.deep.equal(expected);
+    });
+
+    it('filterTrace: filter event without metadata', () => {
+        const traceObject = {
+            events: [{
+                resource: {
+                    something: 'bla',
+                },
+            }],
+        };
+        const ignoredKeys = ['studentid'];
+        const filtered = tracer.filterTrace(traceObject, ignoredKeys);
+        expect(filtered).to.deep.equal(traceObject);
+    });
+});
+
 describe('tracer module tests', () => {
     beforeEach(() => {
         const runnerResource = new serverlessEvent.Resource([

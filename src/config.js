@@ -11,13 +11,13 @@ module.exports.HTTP_ERR_CODE = parseInt(process.env.EPSAGON_HTTP_ERR_CODE, 10) |
  * @param {string} key the key to process
  * @returns {string} key after process
  */
-function processIgnoredKey(key) {
+module.exports.processIgnoredKey = function processIgnoredKey(key) {
     return key
         .toLowerCase()
         .replace('-', '')
         .replace('_', '')
         .trim();
-}
+};
 
 /**
  * configuration singleton. preconfigured with default values.
@@ -30,7 +30,7 @@ const config = {
     traceCollectorURL: consts.TRACE_COLLECTOR_URL,
     isEpsagonDisabled: (process.env.DISABLE_EPSAGON || '').toUpperCase() === 'TRUE',
     urlPatternsToIgnore: [],
-    ignoredKeys: (process.env.EPSAGON_IGNORED_KEYS || '').split(',').map(processIgnoredKey),
+    ignoredKeys: (process.env.EPSAGON_IGNORED_KEYS || '').split(',').map(module.exports.processIgnoredKey),
     /**
      * get isEpsagonPatchDisabled
      * @return {boolean} True if DISABLE_EPSAGON or DISABLE_EPSAGON_PATCH are set to TRUE, false
@@ -94,6 +94,6 @@ module.exports.setConfig = function setConfig(configData) {
     }
 
     if (configData.ignoredKeys) {
-        config.ignoredKeys = configData.ignoredKeys.map(processIgnoredKey);
+        config.ignoredKeys = configData.ignoredKeys.map(module.exports.processIgnoredKey);
     }
 };
