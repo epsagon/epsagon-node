@@ -288,8 +288,8 @@ module.exports.filterTrace = function filterTrace(traceObject, ignoredKeys) {
             .map(k => ({ [k]: filterObject(obj[k]) }));
 
         return Object.assign({},
-            primitive.reduce((sum, key) => ({ ...sum, [key]: obj[key] }), {}),
-            objects.reduce((sum, value) => ({ ...sum, ...value }), {}));
+            primitive.reduce((sum, key) => Object.assign({}, sum, { [key]: obj[key] }), {}),
+            objects.reduce((sum, value) => Object.assign({}, sum, value), {}));
     }
 
     const events = traceObject.events.map((event) => {
