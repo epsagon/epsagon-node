@@ -10,6 +10,7 @@ describe('tracer config tests', () => {
         metadataOnly: true,
         useSSL: false,
         traceCollectorURL: consts.TRACE_COLLECTOR_URL,
+        ignoredKeys: [],
     };
 
 
@@ -73,5 +74,11 @@ describe('tracer config tests', () => {
         const httpErrorStatusCode = 42;
         config.setConfig({ httpErrorStatusCode });
         expect(config.HTTP_ERR_CODE).to.be.equal(httpErrorStatusCode);
+    });
+
+    it('setConfig: set ignoredKeys', () => {
+        config.setConfig({ ignoredKeys: ['studentId', '_password', 'first_name', 'last name'] });
+        const expected = ['studentid', 'password', 'firstname', 'lastname'];
+        expect(config.getConfig().ignoredKeys).to.eql(expected);
     });
 });
