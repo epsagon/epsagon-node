@@ -82,4 +82,3 @@ describe('tracer config tests', () => {
         expect(config.getConfig().ignoredKeys).to.eql(expected);
     });
 });
-
