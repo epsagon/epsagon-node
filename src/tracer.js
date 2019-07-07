@@ -297,7 +297,7 @@ module.exports.filterTrace = function filterTrace(traceObject, ignoredKeys) {
             return event;
         }
 
-        const filteredEvent = { ...event };
+        const filteredEvent = Object.assign({}, event);
         filteredEvent.resource.metadata = filterObject(event.resource.metadata);
         return filteredEvent;
     });
