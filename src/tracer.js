@@ -254,6 +254,25 @@ function sendCurrentTrace(traceSender) {
     return sendResult;
 }
 
+
+/**
+ * Filter a trace to exclude all unwanted keys
+ * @param {Object} traceObject  the trace to filter
+ * @param {Array<String>} ignoredKeys   keys to ignore
+ * @returns {Object}  filtered trace
+ */
+function filterTrace(traceObject, ignoredKeys) {
+    const events = traceObject.events.map((event) => {
+        const metadata = Object
+            .keys(event.resource.metadata)
+            .filter(key => !ignoredKeys.includes(key))
+            .reduce((obj, key) => ({ ...obj, [key]: event.resource.metadata[key] }));
+        return { ...event, metadata };
+    });
+
+    return { ...traceObject, events };
+}
+
 /**
  * Post given trace to epsagon's infrastructure.
  * @param {*} traceObject The trace data to send.
@@ -262,9 +281,16 @@ function sendCurrentTrace(traceSender) {
 module.exports.postTrace = function postTrace(traceObject) {
     utils.debugLog(`Posting trace to ${config.getConfig().traceCollectorURL}`);
     utils.debugLog(`trace: ${JSON.stringify(traceObject, null, 2)}`);
+
+    const { ignoredKeys } = config.getConfig();
+    const filteredTrace = ignoredKeys &&
+        Array.isArray(ignoredKeys) &&
+        ignoredKeys.length > 0 ?
+        filterTrace(traceObject, ignoredKeys) : traceObject;
+
     return session.post(
         config.getConfig().traceCollectorURL,
-        traceObject,
+        filteredTrace,
         { headers: { Authorization: `Bearer ${config.getConfig().token}` } }
     ).then((res) => {
         utils.debugLog('Trace posted!');
