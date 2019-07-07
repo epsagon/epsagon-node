@@ -7,6 +7,19 @@ const consts = require('./consts.js');
 module.exports.HTTP_ERR_CODE = parseInt(process.env.EPSAGON_HTTP_ERR_CODE, 10) || 400;
 
 /**
+ * process each ignored key to make `studentId` ignore `student_id` as well
+ * @param {string} key the key to process
+ * @returns {string} key after process
+ */
+function processIgnoredKey(key) {
+    return key
+        .toLowerCase()
+        .replace('-', '')
+        .replace('_', '')
+        .trim();
+}
+
+/**
  * configuration singleton. preconfigured with default values.
  */
 const config = {
@@ -17,6 +30,7 @@ const config = {
     traceCollectorURL: consts.TRACE_COLLECTOR_URL,
     isEpsagonDisabled: (process.env.DISABLE_EPSAGON || '').toUpperCase() === 'TRUE',
     urlPatternsToIgnore: [],
+    ignoredKeys: (process.env.EPSAGON_IGNORED_KEYS || '').split(',').map(processIgnoredKey),
     /**
      * get isEpsagonPatchDisabled
      * @return {boolean} True if DISABLE_EPSAGON or DISABLE_EPSAGON_PATCH are set to TRUE, false
@@ -77,5 +91,9 @@ module.exports.setConfig = function setConfig(configData) {
     // User-defined HTTP minimum status code to be treated as an error.
     if (configData.httpErrorStatusCode) {
         module.exports.HTTP_ERR_CODE = configData.httpErrorStatusCode;
+    }
+
+    if (configData.ignoredKeys) {
+        config.ignoredKeys = configData.ignoredKeys.map(processIgnoredKey);
     }
 };
