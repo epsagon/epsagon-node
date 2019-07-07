@@ -77,8 +77,8 @@ describe('tracer config tests', () => {
     });
 
     it('setConfig: set ignoredKeys', () => {
-        config.setConfig({ ignoredKeys: ['studentId', '_password', 'first_name'] });
-        const expected = ['studentid', 'password', 'firstname'];
+        config.setConfig({ ignoredKeys: ['studentId', '_password', 'first_name', 'last name'] });
+        const expected = ['studentid', 'password', 'firstname', 'lastname'];
         expect(config.getConfig().ignoredKeys).to.eql(expected);
     });
 });

@@ -16,7 +16,7 @@ module.exports.processIgnoredKey = function processIgnoredKey(key) {
         .toLowerCase()
         .replace('-', '')
         .replace('_', '')
-        .trim();
+        .replace(/\s/g, '');
 };
 
 /**
