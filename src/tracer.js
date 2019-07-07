@@ -254,6 +254,57 @@ function sendCurrentTrace(traceSender) {
     return sendResult;
 }
 
+
+/**
+ * Filter a trace to exclude all unwanted keys
+ * @param {Object} traceObject  the trace to filter
+ * @param {Array<String>} ignoredKeys   keys to ignore
+ * @returns {Object}  filtered trace
+ */
+module.exports.filterTrace = function filterTrace(traceObject, ignoredKeys) {
+    /**
+     * Check if a given param is an object
+     * @param {*} x   param to check
+     * @returns {boolean}   if `x` is an object
+     */
+    function isObject(x) {
+        return (typeof x === 'object') && x !== null;
+    }
+
+    /**
+     * Recursivly filter object properties
+     * @param {Object} obj  object to filter
+     * @returns {Object} filtered object
+     */
+    function filterObject(obj) {
+        const keys = Object
+            .keys(obj)
+            .map(config.processIgnoredKey)
+            .filter((k => !ignoredKeys.includes(k)));
+
+        const primitive = keys.filter(k => !isObject(obj[k]));
+        const objects = keys
+            .filter(k => isObject(obj[k]))
+            .map(k => ({ [k]: filterObject(obj[k]) }));
+
+        return Object.assign({},
+            primitive.reduce((sum, key) => Object.assign({}, sum, { [key]: obj[key] }), {}),
+            objects.reduce((sum, value) => Object.assign({}, sum, value), {}));
+    }
+
+    const events = traceObject.events.map((event) => {
+        if (!(event && event.resource && event.resource.metadata)) {
+            return event;
+        }
+
+        const filteredEvent = Object.assign({}, event);
+        filteredEvent.resource.metadata = filterObject(event.resource.metadata);
+        return filteredEvent;
+    });
+
+    return Object.assign({}, traceObject, { events });
+};
+
 /**
  * Post given trace to epsagon's infrastructure.
  * @param {*} traceObject The trace data to send.
@@ -262,9 +313,16 @@ function sendCurrentTrace(traceSender) {
 module.exports.postTrace = function postTrace(traceObject) {
     utils.debugLog(`Posting trace to ${config.getConfig().traceCollectorURL}`);
     utils.debugLog(`trace: ${JSON.stringify(traceObject, null, 2)}`);
+
+    const { ignoredKeys } = config.getConfig();
+    const filteredTrace = ignoredKeys &&
+        Array.isArray(ignoredKeys) &&
+        ignoredKeys.length > 0 ?
+        module.exports.filterTrace(traceObject, ignoredKeys) : traceObject;
+
     return session.post(
         config.getConfig().traceCollectorURL,
-        traceObject,
+        filteredTrace,
         { headers: { Authorization: `Bearer ${config.getConfig().token}` } }
     ).then((res) => {
         utils.debugLog('Trace posted!');
