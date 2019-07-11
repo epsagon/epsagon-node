@@ -20,11 +20,13 @@ module.exports.hasECSMetadata = function hasECSMetadata() {
  * @returns {Promise}   when resolved will contain the ECS metadata
  */
 module.exports.loadECSMetadata = function loadECSMetadata(uri) {
+    if (currentECSLabels) return Promise.resolve(currentECSLabels);
+
     utils.debugLog(`loading ecs meta, url: (${uri})`);
     return axios.get(uri).then(res => res.data).then((metadata) => {
         utils.debugLog(`Received metadata: ${JSON.stringify(metadata)}`);
         currentECSLabels = metadata && metadata.Labels;
-        return metadata;
+        return currentECSLabels;
     });
 };
 
