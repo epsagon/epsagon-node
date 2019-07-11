@@ -129,9 +129,10 @@ module.exports.initTrace = function initTrace(
  *      if required.
  */
 module.exports.addRunner = function addRunner(runner, runnerPromise) {
-    const tracerObj = ecs.addECSMetadata(module.exports.getTrace());
+    const tracerObj = module.exports.getTrace();
     tracerObj.trace.addEvent(runner, runnerPromise);
     tracerObj.currRunner = runner;
+    ecs.addECSMetadata(tracerObj.currRunner);
 };
 
 /**
