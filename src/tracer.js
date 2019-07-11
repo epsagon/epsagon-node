@@ -12,6 +12,7 @@ const utils = require('./utils.js');
 const config = require('./config.js');
 const eventInterface = require('./event.js');
 const consts = require('./consts.js');
+const ecs = require('./containers/ecs.js');
 
 
 /**
@@ -112,6 +113,11 @@ module.exports.addException = function addException(error, additionalData) {
 module.exports.initTrace = function initTrace(
     configData
 ) {
+    const ecsMetaUri = ecs.hasECSMetadata();
+    if (ecsMetaUri) {
+        ecs.loadECSMetadata(ecsMetaUri).catch(err => utils.debugLog(err));
+    }
+
     config.setConfig(configData);
 };
 
@@ -126,6 +132,7 @@ module.exports.addRunner = function addRunner(runner, runnerPromise) {
     const tracerObj = module.exports.getTrace();
     tracerObj.trace.addEvent(runner, runnerPromise);
     tracerObj.currRunner = runner;
+    ecs.addECSMetadata(tracerObj.currRunner);
 };
 
 /**
