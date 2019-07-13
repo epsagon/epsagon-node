@@ -15,6 +15,7 @@
   "author": "Epsagon Team <support@epsagon.com>",
   "license": "MIT",
   "scripts": {
+    "pretest": "./scripts/build_peg.sh",
     "test": "./scripts/run_tests.sh",
     "lint:js": "eslint --max-warnings=0 ./src/ ./examples/ ./test/unit_tests ./index.js -f table --ext .js --ext .jsx",
     "lint": "npm run lint:js",
@@ -42,6 +43,7 @@
     }
   },
   "devDependencies": {
+    "@babel/runtime": "^7.4.5",
     "@commitlint/cli": "^7.1.2",
     "@commitlint/config-angular": "^7.1.2",
     "@commitlint/config-conventional": "^7.1.2",
