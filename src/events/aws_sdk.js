@@ -763,6 +763,26 @@ function AWSSDKWrapper(wrappedFunction) {
     };
 }
 
+/**
+ * aws-sdk dynamically creates the `promise` function, so we have to re-wrap it
+ * every time `addPromisesToClass` is called
+ * @param {Function} wrappedFunction the `addPromisesToClass` function
+ * @return {Function} The wrapped function
+ */
+function wrapPromiseOnAdd(wrappedFunction) {
+    return function internalWrapPromiseOnAdd(promiseDependency) {
+        const result = wrappedFunction.apply(this, [promiseDependency]);
+        try {
+            // it is OK to just re-wrap, as the original function overrides
+            // `promise` anyway
+            shimmer.wrap(AWS.Request.prototype, 'promise', AWSSDKWrapper);
+        } catch (err) {
+            utils.debugLog('Failed to re-instrument aws-sdk\'s promise method', err);
+        }
+        return result;
+    };
+}
+
 module.exports = {
     /**
      * Initializes the aws-sdk tracer
@@ -771,6 +791,9 @@ module.exports = {
         if (AWS) {
             shimmer.wrap(AWS.Request.prototype, 'send', AWSSDKWrapper);
             shimmer.wrap(AWS.Request.prototype, 'promise', AWSSDKWrapper);
+
+            // This method is static - not in prototype
+            shimmer.wrap(AWS.Request, 'addPromisesToClass', wrapPromiseOnAdd);
         }
     },
 
