@@ -3,10 +3,46 @@
  */
 const utils = require('../utils.js');
 const tracer = require('../tracer.js');
-const traceObject = require('../trace_object.js');
 const serverlessEvent = require('../proto/event_pb.js');
 const eventInterface = require('../event.js');
 const errorCode = require('../proto/error_code_pb.js');
+
+/**
+ * The tracer map contains the currently active tracers with the openwhisk activationId as key.
+ * @type {Map<string, tracer>}
+ */
+const tracerMap = new Map();
+
+/**
+ * For openwhisk we need to create a tracer for each activationId, because the same action can
+ * be invoked concurrently. Also, if the openWhiskWrapper() wasn't invoked, we don't want to
+ * trace anything (or at least no record it).
+ * @returns {tracer} The tracer or {@code null}.
+ */
+function getTracer() {
+    const id = process.env['__OW_ACTIVATION_ID']; // eslint-disable-line dot-notation
+    return id ? tracerMap.get(id) : null;
+}
+
+/**
+ * Creates a new tracer and registers it in the map.
+ */
+function registerTracer() {
+    const id = process.env['__OW_ACTIVATION_ID']; // eslint-disable-line dot-notation
+    if (id) {
+        tracerMap.set(id, tracer.createTracer());
+    }
+}
+
+/**
+ * Unregister the tracer from the map.
+ */
+function unregisterTracer() {
+    const id = process.env['__OW_ACTIVATION_ID']; // eslint-disable-line dot-notation
+    if (id) {
+        tracerMap.delete(id);
+    }
+}
 
 /**
  * Creates an Event representing the running function (runner)
@@ -50,6 +86,9 @@ function createRunner(functionName, originalParams) {
  * @return {function} The original function, wrapped by our tracer
  */
 function openWhiskWrapper(functionToWrap, options) {
+    // register the openwhisk specific getter as soon as the wrapper is instrumented.
+    tracer.getTrace = getTracer;
+
     return (originalParams) => { // eslint-disable-line consistent-return
         if (options && typeof options === 'object') {
             if (options.token) {
@@ -60,8 +99,8 @@ function openWhiskWrapper(functionToWrap, options) {
                 }, options));
             }
         }
-        tracer.getTrace = traceObject.get;
-        tracer.restart();
+        registerTracer();
+        tracer.restart(); // actually not needed, because we should now have an empty tracer
         let runner;
 
         try {
@@ -84,22 +123,24 @@ function openWhiskWrapper(functionToWrap, options) {
             const result = functionToWrap(originalParams);
             if (result && typeof result.then === 'function') {
                 return result.then((res) => {
-                    tracer.sendTrace(runnerSendUpdateHandler);
+                    tracer.sendTrace(runnerSendUpdateHandler).then(unregisterTracer);
                     return res;
                 }).catch((err) => {
                     eventInterface.setException(runner, err);
                     runnerSendUpdateHandler();
                     return tracer.sendTraceSync().then(() => {
+                        unregisterTracer();
                         throw err;
                     });
                 });
             }
-            tracer.sendTrace(runnerSendUpdateHandler);
+            tracer.sendTrace(runnerSendUpdateHandler).then(unregisterTracer);
             return result;
         } catch (err) {
             eventInterface.setException(runner, err);
             runnerSendUpdateHandler(); // Doing it here since the send is synchronous on error
             tracer.sendTraceSync().then(() => {
+                unregisterTracer();
                 throw err;
             });
         }

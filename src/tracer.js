@@ -130,6 +130,9 @@ module.exports.initTrace = function initTrace(
  */
 module.exports.addRunner = function addRunner(runner, runnerPromise) {
     const tracerObj = module.exports.getTrace();
+    if (!tracerObj) {
+        return;
+    }
     tracerObj.trace.addEvent(runner, runnerPromise);
     tracerObj.currRunner = runner;
     ecs.addECSMetadata(tracerObj.currRunner);
@@ -141,6 +144,9 @@ module.exports.addRunner = function addRunner(runner, runnerPromise) {
  */
 module.exports.restart = function restart() {
     const tracerObj = module.exports.getTrace();
+    if (!tracerObj) {
+        return;
+    }
     tracerObj.trace.clearExceptionList();
     tracerObj.trace.clearEventList();
     tracerObj.trace.setAppName(config.getConfig().appName);
@@ -203,11 +209,13 @@ function stripOperations(traceJson, attempt) {
  * handled
  * @param {function} traceSender: The function to use to send the trace. Gets the trace object
  *     as a parameter and sends a JSON version of it to epsagon's infrastructure
- * @param {Object} tracer  Optional tracer
  * @return {*} traceSender's result
  */
 function sendCurrentTrace(traceSender) {
     const tracerObj = module.exports.getTrace();
+    if (!tracerObj) {
+        return {};
+    }
     const traceJson = {
         app_name: tracerObj.trace.getAppName(),
         token: tracerObj.trace.getToken(),
@@ -349,6 +357,9 @@ module.exports.postTrace = function postTrace(traceObject) {
 module.exports.sendTrace = function sendTrace(runnerUpdateFunc) {
     utils.debugLog('Sending trace async');
     const tracerObj = module.exports.getTrace();
+    if (!tracerObj) {
+        return Promise.resolve();
+    }
     return Promise.all(tracerObj.pendingEvents.values()).then(() => {
         // Setting runner's duration.
         runnerUpdateFunc();
@@ -365,6 +376,9 @@ module.exports.sendTrace = function sendTrace(runnerUpdateFunc) {
 module.exports.sendTraceSync = function sendTraceSync() {
     utils.debugLog('Sending trace sync');
     const tracerObj = module.exports.getTrace();
+    if (!tracerObj) {
+        return Promise.resolve();
+    }
 
     tracerObj.pendingEvents.forEach((promise, event) => {
         if (promise.isPending()) {
