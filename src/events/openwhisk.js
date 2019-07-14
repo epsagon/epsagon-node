@@ -13,7 +13,7 @@ try {
     // eslint-disable-next-line global-require,import/no-unresolved
     actions = require('openwhisk/lib/actions.js');
 } catch (e) {
-    // ignore
+    // ignore.
 }
 
 /**
