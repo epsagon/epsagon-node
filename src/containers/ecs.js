@@ -39,5 +39,5 @@ module.exports.loadECSMetadata = function loadECSMetadata(uri) {
  */
 module.exports.addECSMetadata = function addECSMetadata(runner) {
     if (!runner || !currentECSLabels) return;
-    eventIterface.addToMetadata(runner, { ecsLabels: currentECSLabels });
+    eventIterface.addToMetadata(runner, { ECS: currentECSLabels });
 };
