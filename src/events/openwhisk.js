@@ -1,20 +1,13 @@
 const uuid4 = require('uuid4');
 const shimmer = require('shimmer');
+const tryRequire = require('../try_require.js');
 const utils = require('../utils.js');
 const tracer = require('../tracer.js');
 const serverlessEvent = require('../proto/event_pb.js');
 const eventInterface = require('../event.js');
 const errorCode = require('../proto/error_code_pb.js');
 
-// Try to load the Actions class from openwhisk. Using `tryRequire()` would hide the dependency
-// from webpack and will never be able to load the class.
-let actions;
-try {
-    // eslint-disable-next-line global-require,import/no-unresolved
-    actions = require('openwhisk/lib/actions.js');
-} catch (e) {
-    // ignore.
-}
+const actions = tryRequire('openwhisk/lib/actions.js');
 
 /**
  * Wraps the openwhisk module.
