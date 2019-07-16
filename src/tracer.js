@@ -214,7 +214,7 @@ function stripOperations(traceJson, attempt) {
 function sendCurrentTrace(traceSender) {
     const tracerObj = module.exports.getTrace();
     if (!tracerObj) {
-        return {};
+        return Promise.resolve();
     }
     const traceJson = {
         app_name: tracerObj.trace.getAppName(),
