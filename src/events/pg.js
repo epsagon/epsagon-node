@@ -1,6 +1,7 @@
 const shimmer = require('shimmer');
 const tryRequire = require('../try_require.js');
 const sqlWrapper = require('./sql.js');
+const utils = require('../utils.js');
 
 const pg = tryRequire('pg');
 const Pool = tryRequire('pg-pool');
@@ -14,6 +15,7 @@ function pgClientWrapper(wrappedFunction) {
     return function internalPgClientWrapper(queryString, arg1, arg2) {
         if (queryString && queryString.submit) {
             // this is a Submittable instance, not supported yet - return as is.
+            utils.debugLog(`pg: Submittable instance: ${queryString}`);
             return wrappedFunction.apply(this, [queryString, arg1, arg2]);
         }
 
@@ -25,6 +27,7 @@ function pgClientWrapper(wrappedFunction) {
         let sqlParams = params;
         if (queryString && queryString.text) {
             // this is a query object, use the values inside it.
+            utils.debugLog(`pg: query object: ${queryString.text}`);
             sqlString = queryString.text;
             if (queryString.values && params && !params.length) {
                 // values are in the object
@@ -44,6 +47,7 @@ function pgClientWrapper(wrappedFunction) {
 
         if (callback) {
             // it's safe to use callback, user not expecting a Promise.
+            utils.debugLog('pg: calling callback');
             return wrappedFunction.apply(this, [queryString, params, patchedCallback]);
         }
 
@@ -56,14 +60,17 @@ function pgClientWrapper(wrappedFunction) {
             // the return value is not a promise. This is an old version
             // call patchedCallback now or it will never be called
             // using empty result
+            utils.debugLog('pg: return value is not a promise');
             patchedCallback(null, null, null);
         }
 
         // we got a promise. call patchedCallback when it resolves/rejects.
         return responsePromise.then((res) => {
+            utils.debugLog('pg: promise, calling callback without error');
             patchedCallback(null, res, null);
             return res;
         }, (err) => {
+            utils.debugLog('pg: promise, calling callback with error');
             patchedCallback(err, null, null);
             throw err;
         });
