@@ -12,7 +12,9 @@ const Pool = tryRequire('pg-pool');
  * @returns {Function} The wrapped function
  */
 function pgClientWrapper(wrappedFunction) {
+    utils.debugLog('in pgClientWrapper');
     return function internalPgClientWrapper(queryString, arg1, arg2) {
+        utils.debugLog('in internalPgClientWrapper');
         if (queryString && queryString.submit) {
             // this is a Submittable instance, not supported yet - return as is.
             utils.debugLog(`pg: Submittable instance: ${queryString}`);
@@ -82,7 +84,15 @@ module.exports = {
      * Initializes the pg tracer
      */
     init() {
-        if (pg) shimmer.wrap(pg.Client.prototype, 'query', pgClientWrapper);
-        if (Pool) shimmer.wrap(Pool.prototype, 'query', pgClientWrapper);
+        if (pg) {
+            utils.debugLog('pg init');
+            shimmer.wrap(pg.Client.prototype, 'query', pgClientWrapper);
+            utils.debugLog('pg init success');
+        }
+        if (Pool) {
+            utils.debugLog('pg pool init');
+            shimmer.wrap(Pool.prototype, 'query', pgClientWrapper);
+            utils.debugLog('pg pool init success');
+        }
     },
 };
