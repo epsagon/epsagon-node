@@ -751,8 +751,6 @@ function AWSSDKWrapper(wrappedFunction) {
                         resolve();
                     }
                 });
-            }).catch((err) => {
-                tracer.addException(err);
             });
 
             tracer.addEvent(awsEvent, responsePromise);

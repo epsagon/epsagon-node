@@ -26,7 +26,7 @@ describe('tracer restart tests - if these fail the others will too', () => {
         tracer.getTrace = tracerObj.get;
         tracer.initTrace({ token: 'token', appName: 'app' });
         tracer.addEvent(new serverlessEvent.Event());
-        tracer.addException(Error('test error'));
+        tracer.addException(new Error('test error'));
         tracer.restart();
         tracer.addRunner(new serverlessEvent.Event());
         expect(tracerObj.get().trace.getEventList().length).to.equal(1);

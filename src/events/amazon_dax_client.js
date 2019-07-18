@@ -93,8 +93,6 @@ function DAXWrapper(wrappedFunction) {
                         resolve();
                     }
                 });
-            }).catch((err) => {
-                tracer.addException(err);
             });
             tracer.addEvent(daxEvent, responsePromise);
         } catch (error) {

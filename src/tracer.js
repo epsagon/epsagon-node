@@ -69,7 +69,9 @@ module.exports.addEvent = function addEvent(event, promise) {
     if (promise !== undefined) {
         tracerObj.pendingEvents.set(
             event,
-            utils.makeQueryablePromise(utils.reflectPromise(promise))
+            utils.makeQueryablePromise(promise.catch((err) => {
+                module.exports.addException(err);
+            }))
         );
     }
 
@@ -78,10 +80,11 @@ module.exports.addEvent = function addEvent(event, promise) {
 
 /**
  * Adds an exception to the tracer
- * @param {Error} error The error object describing the exception
+ * @param {Error} userError The error object describing the exception
  * @param {Object} additionalData Additional data to send with the error. A map of <string: string>
  */
-module.exports.addException = function addException(error, additionalData) {
+module.exports.addException = function addException(userError, additionalData) {
+    const error = userError || new Error();
     const raisedException = new exception.Exception([
         error.name,
         error.message,
