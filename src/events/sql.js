@@ -109,8 +109,6 @@ module.exports.wrapSqlQuery = function wrapSqlQuery(queryString, params, callbac
                     callback(err, res, fields);
                 }
             };
-        }).catch((err) => {
-            tracer.addException(err);
         });
 
         tracer.addEvent(dbapiEvent, responsePromise);
