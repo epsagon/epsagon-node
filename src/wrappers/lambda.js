@@ -14,7 +14,9 @@ const { STEP_ID_NAME } = require('../consts.js');
 
 const FAILED_TO_SERIALIZE_MESSAGE = 'Unable to stringify response body as json';
 const TIMEOUT_WINDOW = 200;
+const epsagonWrapped = Symbol('epsagonWrapped');
 
+module.exports.epsagonWrapped = epsagonWrapped;
 module.exports.TIMEOUT_WINDOW = TIMEOUT_WINDOW;
 module.exports.FAILED_TO_SERIALIZE_MESSAGE = FAILED_TO_SERIALIZE_MESSAGE;
 
@@ -48,10 +50,10 @@ function baseLambdaWrapper(
             runner = lambdaRunner.createRunner(originalContext, runnerResourceType);
             tracer.addRunner(runner);
         } catch (err) {
-            const wrappedFunction = (
-                originalFunctionToWrap === null ?
-                    functionToWrap : originalFunctionToWrap
-            );
+            const wrappedFunction =
+        originalFunctionToWrap === null ?
+            functionToWrap :
+            originalFunctionToWrap;
             return wrappedFunction(originalEvent, originalContext, originalCallback);
         }
 
@@ -63,16 +65,13 @@ function baseLambdaWrapper(
 
             tracer.addEvent(trigger);
         } catch (err) {
-            tracer.addException(
-                err,
-                { event: JSON.stringify(originalEvent) }
-            );
+            tracer.addException(err, { event: JSON.stringify(originalEvent) });
         }
 
         const startTime = Date.now();
-        const runnerSendUpdateHandler = (() => {
+        const runnerSendUpdateHandler = () => {
             runner.setDuration(utils.createDurationTimestamp(startTime));
-        });
+        };
 
         // Hook when the event loop is empty, in case callback is not called.
         // Based on the way AWS Lambda implements it
@@ -96,7 +95,8 @@ function baseLambdaWrapper(
                 return Promise.resolve();
             }
             callbackCalled = true;
-            if (error) { // not catching false here, but that seems OK
+            if (error) {
+                // not catching false here, but that seems OK
                 eventInterface.setException(runner, error);
             }
 
@@ -104,7 +104,9 @@ function baseLambdaWrapper(
                 let jsonResult;
                 try {
                     // Taken from AWS Lambda runtime
-                    jsonResult = JSON.stringify(typeof result === 'undefined' ? null : result);
+                    jsonResult = JSON.stringify(
+                        typeof result === 'undefined' ? null : result
+                    );
                 } catch (err) {
                     jsonResult = `${FAILED_TO_SERIALIZE_MESSAGE}: ${err.message}`;
                 }
@@ -139,7 +141,7 @@ function baseLambdaWrapper(
             waitForOriginalCallbackPromise = new Promise((resolve) => {
                 utils.debugLog('handling execution done before calling callback');
                 handleUserExecutionDone(error, result).then(() => {
-                    utils.debugLog('calling User\'s callback');
+                    utils.debugLog("calling User's callback");
                     originalCallback(error, result);
                     resolve();
                 });
@@ -191,8 +193,10 @@ function baseLambdaWrapper(
 
         // Adding wrappers to original setter and getter
         Object.defineProperty(patchedContext, 'callbackWaitsForEmptyEventLoop', {
-            // eslint-disable-next-line no-param-reassign
-            set: (value) => { originalContext.callbackWaitsForEmptyEventLoop = value; },
+            set: (value) => {
+                // eslint-disable-next-line no-param-reassign
+                originalContext.callbackWaitsForEmptyEventLoop = value;
+            },
             get: () => originalContext.callbackWaitsForEmptyEventLoop,
         });
 
@@ -205,11 +209,9 @@ function baseLambdaWrapper(
                 tracer.sendTraceSync();
             }, patchedContext.getRemainingTimeInMillis() - TIMEOUT_WINDOW);
             runner.setStartTime(utils.createTimestampFromTime(startTime));
-            let result = (
-                shouldPassRunner ?
-                    functionToWrap(originalEvent, patchedContext, wrappedCallback, runner) :
-                    functionToWrap(originalEvent, patchedContext, wrappedCallback)
-            );
+            let result = shouldPassRunner ?
+                functionToWrap(originalEvent, patchedContext, wrappedCallback, runner) :
+                functionToWrap(originalEvent, patchedContext, wrappedCallback);
 
             // Check if result is an instance of Promise (some Webpack versions
             // don't support instanceof Promise)
@@ -249,7 +251,17 @@ function baseLambdaWrapper(
  * @return {function} The original function, wrapped by our tracer
  */
 module.exports.lambdaWrapper = function lambdaWrapper(functionToWrap) {
-    return baseLambdaWrapper(functionToWrap);
+    if (functionToWrap[epsagonWrapped]) {
+        return functionToWrap;
+    }
+
+    const wrapped = baseLambdaWrapper(functionToWrap);
+    Object.defineProperty(wrapped, epsagonWrapped, {
+        value: true,
+        writable: false,
+    });
+
+    return wrapped;
 };
 
 /**
@@ -311,6 +323,22 @@ function createStepIdAddWrapper(functionToWrap) {
  * @return {function} The original function, wrapped by our tracer
  */
 module.exports.stepLambdaWrapper = function stepLambdaWrapper(functionToWrap) {
+    if (functionToWrap[epsagonWrapped]) {
+        return functionToWrap;
+    }
+
     const stepIdAddWrapper = createStepIdAddWrapper(functionToWrap);
-    return baseLambdaWrapper(stepIdAddWrapper, 'step_function_lambda', true, functionToWrap);
+    const wrapped = baseLambdaWrapper(
+        stepIdAddWrapper,
+        'step_function_lambda',
+        true,
+        functionToWrap
+    );
+
+    Object.defineProperty(wrapped, epsagonWrapped, {
+        value: true,
+        writable: false,
+    });
+
+    return wrapped;
 };
