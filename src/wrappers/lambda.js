@@ -16,6 +16,7 @@ const FAILED_TO_SERIALIZE_MESSAGE = 'Unable to stringify response body as json';
 const TIMEOUT_WINDOW = 200;
 const epsagonWrapped = Symbol('epsagonWrapped');
 
+module.exports.epsagonWrapped = epsagonWrapped;
 module.exports.TIMEOUT_WINDOW = TIMEOUT_WINDOW;
 module.exports.FAILED_TO_SERIALIZE_MESSAGE = FAILED_TO_SERIALIZE_MESSAGE;
 
