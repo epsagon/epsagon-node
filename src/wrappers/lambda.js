@@ -193,8 +193,8 @@ function baseLambdaWrapper(
 
         // Adding wrappers to original setter and getter
         Object.defineProperty(patchedContext, 'callbackWaitsForEmptyEventLoop', {
-            // eslint-disable-next-line no-param-reassign
             set: (value) => {
+                // eslint-disable-next-line no-param-reassign
                 originalContext.callbackWaitsForEmptyEventLoop = value;
             },
             get: () => originalContext.callbackWaitsForEmptyEventLoop,
