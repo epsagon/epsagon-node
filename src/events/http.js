@@ -43,7 +43,11 @@ function isBlacklistURL(url) {
  * @returns {boolean} True if it is in the blacklist, False otherwise
  */
 function isBlacklistHeader(headers) {
-    return USER_AGENTS_BLACKLIST.includes(headers['user-agent']);
+    if (headers) {
+        return USER_AGENTS_BLACKLIST.includes(headers['user-agent']);
+    }
+
+    return false;
 }
 
 /**

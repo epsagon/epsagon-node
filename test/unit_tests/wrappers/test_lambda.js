@@ -382,6 +382,14 @@ describe('lambdaWrapper tests', () => {
         }, 1);
         done();
     });
+
+    it('lambdaWrapper: avoid double wrapping', (done) => {
+        expect(this.wrappedStub[lambdaWrapper.epsagonWrapped]).to.be.true;
+        const newWrapped = lambdaWrapper.lambdaWrapper(this.wrappedStub);
+
+        expect(this.wrappedStub).to.equal(newWrapped);
+        done();
+    });
 });
 
 describe('stepLambdaWrapper tests', () => {
