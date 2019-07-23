@@ -16,7 +16,7 @@
   "license": "MIT",
   "scripts": {
     "pretest": "./scripts/build_peg.sh",
-    "test": "./scripts/run_tests.sh",
+    "test": "mocha --recursive test/unit_tests",
     "lint:js": "eslint --max-warnings=0 ./src/ ./examples/ ./test/unit_tests ./index.js -f table --ext .js --ext .jsx",
     "lint": "npm run lint:js",
     "build:dev": "./scripts/build_peg.sh && rollup -c",
