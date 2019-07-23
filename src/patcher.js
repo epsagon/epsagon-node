@@ -37,6 +37,5 @@ if (!config.getConfig().isEpsagonPatchDisabled) {
         redisPatcher,
         mongoPatcher,
         daxPatcher,
-        openWhiskPatcher,
     ].forEach(patch);
 }
