@@ -34,7 +34,7 @@ handler = epsagon.lambdaWrapper(handler)
 
 ## Getting started (Apache OpenWhisk)
 
-Use the [epsagon-openwhisk](https://github.com/epsagon/epsagon-openwhisk)
+Use the [epsagon-node-openwhisk](https://github.com/epsagon/epsagon-node-openwhisk)
 
 ## Custom labels
 
