@@ -207,18 +207,11 @@ function stripOperations(traceJson, attempt) {
 }
 
 /**
- * Builds and sends current collected trace
- * Sends the trace to the epsagon infrastructure now, assuming all required event's promises was
- * handled
- * @param {function} traceSender: The function to use to send the trace. Gets the trace object
- *     as a parameter and sends a JSON version of it to epsagon's infrastructure
- * @return {*} traceSender's result
+ * Builds the current collected trace
+ * @return {Object} TraceJson
  */
-function sendCurrentTrace(traceSender) {
+module.exports.buildTraceJson = function buildTraceJson() {
     const tracerObj = module.exports.getTrace();
-    if (!tracerObj) {
-        return Promise.resolve();
-    }
     const traceJson = {
         app_name: tracerObj.trace.getAppName(),
         token: tracerObj.trace.getToken(),
@@ -267,6 +260,23 @@ function sendCurrentTrace(traceSender) {
         attempt += 1;
     }
 
+    return traceJson;
+};
+
+/**
+ * sends current collected trace
+ * Sends the trace to the epsagon infrastructure now, assuming all required event's promises was
+ * handled
+ * @param {function} traceSender: The function to use to send the trace. Gets the trace object
+ *     as a parameter and sends a JSON version of it to epsagon's infrastructure
+ * @return {*} traceSender's result
+ */
+function sendCurrentTrace(traceSender) {
+    const tracerObj = module.exports.getTrace();
+    if (!tracerObj) {
+        return Promise.resolve();
+    }
+    const traceJson = module.exports.buildTraceJson();
     const sendResult = traceSender(traceJson);
     tracerObj.pendingEvents.clear();
     return sendResult;
