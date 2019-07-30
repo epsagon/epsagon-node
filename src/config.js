@@ -30,7 +30,6 @@ const config = {
     traceCollectorURL: consts.TRACE_COLLECTOR_URL,
     isEpsagonDisabled: (process.env.DISABLE_EPSAGON || '').toUpperCase() === 'TRUE',
     urlPatternsToIgnore: [],
-    ignoredKeys: (process.env.EPSAGON_IGNORED_KEYS || '').split(',').map(module.exports.processIgnoredKey),
     /**
      * get isEpsagonPatchDisabled
      * @return {boolean} True if DISABLE_EPSAGON or DISABLE_EPSAGON_PATCH are set to TRUE, false
@@ -43,6 +42,10 @@ const config = {
 
 if (process.env.EPSAGON_URLS_TO_IGNORE) {
     config.urlPatternsToIgnore = process.env.EPSAGON_URLS_TO_IGNORE.split(',');
+}
+
+if (process.env.EPSAGON_IGNORED_KEYS) {
+    config.ignoredKeys = process.env.EPSAGON_IGNORED_KEYS.split(',').map(module.exports.processIgnoredKey);
 }
 
 /**

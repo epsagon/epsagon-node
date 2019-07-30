@@ -310,6 +310,7 @@ module.exports.filterTrace = function filterTrace(traceObject, ignoredKeys) {
             objects.reduce((sum, value) => Object.assign({}, sum, value), {}));
     }
 
+    utils.debugLog('Trace was filtered with ignored keys');
     const events = traceObject.events.map((event) => {
         if (!(event && event.resource && event.resource.metadata)) {
             return event;
@@ -330,7 +331,6 @@ module.exports.filterTrace = function filterTrace(traceObject, ignoredKeys) {
  *  */
 module.exports.postTrace = function postTrace(traceObject) {
     utils.debugLog(`Posting trace to ${config.getConfig().traceCollectorURL}`);
-    utils.debugLog(`trace: ${JSON.stringify(traceObject, null, 2)}`);
 
     const { ignoredKeys } = config.getConfig();
     const filteredTrace = ignoredKeys &&
@@ -338,6 +338,7 @@ module.exports.postTrace = function postTrace(traceObject) {
         ignoredKeys.length > 0 ?
         module.exports.filterTrace(traceObject, ignoredKeys) : traceObject;
 
+    utils.debugLog(`trace: ${JSON.stringify(traceObject, null, 2)}`);
     return session.post(
         config.getConfig().traceCollectorURL,
         filteredTrace,
