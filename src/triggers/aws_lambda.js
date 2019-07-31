@@ -110,7 +110,8 @@ function createSQSTrigger(event, trigger) {
     resource.setOperation('ReceiveMessage');
     eventInterface.addToMetadata(trigger, {
         'MD5 Of Message Body': event.Records[0].md5OfBody,
-        'Message Attributes': event.Records[0].attributes,
+        Attributes: event.Records[0].attributes,
+        'Message Attributes': event.Records[0].messageAttributes,
     }, {
         'Message Body': event.Records[0].body,
     });
