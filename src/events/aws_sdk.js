@@ -173,6 +173,11 @@ const SQSEventCreator = {
                 'Message Body': entry.MessageBody,
             });
         }
+        if ('MessageAttributes' in entry) {
+            eventInterface.addToMetadata(event, {}, {
+                'Message Attributes': entry.MessageAttributes,
+            });
+        }
     },
 
     /**
