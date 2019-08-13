@@ -1,3 +1,5 @@
+import copy from 'rollup-plugin-copy';
+
 const commonjs = require('rollup-plugin-commonjs');
 const { eslint } = require('rollup-plugin-eslint');
 const { terser } = require('rollup-plugin-terser');
@@ -30,5 +32,10 @@ module.exports = {
                 beautify: false,
             },
         }) : null),
+        copy({
+            targets: [{
+                src: 'src/index.d.ts', dest: 'dist',
+            }],
+        }),
     ],
 };
