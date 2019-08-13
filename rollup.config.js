@@ -34,7 +34,7 @@ module.exports = {
         }) : null),
         copy({
             targets: [{
-                src: 'src/index.d.ts', dest: 'dist',
+                src: 'src/index.d.ts', dest: 'dist', rename: 'bundle.d.ts',
             }],
         }),
     ],
