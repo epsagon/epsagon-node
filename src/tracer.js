@@ -400,10 +400,9 @@ module.exports.sendTraceSync = function sendTraceSync() {
                 event.setId(uuid4());
             }
             if (event.getErrorCode() === errorCode.ErrorCode.OK) {
-                eventInterface.setException(
-                    event,
-                    Error('Operation not completed because of premature Lambda exit')
-                );
+                eventInterface.addToMetadata(event, {
+                    premature_exit: true,
+                });
             }
             if (event.getDuration() === 0) {
                 event.setDuration(utils.createDurationTimestamp(event.getStartTime() * 1000));
