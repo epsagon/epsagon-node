@@ -13,11 +13,8 @@ declare module 'epsagon' {
   }): void
   export function label(key: string, value: string): void
   export function setError(error: Error): void
-
-  type Wrapper<T extends AWSLambda.Handler> = (f: T) => T
-
-  export function lambdaWrapper<T extends AWSLambda.Handler>(f: T): T
-  export function stepLambdaWrapper<T extends AWSLambda.Handler>(f: T): T
+  export function lambdaWrapper<T extends Function>(f: T): T
+  export function stepLambdaWrapper<T extends Function>(f: T): T
   export function openWhiskWrapper<T extends Function>(f: T): T
   export function nodeWrapper<T extends Function>(f: T): T
   export function wrapBatchJob<T extends Function>(f: T): T
