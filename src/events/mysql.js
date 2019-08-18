@@ -15,6 +15,7 @@ function mysqlQueryWrapper(wrappedFunction) {
         let queryString;
         let callback;
         let params;
+        let overrideInnerCallback = false;
         if (typeof sql !== 'string') {
             queryString = sql.sql;
         } else {
@@ -28,6 +29,12 @@ function mysqlQueryWrapper(wrappedFunction) {
             ({ params, callback } = sqlWrapper.parseQueryArgs(arg1, arg2));
         }
 
+        if (callback === undefined && sql._callback) { // eslint-disable-line no-underscore-dangle
+            // In pool connection, no callback passed, but _callback is being used.
+            callback = sql._callback; // eslint-disable-line no-underscore-dangle
+            overrideInnerCallback = true;
+        }
+
         const patchedCallback = sqlWrapper.wrapSqlQuery(
             queryString,
             params,
@@ -39,6 +46,10 @@ function mysqlQueryWrapper(wrappedFunction) {
             sql.onResult = patchedCallback; // eslint-disable-line
         } else {
             callback = patchedCallback;
+        }
+        if (overrideInnerCallback) {
+            // eslint-disable-next-line no-underscore-dangle,no-param-reassign
+            sql._callback = patchedCallback;
         }
         return wrappedFunction.apply(this, [sql, params, callback]);
     };
