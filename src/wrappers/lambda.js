@@ -37,15 +37,21 @@ function baseLambdaWrapper(
     shouldPassRunner = false,
     originalFunctionToWrap = null
 ) {
+    console.log('Epsagon wrapper started')
+    console.time('baseLambdaWrapper')
     tracer.getTrace = traceObject.get;
     // eslint-disable-next-line consistent-return
     return (originalEvent, originalContext, originalCallback) => {
+        console.log('Epsagon in wrapper started')
+        console.time('tracer.restart')
         tracer.restart();
         let runner;
         let timeoutHandler;
         let tracesSent = false;
         let callbackCalled = false;
+        console.timeEnd('tracer.restart')
 
+        console.time('createRunner')
         try {
             runner = lambdaRunner.createRunner(originalContext, runnerResourceType);
             tracer.addRunner(runner);
@@ -56,7 +62,9 @@ function baseLambdaWrapper(
             originalFunctionToWrap;
             return wrappedFunction(originalEvent, originalContext, originalCallback);
         }
+        console.timeEnd('createRunner')
 
+        console.time('awsLambdaTrigger')
         try {
             const trigger = awsLambdaTrigger.createFromEvent(
                 originalEvent,
@@ -67,7 +75,9 @@ function baseLambdaWrapper(
         } catch (err) {
             tracer.addException(err, { event: JSON.stringify(originalEvent) });
         }
+        console.timeEnd('awsLambdaTrigger')
 
+        console.time('consts')
         const startTime = Date.now();
         const runnerSendUpdateHandler = () => {
             runner.setDuration(utils.createDurationTimestamp(startTime));
@@ -199,8 +209,9 @@ function baseLambdaWrapper(
             },
             get: () => originalContext.callbackWaitsForEmptyEventLoop,
         });
-
+        console.timeEnd('consts')
         try {
+            console.time('inTry')
             timeoutHandler = setTimeout(() => {
                 utils.debugLog('In timeout handler');
                 tracesSent = true;
@@ -209,9 +220,13 @@ function baseLambdaWrapper(
                 tracer.sendTraceSync();
             }, patchedContext.getRemainingTimeInMillis() - TIMEOUT_WINDOW);
             runner.setStartTime(utils.createTimestampFromTime(startTime));
+            console.timeEnd('inTry')
+            console.log('before real function')
+            console.time('runningRealFunc')
             let result = shouldPassRunner ?
                 functionToWrap(originalEvent, patchedContext, wrappedCallback, runner) :
                 functionToWrap(originalEvent, patchedContext, wrappedCallback);
+            console.timeEnd('runningRealFunc')
 
             // Check if result is an instance of Promise (some Webpack versions
             // don't support instanceof Promise)
@@ -243,6 +258,7 @@ function baseLambdaWrapper(
             patchedContext.fail(err);
         }
     };
+    console.timeEnd('baseLambdaWrapper')
 }
 
 /**
@@ -251,6 +267,8 @@ function baseLambdaWrapper(
  * @return {function} The original function, wrapped by our tracer
  */
 module.exports.lambdaWrapper = function lambdaWrapper(functionToWrap) {
+    console.log('Epsagon lambdaWrapper started')
+
     if (functionToWrap[epsagonWrapped]) {
         return functionToWrap;
     }
@@ -261,6 +279,7 @@ module.exports.lambdaWrapper = function lambdaWrapper(functionToWrap) {
         writable: false,
     });
 
+    console.log('Epsagon lambdaWrapper return')
     return wrapped;
 };
 
