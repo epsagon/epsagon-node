@@ -65,7 +65,7 @@ function baseLambdaWrapper(
 
             tracer.addEvent(trigger);
         } catch (err) {
-            utils.debugLog(`Error parsing trigger: ${err}`);
+            utils.debugLog(`Error parsing trigger: ${err}, Event: ${JSON.stringify(originalEvent)}`);
         }
 
         const startTime = Date.now();
