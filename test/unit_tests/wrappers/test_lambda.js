@@ -183,7 +183,6 @@ describe('lambdaWrapper tests', () => {
             expect(this.createFromEventStub.callCount).to.equal(1);
             expect(this.createFromEventStub.calledWith({}));
             expect(this.addEventStub.callCount).to.equal(0);
-            expect(this.addExceptionStub.callCount).to.equal(1);
             expect(this.sendTraceStub.callCount).to.equal(1);
             expect(this.stubFunction.callCount).to.equal(1);
             expect(this.callbackStub.callCount).to.equal(1);
@@ -588,7 +587,6 @@ describe('stepLambdaWrapper tests', () => {
             expect(this.createFromEventStub.callCount).to.equal(1);
             expect(this.createFromEventStub.calledWith({}));
             expect(this.addEventStub.callCount).to.equal(0);
-            expect(this.addExceptionStub.callCount).to.equal(1);
             expect(this.sendTraceStub.callCount).to.equal(1);
             expect(this.stubFunction.callCount).to.equal(1);
             expect(this.callbackStub.callCount).to.equal(1);
