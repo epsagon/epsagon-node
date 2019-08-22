@@ -19,6 +19,7 @@ const Wreck = tryRequire('wreck');
 const URL_BLACKLIST = {
     'tc.epsagon.com': 'endsWith',
     'amazonaws.com': (url, pattern) => url.endsWith(pattern) && (url.indexOf('execute-api') === -1),
+    '127.0.0.1': (url, pattern, path) => (url === pattern) && path.startsWith('/2018-06-01/runtime/invocation/'),
     '169.254.169.254': 'startsWith', // EC2 document ip. Have better filtering in the future
 };
 
@@ -28,10 +29,10 @@ const USER_AGENTS_BLACKLIST = ['openwhisk-client-js'];
  * @param {string} url The URL to check
  * @returns {boolean} True if it is in the blacklist, False otherwise
  */
-function isBlacklistURL(url) {
+function isBlacklistURL(url, path) {
     return Object.keys(URL_BLACKLIST).some((key) => {
         if (typeof URL_BLACKLIST[key] === typeof (() => {})) {
-            return URL_BLACKLIST[key](url, key);
+            return URL_BLACKLIST[key](url, key, path);
         }
         return url[URL_BLACKLIST[key]](key);
     });
@@ -91,7 +92,8 @@ function httpWrapper(wrappedFunction) {
                 (options.uri && options.uri.hostname) ||
                 'localhost'
             );
-            if (isBlacklistURL(hostname)) {
+
+            if (isBlacklistURL(hostname, options.path)) {
                 utils.debugLog(`filtered blacklist hostname ${hostname}`);
                 return wrappedFunction.apply(this, [options, callback]);
             }
