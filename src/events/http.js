@@ -27,6 +27,7 @@ const USER_AGENTS_BLACKLIST = ['openwhisk-client-js'];
 /**
  * Checks if a URL is in the blacklist
  * @param {string} url The URL to check
+ * @param {string} path The Path to check (optional)
  * @returns {boolean} True if it is in the blacklist, False otherwise
  */
 function isBlacklistURL(url, path) {
