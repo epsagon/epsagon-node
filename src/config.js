@@ -30,6 +30,7 @@ const config = {
     traceCollectorURL: consts.TRACE_COLLECTOR_URL,
     isEpsagonDisabled: (process.env.DISABLE_EPSAGON || '').toUpperCase() === 'TRUE',
     urlPatternsToIgnore: [],
+    internalSampleRate: 1,
     /**
      * get isEpsagonPatchDisabled
      * @return {boolean} True if DISABLE_EPSAGON or DISABLE_EPSAGON_PATCH are set to TRUE, false
@@ -38,8 +39,29 @@ const config = {
     get isEpsagonPatchDisabled() {
         return this.isEpsagonDisabled || (process.env.DISABLE_EPSAGON_PATCH || '').toUpperCase() === 'TRUE';
     },
+
+    /**
+     * @return {Number} the current sample rate
+     */
+    get sampleRate() {
+        return this.internalSampleRate;
+    },
+
+    /**
+     * updates the sampling rate, if input is valid
+     * @param {String | Number} newRate The new rate to use
+     */
+    set sampleRate(newRate) {
+        const newParsedRate = parseFloat(newRate);
+        if (!Number.isNaN(newParsedRate)) {
+            this.internalSampleRate = newParsedRate;
+        }
+    },
 };
 
+if (process.env.EPSAGON_SAMPLE_RATE) {
+    config.sampleRate = process.env.EPSAGON_SAMPLE_RATE;
+}
 if (process.env.EPSAGON_URLS_TO_IGNORE) {
     config.urlPatternsToIgnore = process.env.EPSAGON_URLS_TO_IGNORE.split(',');
 }
@@ -98,5 +120,9 @@ module.exports.setConfig = function setConfig(configData) {
 
     if (configData.ignoredKeys) {
         config.ignoredKeys = configData.ignoredKeys.map(module.exports.processIgnoredKey);
+    }
+
+    if (configData.sampleRate !== null && config.sampleRate !== undefined) {
+        config.sampleRate = configData.sampleRate;
     }
 };

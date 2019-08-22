@@ -137,6 +137,7 @@ function httpWrapper(wrappedFunction) {
             const url = `${protocol}://${hostname}${pathname}`;
             const fullURL = `${url}${path}`;
             httpEvent.setResource(resource);
+
             eventInterface.addToMetadata(httpEvent,
                 { url }, {
                     path,
@@ -159,6 +160,16 @@ function httpWrapper(wrappedFunction) {
                 eventInterface.addToMetadata(httpEvent, metadataFields, {
                     response_headers: res.headers,
                 });
+
+                // Override request headers if they are present here. In some libs they are not
+                // available on `options.headers`
+                // eslint-disable-next-line no-underscore-dangle
+                if (res.req && res.req._headers) {
+                    eventInterface.addToMetadata(httpEvent, metadataFields, {
+                        // eslint-disable-next-line no-underscore-dangle
+                        request_headers: res.req._headers,
+                    });
+                }
 
                 if ('x-amzn-requestid' in res.headers) {
                     // This is a request to AWS API Gateway

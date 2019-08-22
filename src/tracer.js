@@ -25,6 +25,13 @@ module.exports.getTrace = () => {};
  * @returns {Object} new Trace
  */
 module.exports.createTracer = function createTracer() {
+    if (config.getConfig().sampleRate <= Math.random()) {
+        // sampling decision. Not initializing tracer for this to be backwards compatible
+        // and for efficiency (initializing a tracer is currently not that cheap, and we
+        // may initialize one for each request.
+        return null;
+    }
+
     const tracerObj = new trace.Trace([
         '',
         '',
@@ -359,11 +366,12 @@ module.exports.postTrace = function postTrace(traceObject) {
  * @returns {Promise} a promise that is resolved when the trace transmission ends.
  */
 module.exports.sendTrace = function sendTrace(runnerUpdateFunc) {
-    utils.debugLog('Sending trace async');
     const tracerObj = module.exports.getTrace();
     if (!tracerObj) {
         return Promise.resolve();
     }
+
+    utils.debugLog('Sending trace async');
     return Promise.all(tracerObj.pendingEvents.values()).then(() => {
         // Setting runner's duration.
         runnerUpdateFunc();
@@ -378,12 +386,12 @@ module.exports.sendTrace = function sendTrace(runnerUpdateFunc) {
  * @returns {Promise} a promise that is resolved when the trace transmission ends.
  */
 module.exports.sendTraceSync = function sendTraceSync() {
-    utils.debugLog('Sending trace sync');
     const tracerObj = module.exports.getTrace();
     if (!tracerObj) {
         return Promise.resolve();
     }
 
+    utils.debugLog('Sending trace sync');
     tracerObj.pendingEvents.forEach((promise, event) => {
         if (promise.isPending()) {
             // Consider changing to report a different type of error. Maybe a new error code
@@ -392,10 +400,9 @@ module.exports.sendTraceSync = function sendTraceSync() {
                 event.setId(uuid4());
             }
             if (event.getErrorCode() === errorCode.ErrorCode.OK) {
-                eventInterface.setException(
-                    event,
-                    Error('Operation not completed because of premature Lambda exit')
-                );
+                eventInterface.addToMetadata(event, {
+                    premature_exit: true,
+                });
             }
             if (event.getDuration() === 0) {
                 event.setDuration(utils.createDurationTimestamp(event.getStartTime() * 1000));

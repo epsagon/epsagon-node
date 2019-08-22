@@ -520,7 +520,14 @@ describe('sendTraceSync function tests', () => {
     });
 
     it('sendTraceSync: post event if not all events resolved', () => {
+        const resource = new serverlessEvent.Resource([
+            '',
+            'test_resource',
+            'test_opeation',
+        ]);
+
         const eventToAdd = new serverlessEvent.Event();
+        eventToAdd.setResource(resource);
         let shouldPromiseEnd = false;
         const stubPromise = new Promise((resolve) => {
             function checkFlag() {
@@ -541,7 +548,13 @@ describe('sendTraceSync function tests', () => {
     });
 
     it('sendTraceSync: post even if event rejected', () => {
+        const resource = new serverlessEvent.Resource([
+            '',
+            'test_resource',
+            'test_opeation',
+        ]);
         const eventToAdd = new serverlessEvent.Event();
+        eventToAdd.setResource(resource);
         const stubPromise = Promise.reject(new Error('failed'));
         tracer.addEvent(eventToAdd, stubPromise);
 
@@ -550,7 +563,13 @@ describe('sendTraceSync function tests', () => {
     });
 
     it('sendTraceSync: send even with for more then 1 event pending', () => {
+        const resource = new serverlessEvent.Resource([
+            '',
+            'test_resource',
+            'test_opeation',
+        ]);
         const eventToAdd1 = new serverlessEvent.Event();
+        eventToAdd1.setResource(resource);
         let shouldPromiseEnd1 = false;
         const stubPromise1 = new Promise((resolve) => {
             function checkFlag() {
@@ -566,6 +585,7 @@ describe('sendTraceSync function tests', () => {
         tracer.addEvent(eventToAdd1, stubPromise1);
 
         const eventToAdd2 = new serverlessEvent.Event();
+        eventToAdd2.setResource(resource);
         let shouldPromiseEnd2 = false;
         const stubPromise2 = new Promise((resolve) => {
             function checkFlag() {
@@ -586,7 +606,13 @@ describe('sendTraceSync function tests', () => {
     });
 
     it('sendTraceSync: there is more then 1 event and some rejects', () => {
+        const resource = new serverlessEvent.Resource([
+            '',
+            'test_resource',
+            'test_opeation',
+        ]);
         const eventToAdd1 = new serverlessEvent.Event();
+        eventToAdd1.setResource(resource);
         let shouldPromiseEnd1 = false;
         const stubPromise1 = new Promise((resolve) => {
             function checkFlag() {
@@ -602,6 +628,7 @@ describe('sendTraceSync function tests', () => {
         tracer.addEvent(eventToAdd1, stubPromise1);
 
         const eventToAdd2 = new serverlessEvent.Event();
+        eventToAdd2.setResource(resource);
         const stubPromise2 = Promise.reject();
 
         tracer.addEvent(eventToAdd2, stubPromise2);
@@ -613,6 +640,11 @@ describe('sendTraceSync function tests', () => {
     });
 
     it('sendTraceSync: send too big trace', () => {
+        const resource = new serverlessEvent.Resource([
+            '',
+            'test_resource',
+            'test_opeation',
+        ]);
         const eventToAdd1 = new serverlessEvent.Event([
             'x'.repeat(100 * 1024),
             0,
@@ -621,6 +653,7 @@ describe('sendTraceSync function tests', () => {
             0,
             0,
         ]);
+        eventToAdd1.setResource(resource);
 
         let shouldPromiseEnd1 = false;
         const stubPromise1 = new Promise((resolve) => {
@@ -644,6 +677,7 @@ describe('sendTraceSync function tests', () => {
             0,
             0,
         ]);
+        eventToAdd2.setResource(resource);
 
         let shouldPromiseEnd2 = false;
         const stubPromise2 = new Promise((resolve) => {

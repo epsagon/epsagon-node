@@ -1,8 +1,12 @@
 let lastError = null;
 
-const tryRequire = (id, req) => {
+const tryRequire = (id) => {
     let path;
-    const currentRequire = req || require;
+    // for webpack we only support requiring external packages
+    const currentRequire = (
+        typeof __webpack_require__ === 'function' ? // eslint-disable-line camelcase
+            __non_webpack_require__ : require // eslint-disable-line no-undef, camelcase
+    );
 
     try {
         path = currentRequire.resolve(id);
