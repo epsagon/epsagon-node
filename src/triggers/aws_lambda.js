@@ -129,12 +129,13 @@ function createSQSTrigger(event, trigger) {
 function createAPIGatewayTrigger(event, trigger) {
     const resource = trigger.getResource();
     trigger.setId(event.requestContext.requestId);
-    resource.setName(event.resource);
+    resource.setName(event.headers.Host || event.requestContext.apiId);
     resource.setOperation(event.httpMethod);
     eventInterface.addToMetadata(trigger, {
         stage: event.requestContext.stage,
         query_string_parameters: JSON.stringify(event.queryStringParameters),
         path_parameters: JSON.stringify(event.pathParameters),
+        resource: event.resource,
     }, {
         body: JSON.stringify(event.body),
         headers: JSON.stringify(event.headers),
@@ -150,12 +151,13 @@ function createAPIGatewayTrigger(event, trigger) {
 function createNoProxyAPIGatewayTrigger(event, trigger) {
     const resource = trigger.getResource();
     trigger.setId(event.context['request-id']);
-    resource.setName(event.context['resource-path']);
+    resource.setName(event.params.header.Host || event.context['api-id']);
     resource.setOperation(event.context['http-method']);
     eventInterface.addToMetadata(trigger, {
         stage: event.context.stage,
         query_string_parameters: JSON.stringify(event.params.querystring),
         path_parameters: JSON.stringify(event.params.path),
+        resource: event.context['resource-path'],
     }, {
         body: JSON.stringify(event['body-json']),
         headers: JSON.stringify(event.params.header),
@@ -215,11 +217,12 @@ function createDynamoDBTrigger(event, trigger) {
 function createElbTrigger(event, trigger) {
     const resource = trigger.getResource();
     trigger.setId(`elb-${uuid4()}`);
-    resource.setName(event.path);
+    resource.setName(event.headers.host);
     resource.setOperation(event.httpMethod);
     eventInterface.addToMetadata(trigger, {
         query_string_parameters: JSON.stringify(event.queryStringParameters),
         target_group_arn: event.requestContext.elb.targetGroupArn,
+        path: event.path,
     }, {
         body: JSON.stringify(event.body),
         headers: JSON.stringify(event.headers),
