@@ -303,7 +303,7 @@ module.exports.filterTrace = function filterTrace(traceObject, ignoredKeys) {
     function isNotIgnored(key) {
         for (let i = 0; i < ignoredKeys.length; i += 1) {
             const predicate = ignoredKeys[i];
-            if (typeof predicate === 'string' && 
+            if (typeof predicate === 'string' &&
             config.processIgnoredKey(predicate) === config.processIgnoredKey(key)) {
                 return false;
             }
