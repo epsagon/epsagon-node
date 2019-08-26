@@ -279,7 +279,6 @@ function sendCurrentTrace(traceSender) {
     return sendResult;
 }
 
-
 /**
  * Filter a trace to exclude all unwanted keys
  * @param {Object} traceObject  the trace to filter
@@ -297,6 +296,28 @@ module.exports.filterTrace = function filterTrace(traceObject, ignoredKeys) {
     }
 
     /**
+     * Tests if a key is to be ignored or not.
+     * @param {string} key a key in an object or hash map
+     * @returns {boolean} true for non-ignored keys
+     */
+    function isNotIgnored(key) {
+        for (let i = 0; i < ignoredKeys.length; i += 1) {
+            const predicate = ignoredKeys[i];
+            if (typeof predicate === 'string' && 
+            config.processIgnoredKey(predicate) === config.processIgnoredKey(key)) {
+                return false;
+            }
+            if (predicate instanceof RegExp && predicate.test(key)) {
+                return false;
+            }
+            if (typeof predicate === 'function' && predicate(key)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
      * Recursivly filter object properties
      * @param {Object} obj  object to filter
      * @returns {Object} filtered object
@@ -304,8 +325,7 @@ module.exports.filterTrace = function filterTrace(traceObject, ignoredKeys) {
     function filterObject(obj) {
         const keys = Object
             .keys(obj)
-            .map(config.processIgnoredKey)
-            .filter((k => !ignoredKeys.includes(k)));
+            .filter(isNotIgnored);
 
         const primitive = keys.filter(k => !isObject(obj[k]));
         const objects = keys

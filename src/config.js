@@ -67,7 +67,7 @@ if (process.env.EPSAGON_URLS_TO_IGNORE) {
 }
 
 if (process.env.EPSAGON_IGNORED_KEYS) {
-    config.ignoredKeys = process.env.EPSAGON_IGNORED_KEYS.split(',').map(module.exports.processIgnoredKey);
+    config.ignoredKeys = process.env.EPSAGON_IGNORED_KEYS.split(',');
 }
 
 /**
@@ -119,7 +119,7 @@ module.exports.setConfig = function setConfig(configData) {
     }
 
     if (configData.ignoredKeys) {
-        config.ignoredKeys = configData.ignoredKeys.map(module.exports.processIgnoredKey);
+        config.ignoredKeys = configData.ignoredKeys;
     }
 
     if (configData.sampleRate !== null && config.sampleRate !== undefined) {
