@@ -42,13 +42,14 @@ describe('filter keys function', () => {
             events: [{
                 resource: {
                     metadata: {
+                        employeeId: 'personal',
                         studentId: 'personal',
                         message: 'not-personal',
                     },
                 },
             }],
         };
-        const ignoredKeys = ['studentid'];
+        const ignoredKeys = ['studentid', /.*Id$/];
         const filtered = tracer.filterTrace(traceObject, ignoredKeys);
         const expected = {
             events: [{

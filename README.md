@@ -95,14 +95,16 @@ function handler(event, context, callback) {
 
 You can pass a list of sensitive properties and they will be filtered out:
 
-```node
+```javascript
 epsagon.init({
     token: 'my-secret-token',
     appName: 'my-app-name',
     metadataOnly: false, // Optional, send more trace data
-    ignoredKeys: ['password', ...]
+    ignoredKeys: ['password', /.*_token$/ , …]
 });
 ```
+
+The `ignoredKeys` property can contain strings (will perform a lose match, so that `First Name` also matches `first_name`), regular expressions, and predicate functions.
 
 Alternatively you can pass a comma-separated list of sensitive keys using 
 the `EPSAGON_IGNORED_KEYS` environment variable to get the same effect.
