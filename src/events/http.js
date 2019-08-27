@@ -81,7 +81,7 @@ function resolveHttpPromise(httpEvent, resolveFunction, startTime) {
  * @param {callback} callback The callback function, if exists
  * @returns {object} The params array
  */
-    function buildParams(input, options, callback) {
+function buildParams(input, options, callback) {
     if (input && options) {
         // In case of both input and options returning all three
         return [input, options, callback];
@@ -102,8 +102,8 @@ function resolveHttpPromise(httpEvent, resolveFunction, startTime) {
 function httpWrapper(wrappedFunction) {
     return function internalHttpWrapper(a, b, c) {
         let input = a;
-        let options = b
-        let callback = c
+        let options = b;
+        let callback = c;
         if (!(['string', 'URL'].includes(typeof input)) && !callback) {
             callback = b;
             options = a;
@@ -162,8 +162,8 @@ function httpWrapper(wrappedFunction) {
                 return wrappedFunction.apply(this, [a, b, c]);
             }
 
-            // eslint-disable-next-line no-underscore-dangle
             const agent = (
+                // eslint-disable-next-line no-underscore-dangle
                 (options && options.agent) || (options && options._defaultAgent) ||
                 undefined
             );
