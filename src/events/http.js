@@ -6,6 +6,7 @@ const uuid4 = require('uuid4');
 const shimmer = require('shimmer');
 const http = require('http');
 const https = require('https');
+const urlLib = require('url');
 const tryRequire = require('../try_require.js');
 const utils = require('../utils.js');
 const tracer = require('../tracer.js');
@@ -74,50 +75,115 @@ function resolveHttpPromise(httpEvent, resolveFunction, startTime) {
 }
 
 /**
+ * Builds the HTTP Params array
+ * @param {string} url The URL, if exists
+ * @param {object} options The Options object, if exists
+ * @param {callback} callback The callback function, if exists
+ * @returns {object} The params array
+ */
+function buildParams(url, options, callback) {
+    if (url && options) {
+        // in case of both input and options returning all three
+        return [url, options, callback];
+    }
+    if (url && !options) {
+        // in case of missing options returning only url and callback
+        return [url, callback];
+    }
+    // url is missing - returning options and callback
+    return [options, callback];
+}
+
+/**
  * Wraps the http's module request function with tracing
  * @param {Function} wrappedFunction The http's request module
  * @returns {Function} The wrapped function
  */
 function httpWrapper(wrappedFunction) {
-    return function internalHttpWrapper(options, callback) {
+    return function internalHttpWrapper(a, b, c) {
+        let url = a;
+        let options = b;
+        let callback = c;
+        // handling case of request(options, callback)
+        if (!(['string', 'URL'].includes(typeof url)) && !callback) {
+            callback = b;
+            options = a;
+            url = undefined;
+        }
+
+        // handling case of request(url, callback)
+        if ((typeof options === 'function') && (!callback)) {
+            callback = options;
+            options = null;
+        }
+
         if (callback && callback.__epsagonCallback) { // eslint-disable-line no-underscore-dangle
             // we are already tracing this request. can happen in
             // https->http cases
-            return wrappedFunction.apply(this, [options, callback]);
+            return wrappedFunction.apply(this, [a, b, c]);
         }
         let clientRequest = null;
         try {
+            let parsedUrl = url;
+
+            if (typeof parsedUrl === 'string') {
+                parsedUrl = urlLib.parse(parsedUrl);
+            }
+
             const hostname = (
-                options.hostname ||
-                options.host ||
-                (options.uri && options.uri.hostname) ||
+                (parsedUrl && parsedUrl.hostname) ||
+                (parsedUrl && parsedUrl.host) ||
+                (options && options.hostname) ||
+                (options && options.host) ||
+                (options && options.uri && options.uri.hostname) ||
                 'localhost'
             );
 
-            if (isBlacklistURL(hostname, options.path)) {
+            const path = (
+                (parsedUrl && parsedUrl.path) ||
+                (options && options.path) ||
+                ('/')
+            );
+
+            const pathname = (
+                (parsedUrl && parsedUrl.pathname) ||
+                (options && options.pathname) ||
+                ('/')
+            );
+
+            const headers = (
+                (options && options.headers) || {}
+            );
+
+            if (isBlacklistURL(hostname, path)) {
                 utils.debugLog(`filtered blacklist hostname ${hostname}`);
-                return wrappedFunction.apply(this, [options, callback]);
+                return wrappedFunction.apply(this, [a, b, c]);
             }
-            if (isBlacklistHeader(options.headers)) {
-                utils.debugLog(`filtered blacklist headers ${JSON.stringify(options.headers)}`);
-                return wrappedFunction.apply(this, [options, callback]);
+            if (isBlacklistHeader(headers)) {
+                utils.debugLog(`filtered blacklist headers ${JSON.stringify(headers)}`);
+                return wrappedFunction.apply(this, [a, b, c]);
             }
-            // eslint-disable-next-line no-underscore-dangle
-            const agent = options.agent || options._defaultAgent;
-            const port = options.port || options.defaultPort || (agent && agent.defaultPort) || 80;
+
+            const agent = (
+                // eslint-disable-next-line no-underscore-dangle
+                (options && options.agent) || (options && options._defaultAgent) ||
+                undefined
+            );
+            const port = (
+                (parsedUrl && parsedUrl.port) || (options && options.port) ||
+                (options && options.defaultPort) || (agent && agent.defaultPort) || 80
+            );
             let protocol = (
+                (parsedUrl && parsedUrl.protocol) ||
                 (port === 443 && 'https:') ||
-                options.protocol ||
+                (options && options.protocol) ||
                 (agent && agent.protocol) ||
                 'http:'
             );
-            const headers = options.headers || {};
-            const body = options.body || '';
-            const path = options.path || '/';
-            const pathname = options.pathname || '/';
-
             protocol = protocol.slice(0, -1);
-            const method = options.method || 'GET';
+
+            const body = (options && options.body) || '';
+            const method = (options && options.method) || 'GET';
 
             const resource = new serverlessEvent.Resource([
                 hostname,
@@ -135,19 +201,19 @@ function httpWrapper(wrappedFunction) {
                 errorCode.ErrorCode.OK,
             ]);
 
-            const url = `${protocol}://${hostname}${pathname}`;
-            const fullURL = `${url}${path}`;
+            const requestUrl = `${protocol}://${hostname}${pathname}`;
+            const fullURL = `${requestUrl}${path}`;
             httpEvent.setResource(resource);
 
             eventInterface.addToMetadata(httpEvent,
-                { url }, {
+                { url: requestUrl }, {
                     path,
                     request_headers: headers,
                     request_body: body,
                 });
 
             const patchedCallback = (res) => {
-                const { isWreck } = (options.agent || {});
+                const { isWreck } = ((options || {}).agent || {});
                 let metadataFields = {};
                 if ('x-powered-by' in res.headers) {
                     // This field is used to identify responses from 'Express'
@@ -198,8 +264,9 @@ function httpWrapper(wrappedFunction) {
                 }
             };
             patchedCallback.__epsagonCallback = true; // eslint-disable-line no-underscore-dangle
-
-            clientRequest = wrappedFunction.apply(this, [options, patchedCallback]);
+            clientRequest = wrappedFunction.apply(
+                this, buildParams(url, options, patchedCallback)
+            );
 
             const responsePromise = new Promise((resolve) => {
                 let isTimeout = false;
@@ -245,7 +312,7 @@ function httpWrapper(wrappedFunction) {
         }
 
         if (!clientRequest) {
-            clientRequest = wrappedFunction.apply(this, [options, callback]);
+            clientRequest = wrappedFunction.apply(this, [a, b, c]);
         }
 
         return clientRequest;
@@ -284,8 +351,8 @@ function WreckWrapper(wrappedFunction) {
  * @return {Function} the wrapped function
  */
 function httpGetWrapper(module) {
-    return function internalHttpGetWrapper(input, options, callback) {
-        const req = module.request(input, options, callback);
+    return function internalHttpGetWrapper(url, options, callback) {
+        const req = module.request(url, options, callback);
         req.end();
         return req;
     };
@@ -298,7 +365,6 @@ module.exports = {
     init() {
         shimmer.wrap(http, 'get', () => httpGetWrapper(http));
         shimmer.wrap(http, 'request', httpWrapper);
-
         shimmer.wrap(https, 'get', () => httpGetWrapper(https));
         shimmer.wrap(https, 'request', httpWrapper);
         if (Wreck) {
