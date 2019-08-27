@@ -76,21 +76,21 @@ function resolveHttpPromise(httpEvent, resolveFunction, startTime) {
 
 /**
  * Builds the HTTP Params array
- * @param {string} input The URL, if exists
+ * @param {string} url The URL, if exists
  * @param {object} options The Options object, if exists
  * @param {callback} callback The callback function, if exists
  * @returns {object} The params array
  */
-function buildParams(input, options, callback) {
-    if (input && options) {
-        // In case of both input and options returning all three
-        return [input, options, callback];
+function buildParams(url, options, callback) {
+    if (url && options) {
+        // in case of both input and options returning all three
+        return [url, options, callback];
     }
-    if (input && !options) {
-        // In case of missing options returning only input and callback
-        return [input, callback];
+    if (url && !options) {
+        // in case of missing options returning only url and callback
+        return [url, callback];
     }
-    // Input is missing - returning options and callback
+    // url is missing - returning options and callback
     return [options, callback];
 }
 
@@ -101,15 +101,17 @@ function buildParams(input, options, callback) {
  */
 function httpWrapper(wrappedFunction) {
     return function internalHttpWrapper(a, b, c) {
-        let input = a;
+        let url = a;
         let options = b;
         let callback = c;
-        if (!(['string', 'URL'].includes(typeof input)) && !callback) {
+        // handling case of request(options, callback)
+        if (!(['string', 'URL'].includes(typeof url)) && !callback) {
             callback = b;
             options = a;
-            input = undefined;
+            url = undefined;
         }
 
+        // handling case of request(url, callback)
         if ((typeof options === 'function') && (!callback)) {
             callback = options;
             options = null;
@@ -122,7 +124,7 @@ function httpWrapper(wrappedFunction) {
         }
         let clientRequest = null;
         try {
-            let parsedUrl = input;
+            let parsedUrl = url;
 
             if (typeof parsedUrl === 'string') {
                 parsedUrl = urlLib.parse(parsedUrl);
@@ -263,7 +265,7 @@ function httpWrapper(wrappedFunction) {
             };
             patchedCallback.__epsagonCallback = true; // eslint-disable-line no-underscore-dangle
             clientRequest = wrappedFunction.apply(
-                this, buildParams(input, options, patchedCallback)
+                this, buildParams(url, options, patchedCallback)
             );
 
             const responsePromise = new Promise((resolve) => {
@@ -349,8 +351,8 @@ function WreckWrapper(wrappedFunction) {
  * @return {Function} the wrapped function
  */
 function httpGetWrapper(module) {
-    return function internalHttpGetWrapper(input, options, callback) {
-        const req = module.request(input, options, callback);
+    return function internalHttpGetWrapper(url, options, callback) {
+        const req = module.request(url, options, callback);
         req.end();
         return req;
     };
