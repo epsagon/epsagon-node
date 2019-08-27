@@ -13,6 +13,7 @@ const serverlessEvent = require('../proto/event_pb.js');
 const eventInterface = require('../event.js');
 const errorCode = require('../proto/error_code_pb.js');
 const config = require('../config.js');
+const url = require('url');
 
 const Wreck = tryRequire('wreck');
 
@@ -78,46 +79,90 @@ function resolveHttpPromise(httpEvent, resolveFunction, startTime) {
  * @param {Function} wrappedFunction The http's request module
  * @returns {Function} The wrapped function
  */
+
+function getParams(input, options, callback) {
+    return (input && options) ? [input, options, callback] : (
+        (input && !options) ? [input, callback] : [options, callback]
+    );
+}
+
 function httpWrapper(wrappedFunction) {
-    return function internalHttpWrapper(options, callback) {
+    return function internalHttpWrapper(a, b, c) {
+        let input = a;
+        let options = b
+        let callback = c
+        if (!(['string', 'URL'].includes(typeof input)) && !callback) {
+            callback = b
+            options = a
+            input = undefined
+        }
+
+        if ((typeof(options) === 'function') && (!callback)) {
+            callback = options;
+            options = null;
+        }
+
         if (callback && callback.__epsagonCallback) { // eslint-disable-line no-underscore-dangle
             // we are already tracing this request. can happen in
             // https->http cases
-            return wrappedFunction.apply(this, [options, callback]);
+            return wrappedFunction.apply(this, [a, b, c]);
         }
         let clientRequest = null;
         try {
+            let parsedUrl = input;
+
+            if (typeof parsedUrl === 'string') {
+                parsedUrl = url.parse(parsedUrl);
+            }
+
             const hostname = (
-                options.hostname ||
-                options.host ||
-                (options.uri && options.uri.hostname) ||
+                (parsedUrl && parsedUrl.hostname) ||
+                (parsedUrl && parsedUrl.host) ||
+                (options && options.hostname) ||
+                (options && options.host) ||
+                (options && options.uri && options.uri.hostname) ||
                 'localhost'
             );
 
-            if (isBlacklistURL(hostname, options.path)) {
+            const path = (
+                (parsedUrl && parsedUrl.path) ||
+                (options && options.path) ||
+                ('/')
+            );
+
+            const pathname = (
+                (parsedUrl && parsedUrl.pathname) ||
+                (options && options.pathname) ||
+                ('/')
+            );
+
+            const headers = (
+                (options && options.headers) || {}
+            )
+
+            if (isBlacklistURL(hostname, path)) {
                 utils.debugLog(`filtered blacklist hostname ${hostname}`);
-                return wrappedFunction.apply(this, [options, callback]);
+                return wrappedFunction.apply(this, [a, b, c]);
             }
-            if (isBlacklistHeader(options.headers)) {
-                utils.debugLog(`filtered blacklist headers ${JSON.stringify(options.headers)}`);
-                return wrappedFunction.apply(this, [options, callback]);
+            if (isBlacklistHeader(headers)) {
+                utils.debugLog(`filtered blacklist headers ${JSON.stringify(headers)}`);
+                return wrappedFunction.apply(this, [a, b, c]);
             }
+
             // eslint-disable-next-line no-underscore-dangle
-            const agent = options.agent || options._defaultAgent;
-            const port = options.port || options.defaultPort || (agent && agent.defaultPort) || 80;
+            const agent = (options && options.agent) || (options && options._defaultAgent) || undefined;
+            const port = (parsedUrl && parsedUrl.port) || (options && options.port) || (options && options.defaultPort) || (agent && agent.defaultPort) || 80;
             let protocol = (
+                (parsedUrl && parsedUrl.protocol) ||
                 (port === 443 && 'https:') ||
-                options.protocol ||
+                (options && options.protocol) ||
                 (agent && agent.protocol) ||
                 'http:'
             );
-            const headers = options.headers || {};
-            const body = options.body || '';
-            const path = options.path || '/';
-            const pathname = options.pathname || '/';
-
             protocol = protocol.slice(0, -1);
-            const method = options.method || 'GET';
+
+            const body = (options && options.body) || '';
+            const method = (options && options.method) || 'GET';
 
             const resource = new serverlessEvent.Resource([
                 hostname,
@@ -135,19 +180,19 @@ function httpWrapper(wrappedFunction) {
                 errorCode.ErrorCode.OK,
             ]);
 
-            const url = `${protocol}://${hostname}${pathname}`;
-            const fullURL = `${url}${path}`;
+            const requestUrl = `${protocol}://${hostname}${pathname}`;
+            const fullURL = `${requestUrl}${path}`;
             httpEvent.setResource(resource);
 
             eventInterface.addToMetadata(httpEvent,
-                { url }, {
+                { url: requestUrl }, {
                     path,
                     request_headers: headers,
                     request_body: body,
                 });
 
             const patchedCallback = (res) => {
-                const { isWreck } = (options.agent || {});
+                const { isWreck } = ((options || {}).agent || {});
                 let metadataFields = {};
                 if ('x-powered-by' in res.headers) {
                     // This field is used to identify responses from 'Express'
@@ -198,8 +243,9 @@ function httpWrapper(wrappedFunction) {
                 }
             };
             patchedCallback.__epsagonCallback = true; // eslint-disable-line no-underscore-dangle
-
-            clientRequest = wrappedFunction.apply(this, [options, patchedCallback]);
+            clientRequest = wrappedFunction.apply(this,
+                getParams(input, options, patchedCallback)
+            );
 
             const responsePromise = new Promise((resolve) => {
                 let isTimeout = false;
@@ -245,7 +291,9 @@ function httpWrapper(wrappedFunction) {
         }
 
         if (!clientRequest) {
-            clientRequest = wrappedFunction.apply(this, [options, callback]);
+            clientRequest = wrappedFunction.apply(this,
+                [a, b, c]
+            );
         }
 
         return clientRequest;
@@ -298,7 +346,6 @@ module.exports = {
     init() {
         shimmer.wrap(http, 'get', () => httpGetWrapper(http));
         shimmer.wrap(http, 'request', httpWrapper);
-
         shimmer.wrap(https, 'get', () => httpGetWrapper(https));
         shimmer.wrap(https, 'request', httpWrapper);
         if (Wreck) {
