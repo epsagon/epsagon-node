@@ -6,6 +6,7 @@ const uuid4 = require('uuid4');
 const shimmer = require('shimmer');
 const http = require('http');
 const https = require('https');
+const urlLib = require('url');
 const tryRequire = require('../try_require.js');
 const utils = require('../utils.js');
 const tracer = require('../tracer.js');
@@ -13,7 +14,6 @@ const serverlessEvent = require('../proto/event_pb.js');
 const eventInterface = require('../event.js');
 const errorCode = require('../proto/error_code_pb.js');
 const config = require('../config.js');
-const url = require('url');
 
 const Wreck = tryRequire('wreck');
 
@@ -75,29 +75,42 @@ function resolveHttpPromise(httpEvent, resolveFunction, startTime) {
 }
 
 /**
+ * Builds the HTTP Params array
+ * @param {string} input The URL, if exists
+ * @param {object} options The Options object, if exists
+ * @param {callback} callback The callback function, if exists
+ * @returns {object} The params array
+ */
+    function buildParams(input, options, callback) {
+    if (input && options) {
+        // In case of both input and options returning all three
+        return [input, options, callback];
+    }
+    if (input && !options) {
+        // In case of missing options returning only input and callback
+        return [input, callback];
+    }
+    // Input is missing - returning options and callback
+    return [options, callback];
+}
+
+/**
  * Wraps the http's module request function with tracing
  * @param {Function} wrappedFunction The http's request module
  * @returns {Function} The wrapped function
  */
-
-function getParams(input, options, callback) {
-    return (input && options) ? [input, options, callback] : (
-        (input && !options) ? [input, callback] : [options, callback]
-    );
-}
-
 function httpWrapper(wrappedFunction) {
     return function internalHttpWrapper(a, b, c) {
         let input = a;
         let options = b
         let callback = c
         if (!(['string', 'URL'].includes(typeof input)) && !callback) {
-            callback = b
-            options = a
-            input = undefined
+            callback = b;
+            options = a;
+            input = undefined;
         }
 
-        if ((typeof(options) === 'function') && (!callback)) {
+        if ((typeof options === 'function') && (!callback)) {
             callback = options;
             options = null;
         }
@@ -112,7 +125,7 @@ function httpWrapper(wrappedFunction) {
             let parsedUrl = input;
 
             if (typeof parsedUrl === 'string') {
-                parsedUrl = url.parse(parsedUrl);
+                parsedUrl = urlLib.parse(parsedUrl);
             }
 
             const hostname = (
@@ -138,7 +151,7 @@ function httpWrapper(wrappedFunction) {
 
             const headers = (
                 (options && options.headers) || {}
-            )
+            );
 
             if (isBlacklistURL(hostname, path)) {
                 utils.debugLog(`filtered blacklist hostname ${hostname}`);
@@ -150,8 +163,14 @@ function httpWrapper(wrappedFunction) {
             }
 
             // eslint-disable-next-line no-underscore-dangle
-            const agent = (options && options.agent) || (options && options._defaultAgent) || undefined;
-            const port = (parsedUrl && parsedUrl.port) || (options && options.port) || (options && options.defaultPort) || (agent && agent.defaultPort) || 80;
+            const agent = (
+                (options && options.agent) || (options && options._defaultAgent) ||
+                undefined
+            );
+            const port = (
+                (parsedUrl && parsedUrl.port) || (options && options.port) ||
+                (options && options.defaultPort) || (agent && agent.defaultPort) || 80
+            );
             let protocol = (
                 (parsedUrl && parsedUrl.protocol) ||
                 (port === 443 && 'https:') ||
@@ -243,8 +262,8 @@ function httpWrapper(wrappedFunction) {
                 }
             };
             patchedCallback.__epsagonCallback = true; // eslint-disable-line no-underscore-dangle
-            clientRequest = wrappedFunction.apply(this,
-                getParams(input, options, patchedCallback)
+            clientRequest = wrappedFunction.apply(
+                this, buildParams(input, options, patchedCallback)
             );
 
             const responsePromise = new Promise((resolve) => {
@@ -291,9 +310,7 @@ function httpWrapper(wrappedFunction) {
         }
 
         if (!clientRequest) {
-            clientRequest = wrappedFunction.apply(this,
-                [a, b, c]
-            );
+            clientRequest = wrappedFunction.apply(this, [a, b, c]);
         }
 
         return clientRequest;
