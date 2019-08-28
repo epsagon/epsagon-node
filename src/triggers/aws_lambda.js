@@ -135,7 +135,7 @@ function createAPIGatewayTrigger(event, trigger) {
         stage: event.requestContext.stage,
         query_string_parameters: JSON.stringify(event.queryStringParameters),
         path_parameters: JSON.stringify(event.pathParameters),
-        resource: event.resource,
+        path: event.resource,
     }, {
         body: JSON.stringify(event.body),
         headers: JSON.stringify(event.headers),
@@ -157,7 +157,7 @@ function createNoProxyAPIGatewayTrigger(event, trigger) {
         stage: event.context.stage,
         query_string_parameters: JSON.stringify(event.params.querystring),
         path_parameters: JSON.stringify(event.params.path),
-        resource: event.context['resource-path'],
+        path: event.context['resource-path'],
     }, {
         body: JSON.stringify(event['body-json']),
         headers: JSON.stringify(event.params.header),
