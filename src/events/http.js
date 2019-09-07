@@ -271,19 +271,24 @@ function httpWrapper(wrappedFunction) {
             clientRequest.on('finish', () => {
                 if (!body || body === '') {
                     if (
+                        // eslint-disable-next-line no-underscore-dangle
                         clientRequest._redirectable &&
+                        // eslint-disable-next-line no-underscore-dangle
                         clientRequest._redirectable._requestBodyBuffers &&
+                        // eslint-disable-next-line no-underscore-dangle
                         clientRequest._redirectable._requestBodyBuffers['0'] &&
+                        // eslint-disable-next-line no-underscore-dangle
                         Buffer.isBuffer(clientRequest._redirectable._requestBodyBuffers['0'].data)
                     ) {
-                       const request_body = clientRequest._redirectable._requestBodyBuffers['0'].data.toString();
-                       eventInterface.addToMetadata(
-                        httpEvent, {},
-                        { request_body }
-                       );
+                        // eslint-disable-next-line no-underscore-dangle
+                        const requestBody = clientRequest._redirectable._requestBodyBuffers['0'].data.toString();
+                        eventInterface.addToMetadata(
+                            httpEvent, {},
+                            { request_body: requestBody }
+                        );
                     }
                 }
-             });
+            });
 
             const responsePromise = new Promise((resolve) => {
                 let isTimeout = false;
