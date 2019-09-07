@@ -268,6 +268,23 @@ function httpWrapper(wrappedFunction) {
                 this, buildParams(url, options, patchedCallback)
             );
 
+            clientRequest.on('finish', () => {
+                if (!body || body === '') {
+                    if (
+                        clientRequest._redirectable &&
+                        clientRequest._redirectable._requestBodyBuffers &&
+                        clientRequest._redirectable._requestBodyBuffers['0'] &&
+                        Buffer.isBuffer(clientRequest._redirectable._requestBodyBuffers['0'].data)
+                    ) {
+                       const request_body = clientRequest._redirectable._requestBodyBuffers['0'].data.toString();
+                       eventInterface.addToMetadata(
+                        httpEvent, {},
+                        { request_body }
+                       );
+                    }
+                }
+             });
+
             const responsePromise = new Promise((resolve) => {
                 let isTimeout = false;
                 clientRequest.on('timeout', () => {
