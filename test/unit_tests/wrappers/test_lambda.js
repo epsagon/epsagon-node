@@ -158,7 +158,7 @@ describe('lambdaWrapper tests', () => {
         expect(resource.getMetadataMap().get('log_stream_name')).to.equal('logStreamName');
         expect(resource.getMetadataMap().get('log_group_name')).to.equal('logGroupName');
         expect(resource.getMetadataMap().get('function_version')).to.equal('functionVersion');
-        expect(resource.getMetadataMap().get('cold_start')).to.equal('true');
+        expect(resource.getMetadataMap().get('cold_start')).to.equal(true);
         expect(resource.getMetadataMap().get('memory')).to.equal('memoryLimitInMB');
         expect(resource.getMetadataMap().get('region')).to.equal(consts.REGION);
         expect(resource.getMetadataMap().get('aws_account')).to.equal('4');
@@ -550,7 +550,7 @@ describe('stepLambdaWrapper tests', () => {
         expect(resource.getMetadataMap().get('log_stream_name')).to.equal('logStreamName');
         expect(resource.getMetadataMap().get('log_group_name')).to.equal('logGroupName');
         expect(resource.getMetadataMap().get('function_version')).to.equal('functionVersion');
-        expect(resource.getMetadataMap().get('cold_start')).to.equal('true');
+        expect(resource.getMetadataMap().get('cold_start')).to.equal(true);
         expect(resource.getMetadataMap().get('memory')).to.equal('memoryLimitInMB');
         expect(resource.getMetadataMap().get('region')).to.equal(consts.REGION);
         expect(resource.getMetadataMap().get('aws_account')).to.equal('4');
