@@ -268,31 +268,37 @@ function httpWrapper(wrappedFunction) {
                 this, buildParams(url, options, patchedCallback)
             );
 
-            function WriteWrapper(wrappedFunction) {
-                return function internalWriteWrapper() {
+            /**
+             * Wraps 'write' method in a request to pick up request body
+             * @param {Function} wrappedWriteFunc The wrapped write function
+             * @returns {Function} The wrapped function
+             */
+            function WriteWrapper(wrappedWriteFunc) { // eslint-disable-line no-inner-declarations
+                return function internalWriteWrapper(...args) {
                     if (
-                        (!body || body === '') && arguments[0] && (
-                            (arguments[0] instanceof String) || (arguments[0] instanceof Buffer)
+                        (!body || body === '') && args[0] && (
+                            (args[0] instanceof String) || (args[0] instanceof Buffer)
                         )
                     ) {
                         eventInterface.addToMetadata(
                             httpEvent, {},
-                            { request_body: arguments[0].toString() }
+                            { request_body: args[0].toString() }
                         );
                     }
-                    return wrappedFunction.apply(this, arguments); // eslint-disable-line prefer-rest-params
+                    return wrappedWriteFunc.apply(this, args);
                 };
             }
 
             if (
-                    Object.getPrototypeOf(clientRequest) &&
-                    Object.getPrototypeOf(Object.getPrototypeOf(clientRequest))
+                Object.getPrototypeOf(clientRequest) &&
+                Object.getPrototypeOf(Object.getPrototypeOf(clientRequest))
             ) {
                 try {
-                    let requestPrototype = Object.getPrototypeOf(Object.getPrototypeOf(clientRequest));
-                    shimmer.wrap(requestPrototype, 'write', WriteWrapper);
-                }
-                catch (err) {
+                    const reqPrototype = Object.getPrototypeOf(
+                        Object.getPrototypeOf(clientRequest)
+                    );
+                    shimmer.wrap(reqPrototype, 'write', WriteWrapper);
+                } catch (err) {
                     // In some libs it might not be possible to hook on write
                 }
             }
