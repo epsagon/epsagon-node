@@ -268,27 +268,34 @@ function httpWrapper(wrappedFunction) {
                 this, buildParams(url, options, patchedCallback)
             );
 
-            clientRequest.on('finish', () => {
-                if (!body || body === '') {
+            function WriteWrapper(wrappedFunction) {
+                return function internalWriteWrapper() {
                     if (
-                        // eslint-disable-next-line no-underscore-dangle
-                        clientRequest._redirectable &&
-                        // eslint-disable-next-line no-underscore-dangle
-                        clientRequest._redirectable._requestBodyBuffers &&
-                        // eslint-disable-next-line no-underscore-dangle
-                        clientRequest._redirectable._requestBodyBuffers['0'] &&
-                        // eslint-disable-next-line no-underscore-dangle
-                        Buffer.isBuffer(clientRequest._redirectable._requestBodyBuffers['0'].data)
+                        (!body || body === '') && arguments[0] && (
+                            (arguments[0] instanceof String) || (arguments[0] instanceof Buffer)
+                        )
                     ) {
-                        // eslint-disable-next-line no-underscore-dangle
-                        const requestBody = clientRequest._redirectable._requestBodyBuffers['0'].data.toString();
                         eventInterface.addToMetadata(
                             httpEvent, {},
-                            { request_body: requestBody }
+                            { request_body: arguments[0].toString() }
                         );
                     }
+                    return wrappedFunction.apply(this, arguments); // eslint-disable-line prefer-rest-params
+                };
+            }
+
+            if (
+                    Object.getPrototypeOf(clientRequest) &&
+                    Object.getPrototypeOf(Object.getPrototypeOf(clientRequest))
+            ) {
+                try {
+                    let requestPrototype = Object.getPrototypeOf(Object.getPrototypeOf(clientRequest));
+                    shimmer.wrap(requestPrototype, 'write', WriteWrapper);
                 }
-            });
+                catch (err) {
+                    // In some libs it might not be possible to hook on write
+                }
+            }
 
             const responsePromise = new Promise((resolve) => {
                 let isTimeout = false;
