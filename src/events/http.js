@@ -268,6 +268,41 @@ function httpWrapper(wrappedFunction) {
                 this, buildParams(url, options, patchedCallback)
             );
 
+            /**
+             * Wraps 'write' method in a request to pick up request body
+             * @param {Function} wrappedWriteFunc The wrapped write function
+             * @returns {Function} The wrapped function
+             */
+            function WriteWrapper(wrappedWriteFunc) { // eslint-disable-line no-inner-declarations
+                return function internalWriteWrapper(...args) {
+                    if (
+                        (!body || body === '') && args[0] && (
+                            (args[0] instanceof String) || (args[0] instanceof Buffer)
+                        )
+                    ) {
+                        eventInterface.addToMetadata(
+                            httpEvent, {},
+                            { request_body: args[0].toString() }
+                        );
+                    }
+                    return wrappedWriteFunc.apply(this, args);
+                };
+            }
+
+            if (
+                Object.getPrototypeOf(clientRequest) &&
+                Object.getPrototypeOf(Object.getPrototypeOf(clientRequest))
+            ) {
+                try {
+                    const reqPrototype = Object.getPrototypeOf(
+                        Object.getPrototypeOf(clientRequest)
+                    );
+                    shimmer.wrap(reqPrototype, 'write', WriteWrapper);
+                } catch (err) {
+                    // In some libs it might not be possible to hook on write
+                }
+            }
+
             const responsePromise = new Promise((resolve) => {
                 let isTimeout = false;
                 clientRequest.on('timeout', () => {
