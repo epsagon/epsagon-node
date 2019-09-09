@@ -452,22 +452,6 @@ module.exports.label = function addLabel(key, value) {
     });
 };
 
-
-function addLabel(key, value) {
-    const labels = flatten({ `key`: value });
-    Object.keys(labels).forEach((k) => {
-        console.log(k, labels[k]);
-    });
-};
-
-function addLabel(key, value) {
-    const labels = flatten({ `key`: value });
-    Object.keys(labels).forEach((k) => {
-        console.log(k, labels[k]);
-    });
-};
-
-
 /**
  * Set runner as an error.
  * @param {Error} err error data
