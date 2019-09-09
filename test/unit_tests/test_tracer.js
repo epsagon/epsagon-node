@@ -273,7 +273,7 @@ describe('tracer module tests', () => {
         tracer.getTrace = tracerObj.get;
         tracer.label('label1', { sub: 'value' });
         const labels = JSON.parse(tracerObj.get().trace.getEventList()[0].getResource().getMetadataMap().get('labels'));
-        expect(labels['label1.sub']).to.equal('value2');
+        expect(labels['label1.sub']).to.equal('value');
     });
 
     function checkException(storedException, originalException, additionalData) {
