@@ -439,19 +439,17 @@ module.exports.sendTraceSync = function sendTraceSync() {
  * @param {string} value value for the added label
  */
 module.exports.label = function addLabel(key, value) {
-    // convert numbers to string
-    const updatedValue = (typeof value === 'number') ? value.toString() : value;
-
-    if (typeof key !== 'string' || typeof updatedValue !== 'string') {
-        return;
-    }
-
     const tracerObj = module.exports.getTrace();
     if (!tracerObj) {
         utils.debugLog('Failed to label without an active tracer');
         return;
     }
-    eventInterface.addLabelToMetadata(tracerObj.currRunner, key, updatedValue);
+    let labels = {};
+    labels[key] = value;
+    labels = utils.flatten(labels);
+    Object.keys(labels).forEach((k) => {
+        eventInterface.addLabelToMetadata(tracerObj.currRunner, k, labels[k]);
+    });
 };
 
 /**

@@ -87,9 +87,54 @@ function makeQueryablePromise(promise) {
     return result;
 }
 
+/**
+ * Flatten given dictionary
+ * @param {Object} target the target dictionary
+ * @return {Object} flatten dictionary
+ */
+function flatten(target) {
+    const delimiter = '.';
+    const output = {};
+
+    /**
+     * Recursive function in the flatten process
+     * @param {Object} object the current step's value
+     * @param {string} prev the key from previous step
+     * @param {integer} currentDepth the current depth number
+     */
+    function step(object, prev, currentDepth) {
+        const depthNumber = currentDepth || 1;
+        Object.keys(object).forEach((key) => {
+            const value = object[key];
+            if (value == null) return null;
+            const isArray = Array.isArray(value);
+            const type = Object.prototype.toString.call(value);
+            const isObject = (
+                type === '[object Object]' ||
+                type === '[object Array]'
+            );
+
+            const newKey = prev ? prev + delimiter + key : key;
+
+            if (!isArray && !Buffer.isBuffer(value) && isObject && Object.keys(value).length) {
+                return step(value, newKey, depthNumber + 1);
+            }
+
+            if (value != null && typeof value.toString === 'function') {
+                output[newKey] = value.toString();
+            }
+
+            return null;
+        });
+    }
+    step(target);
+    return output;
+}
+
 module.exports.createTimestampFromTime = createTimestampFromTime;
 module.exports.createTimestamp = createTimestamp;
 module.exports.createDurationTimestamp = createDurationTimestamp;
 module.exports.reflectPromise = reflectPromise;
 module.exports.debugLog = debugLog;
 module.exports.makeQueryablePromise = makeQueryablePromise;
+module.exports.flatten = flatten;

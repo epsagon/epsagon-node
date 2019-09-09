@@ -269,6 +269,13 @@ describe('tracer module tests', () => {
         expect(labels.label2).to.equal(undefined);
     });
 
+    it('addLabel: Labels contain complex values', () => {
+        tracer.getTrace = tracerObj.get;
+        tracer.label('label1', { sub: 'value' });
+        const labels = JSON.parse(tracerObj.get().trace.getEventList()[0].getResource().getMetadataMap().get('labels'));
+        expect(labels['label1.sub']).to.equal('value');
+    });
+
     function checkException(storedException, originalException, additionalData) {
         expect(storedException.getType()).to.equal(originalException.name);
         expect(storedException.getMessage()).to.equal(originalException.message);
