@@ -106,6 +106,7 @@ function flatten(target) {
         const depthNumber = currentDepth || 1;
         Object.keys(object).forEach((key) => {
             const value = object[key];
+            if (value == null) return null;
             const isArray = Array.isArray(value);
             const type = Object.prototype.toString.call(value);
             const isObject = (
