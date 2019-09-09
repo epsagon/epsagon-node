@@ -444,11 +444,29 @@ module.exports.label = function addLabel(key, value) {
         utils.debugLog('Failed to label without an active tracer');
         return;
     }
-    const labels = utils.flatten({ key: value });
+    let labels = {};
+    labels[key] = value;
+    labels = utils.flatten(labels);
     Object.keys(labels).forEach((k) => {
         eventInterface.addLabelToMetadata(tracerObj.currRunner, k, labels[k]);
     });
 };
+
+
+function addLabel(key, value) {
+    const labels = flatten({ `key`: value });
+    Object.keys(labels).forEach((k) => {
+        console.log(k, labels[k]);
+    });
+};
+
+function addLabel(key, value) {
+    const labels = flatten({ `key`: value });
+    Object.keys(labels).forEach((k) => {
+        console.log(k, labels[k]);
+    });
+};
+
 
 /**
  * Set runner as an error.
