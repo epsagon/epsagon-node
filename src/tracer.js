@@ -445,8 +445,10 @@ module.exports.label = function addLabel(key, value) {
         return;
     }
 
-    Object.entries(utils.flatten({ key: value })).forEach((k, v) => {
-        eventInterface.addLabelToMetadata(tracerObj.currRunner, k, v);
+    labels = utils.flatten({ key: value };
+
+    Object.keys(labels).forEach((k) => {
+        eventInterface.addLabelToMetadata(tracerObj.currRunner, k, labels[k]);
     });
 };
 
