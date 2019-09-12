@@ -1,8 +1,10 @@
 const shimmer = require('shimmer');
 const tryRequire = require('../try_require.js');
+const utils = require('../utils.js');
 const sqlWrapper = require('./sql.js');
 
-const pg = tryRequire('pg');
+const pgPath = process.env.EPSAGON_PG_PATH ? `${process.cwd()}${process.env.EPSAGON_PG_PATH}` : 'pg';
+const pg = tryRequire(pgPath);
 const Pool = tryRequire('pg-pool');
 
 /**
@@ -75,6 +77,12 @@ module.exports = {
      * Initializes the pg tracer
      */
     init() {
+        if (process.env.EPSAGON_PG_PATH) {
+            utils.debugLog(`EPSAGON_PG_PATH=${process.env.EPSAGON_PG_PATH}`);
+            utils.debugLog(`cwd=${process.cwd()}`);
+            utils.debugLog(`pg=${pg}`);
+            utils.debugLog(`pg.defaults=${JSON.stringify(pg.defaults)}`);
+        }
         if (pg) shimmer.wrap(pg.Client.prototype, 'query', pgClientWrapper);
         if (Pool) shimmer.wrap(Pool.prototype, 'query', pgClientWrapper);
     },
