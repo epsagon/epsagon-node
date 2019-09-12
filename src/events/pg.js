@@ -81,7 +81,9 @@ module.exports = {
             utils.debugLog(`EPSAGON_PG_PATH=${process.env.EPSAGON_PG_PATH}`);
             utils.debugLog(`cwd=${process.cwd()}`);
             utils.debugLog(`pg=${pg}`);
-            utils.debugLog(`pg.defaults=${JSON.stringify(pg.defaults)}`);
+            if (pg && pg.defaults) {
+                utils.debugLog(`pg.defaults=${JSON.stringify(pg.defaults)}`);
+            }
         }
         if (pg) shimmer.wrap(pg.Client.prototype, 'query', pgClientWrapper);
         if (Pool) shimmer.wrap(Pool.prototype, 'query', pgClientWrapper);
