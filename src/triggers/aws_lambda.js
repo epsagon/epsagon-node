@@ -229,6 +229,27 @@ function createElbTrigger(event, trigger) {
     });
 }
 
+
+/**
+ * Initializes an event representing a trigger to the lambda caused by Cognito
+ * @param {object} event The event the lambda was triggered with
+ * @param {proto.event_pb.Event} trigger An Event to initialize as the trigger
+ */
+function createCognitoTrigger(event, trigger) {
+    const resource = trigger.getResource();
+    trigger.setId(`cognito-${uuid4()}`);
+    resource.setName(event.userPoolId);
+    resource.setOperation(event.triggerSource);
+    eventInterface.addToMetadata(trigger, {
+        username: event.userName,
+        region: event.region,
+    }, {
+        caller_context: event.callerContext,
+        request: event.request,
+        response: event.response,
+    });
+}
+
 const resourceTypeToFactoryMap = {
     s3: createS3Trigger,
     json: createJSONTrigger,
@@ -240,6 +261,7 @@ const resourceTypeToFactoryMap = {
     api_gateway_no_proxy: createNoProxyAPIGatewayTrigger,
     dynamodb: createDynamoDBTrigger,
     elastic_load_balancer: createElbTrigger,
+    cognito: createCognitoTrigger,
 };
 
 
@@ -270,6 +292,8 @@ module.exports.createFromEvent = function createFromEvent(event, context) {
             triggerService = 'api_gateway_no_proxy';
         } else if ('dynamodb' in event) {
             triggerService = 'dynamodb';
+        } else if ('userPoolId' in event) {
+            triggerService = 'cognito';
         }
     }
 
