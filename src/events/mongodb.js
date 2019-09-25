@@ -86,11 +86,14 @@ function handleEventResponse(event, hasError) {
 
         dbapiEvent.setDuration(utils.createTimestampFromTime(event.duration));
         if (hasError) {
-            dbapiEvent.addException({
-                name: 'Mongodb Error',
-                message: '',
-                stack: [],
-            });
+            eventInterface.setException(
+                dbapiEvent,
+                {
+                    name: 'Mongodb Error',
+                    message: '',
+                    stack: [],
+                }
+            );
         }
 
         delete requestsResolvers[event.requestId];
