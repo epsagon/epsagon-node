@@ -52,7 +52,9 @@ module.exports.createTracer = function createTracer() {
 /**
  * The timeout to send for send operations (both sync and async)
  */
-const sendTimeoutMilliseconds = 1000;
+const timeoutEnv = (process.env.EPSAGON_SEND_TIMEOUT_SEC || 0) * 1000.0;
+const timeoutGraceTimeMs = 200;
+const sendTimeoutMilliseconds = timeoutEnv || timeoutGraceTimeMs;
 
 /**
  * Session for the post requests to the collector
