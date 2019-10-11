@@ -298,8 +298,10 @@ function httpWrapper(wrappedFunction) {
                     const reqPrototype = Object.getPrototypeOf(
                         Object.getPrototypeOf(clientRequest)
                     );
-                    if (reqPrototype && !reqPrototype.__epsagonPatched) { // eslint-disable-line no-underscore-dangle
-                        reqPrototype.__epsagonPatched = true; // eslint-disable-line no-underscore-dangle
+                    // eslint-disable-next-line no-underscore-dangle
+                    if (reqPrototype && !reqPrototype.__epsagonPatched) {
+                        // eslint-disable-next-line no-underscore-dangle
+                        reqPrototype.__epsagonPatched = true;
                         shimmer.wrap(reqPrototype, 'write', WriteWrapper);
                     }
                 } catch (err) {
