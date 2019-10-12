@@ -291,13 +291,19 @@ function httpWrapper(wrappedFunction) {
 
             if (
                 Object.getPrototypeOf(clientRequest) &&
-                Object.getPrototypeOf(Object.getPrototypeOf(clientRequest))
+                Object.getPrototypeOf(Object.getPrototypeOf(clientRequest) &&
+                !clientRequest.__epsagonPatched) // eslint-disable-line no-underscore-dangle
             ) {
                 try {
                     const reqPrototype = Object.getPrototypeOf(
                         Object.getPrototypeOf(clientRequest)
                     );
-                    shimmer.wrap(reqPrototype, 'write', WriteWrapper);
+                    // eslint-disable-next-line no-underscore-dangle
+                    if (reqPrototype && !reqPrototype.__epsagonPatched) {
+                        // eslint-disable-next-line no-underscore-dangle
+                        reqPrototype.__epsagonPatched = true;
+                        shimmer.wrap(reqPrototype, 'write', WriteWrapper);
+                    }
                 } catch (err) {
                     // In some libs it might not be possible to hook on write
                 }
