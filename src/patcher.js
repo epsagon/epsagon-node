@@ -40,6 +40,6 @@ if (!config.getConfig().isEpsagonPatchDisabled) {
         mongoPatcher,
         daxPatcher,
         openWhiskPatcher,
-        googlePatcher
+        googlePatcher,
     ].forEach(patch);
 }
