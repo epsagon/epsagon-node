@@ -1,5 +1,5 @@
 /**
- * @fileoverview Instrumentation for google cloud common library.
+ * @fileoverview Instrumentation for google cloud library.
  */
 const uuid4 = require('uuid4');
 const shimmer = require('shimmer');
@@ -12,29 +12,41 @@ const errorCode = require('../proto/error_code_pb.js');
 
 const common = tryRequire('@google-cloud/common/');
 
-const uriSplitString = 'googleapis.com/';
+const URL_SPLIT_STRING = 'googleapis.com/';
 
 /**
- * Wraps the google makeRequest function.
+ * Wraps the bigQuery makeRequest function.
  * @param {Function} wrappedFunction The makeRequest function
  * @returns {Function} The wrapped function
  */
-function googleWrapper(wrappedFunction) {
+function bigQueryWrapper(wrappedFunction) {
     return function internalOWWrapper(reqOpts, config, callback) {
-        const uri = reqOpts.uri.split(uriSplitString)[1];
+        const uri = reqOpts.uri.split(URL_SPLIT_STRING)[1] || '';
         const splitUri = uri.split('/');
-        const service = splitUri[0];
-        const projectId = splitUri[3];
+        const service = splitUri[0] || 'google-cloud';
+        const projectId = splitUri[3] || 'Unknown';
         const path = uri.split(`${projectId}/`)[1];
-        const operation = path.split('/')[0];
+        const operation = path.split('/')[0] || 'Unknown';
         const resource = new serverlessEvent.Resource([
             projectId,
             service,
             operation,
         ]);
+
         const startTime = Date.now();
+        let eventName = `${service}-${uuid4()}`;
+        let jsonMetadata = {};
+
+        if (reqOpts.json !== undefined) {
+            eventName = reqOpts.json.jobReference.jobId;
+            jsonMetadata = reqOpts.json;
+        }
+        else if (reqOpts.uri !== undefined) {
+            // eslint-disable-next-line
+            eventName = reqOpts.uri.split('/')[8];
+        }
         const invokeEvent = new serverlessEvent.Event([
-            `${service}-${uuid4()}`,
+            eventName,
             utils.createTimestampFromTime(startTime),
             null,
             service,
@@ -43,20 +55,19 @@ function googleWrapper(wrappedFunction) {
         ]);
 
         invokeEvent.setResource(resource);
-        if (reqOpts.json !== undefined) {
-            eventInterface.addToMetadata(
-                invokeEvent,
-                reqOpts.json
-            );
-        }
+        eventInterface.addToMetadata(
+            invokeEvent,
+            {},
+            jsonMetadata
+        );
 
         let patchedCallback;
         const responsePromise = new Promise((resolve) => {
             patchedCallback = (err, body, response) => {
                 invokeEvent.setDuration(utils.createDurationTimestamp(startTime));
-                eventInterface.addToMetadata(invokeEvent, response.body);
-                callback(err, body, response);
+                eventInterface.addToMetadata(invokeEvent, {}, response.body);
                 resolve();
+                callback(err, body, response);
             };
         }).catch((err) => {
             tracer.addException(err);
@@ -69,9 +80,9 @@ function googleWrapper(wrappedFunction) {
 
 module.exports = {
     /**
-     * Initializes the google makeRequest tracer
+     * Initializes the bigQuery makeRequest tracer
      */
     init() {
-        if (common) shimmer.wrap(common.util, 'makeRequest', googleWrapper);
+        if (common) shimmer.wrap(common.util, 'makeRequest', bigQueryWrapper);
     },
 };
