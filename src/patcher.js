@@ -10,6 +10,7 @@ const httpPatcher = require('./events/http.js');
 const pgPatcher = require('./events/pg.js');
 const mysqlPatcher = require('./events/mysql.js');
 const openWhiskPatcher = require('./events/openwhisk.js');
+const googlePatcher = require('./events/google_cloud.js');
 const redisPatcher = require('./events/redis.js');
 const mongoPatcher = require('./events/mongodb.js');
 
@@ -39,5 +40,6 @@ if (!config.getConfig().isEpsagonPatchDisabled) {
         mongoPatcher,
         daxPatcher,
         openWhiskPatcher,
+        googlePatcher,
     ].forEach(patch);
 }

@@ -19,6 +19,7 @@ const Wreck = tryRequire('wreck');
 
 const URL_BLACKLIST = {
     'tc.epsagon.com': 'endsWith',
+    'googleapis.com': 'endsWith',
     'amazonaws.com': (url, pattern) => url.endsWith(pattern) && (url.indexOf('execute-api') === -1),
     '127.0.0.1': (url, pattern, path) => (url === pattern) && path.startsWith('/2018-06-01/runtime/invocation/'),
     '169.254.169.254': 'startsWith', // EC2 document ip. Have better filtering in the future
