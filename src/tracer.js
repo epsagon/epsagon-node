@@ -130,6 +130,9 @@ module.exports.initTrace = function initTrace(
     if (ecsMetaUri) {
         ecs.loadECSMetadata(ecsMetaUri).catch(err => utils.debugLog(err));
     }
+    if (k8s.hasK8sMetadata()) {
+        k8s.loadK8sMetadata();
+    }
 
     config.setConfig(configData);
 };
@@ -149,9 +152,7 @@ module.exports.addRunner = function addRunner(runner, runnerPromise) {
     tracerObj.trace.addEvent(runner, runnerPromise);
     tracerObj.currRunner = runner;
     ecs.addECSMetadata(tracerObj.currRunner);
-    if (k8s.hasK8sMetadata()) {
-        k8s.addK8sMetadata(tracerObj.currRunner);
-    }
+    k8s.addK8sMetadata(tracerObj.currRunner);
 };
 
 /**
