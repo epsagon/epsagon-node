@@ -13,6 +13,7 @@ const config = require('./config.js');
 const eventInterface = require('./event.js');
 const consts = require('./consts.js');
 const ecs = require('./containers/ecs.js');
+const k8s = require('./containers/k8s.js');
 
 
 /**
@@ -148,6 +149,9 @@ module.exports.addRunner = function addRunner(runner, runnerPromise) {
     tracerObj.trace.addEvent(runner, runnerPromise);
     tracerObj.currRunner = runner;
     ecs.addECSMetadata(tracerObj.currRunner);
+    if (k8s.hasK8sMetadata()) {
+        k8s.addK8sMetadata(tracerObj.currRunner);
+    }
 };
 
 /**
