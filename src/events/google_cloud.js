@@ -13,7 +13,8 @@ const errorCode = require('../proto/error_code_pb.js');
 const common = tryRequire('@google-cloud/common/');
 
 const URL_SPLIT_STRING = 'googleapis.com/';
-const BIG_QUERY = 'bigquery'
+const BIG_QUERY = 'bigquery';
+
 /**
  * Wraps the bigQuery makeRequest function.
  * @param {Function} wrappedFunction The makeRequest function
@@ -22,7 +23,7 @@ const BIG_QUERY = 'bigquery'
 function bigQueryWrapper(wrappedFunction) {
     return function internalOWWrapper(reqOpts, config, callback) {
         if (reqOpts.uri.indexOf(BIG_QUERY) === -1) {
-            return wrappedFunction.apply(this, [reqOpts, config, callback])
+            return wrappedFunction.apply(this, [reqOpts, config, callback]);
         }
 
         const uri = reqOpts.uri.split(URL_SPLIT_STRING)[1] || '';
