@@ -3,6 +3,7 @@
  */
 
 const uuid4 = require('uuid4');
+const uuidToHex = require('uuid-to-hex');
 const shimmer = require('shimmer');
 const http = require('http');
 const https = require('https');
@@ -165,6 +166,14 @@ function httpWrapper(wrappedFunction) {
                 return wrappedFunction.apply(this, [a, b, c]);
             }
 
+            // Inject header to support tracing over HTTP requests to opentracing monitored code
+            const traceId = uuid4();
+            const hexTraceId = uuidToHex(traceId);
+            const spanId = uuidToHex(uuid4()).slice(16);
+            const parentSpanId = uuidToHex(uuid4()).slice(16);
+
+            headers['epsagon-trace-id'] = `${hexTraceId}:${spanId}:${parentSpanId}:1`;
+
             const agent = (
                 // eslint-disable-next-line no-underscore-dangle
                 (options && options.agent) || (options && options._defaultAgent) ||
@@ -212,6 +221,10 @@ function httpWrapper(wrappedFunction) {
                     request_headers: headers,
                     request_body: body,
                 });
+
+            eventInterface.addToMetadata(httpEvent, {
+                http_trace_id: traceId,
+            });
 
             const patchedCallback = (res) => {
                 const { isWreck } = ((options || {}).agent || {});
