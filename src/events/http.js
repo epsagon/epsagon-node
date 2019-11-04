@@ -60,7 +60,7 @@ function isBlacklistHeader(headers) {
  * @param {string} url The URL to check
  * @returns {boolean} True if it is in the user-defined blacklist, False otherwise.
  */
-function isURLIgnoredByUser(url) {
+function isURLIgnoredByUser(url) { // eslint-disable-line no-unused-vars
     return config.getConfig().urlPatternsToIgnore.some(pattern => url.includes(pattern));
 }
 
