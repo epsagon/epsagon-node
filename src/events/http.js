@@ -291,7 +291,7 @@ function httpWrapper(wrappedFunction) {
             if (
                 Object.getPrototypeOf(clientRequest) &&
                 Object.getPrototypeOf(Object.getPrototypeOf(clientRequest) &&
-                    !clientRequest.__epsagonPatched) // eslint-disable-line no-underscore-dangle
+                !clientRequest.__epsagonPatched) // eslint-disable-line no-underscore-dangle
             ) {
                 try {
                     const reqPrototype = Object.getPrototypeOf(
