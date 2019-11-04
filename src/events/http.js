@@ -212,7 +212,6 @@ function httpWrapper(wrappedFunction) {
             ]);
 
             const requestUrl = `${protocol}://${hostname}${pathname}`;
-            const fullURL = `${requestUrl}${path}`;
             httpEvent.setResource(resource);
 
             eventInterface.addToMetadata(httpEvent,
@@ -227,7 +226,6 @@ function httpWrapper(wrappedFunction) {
             });
 
             const patchedCallback = (res) => {
-                const { isWreck } = ((options || {}).agent || {});
                 let metadataFields = {};
                 if ('x-powered-by' in res.headers) {
                     // This field is used to identify responses from 'Express'
@@ -260,19 +258,6 @@ function httpWrapper(wrappedFunction) {
                     });
                 }
 
-                let data = '';
-                if (!config.getConfig().metadataOnly &&
-                    !isWreck &&
-                    !isURLIgnoredByUser(fullURL)) {
-                    res.on('data', (chunk) => {
-                        data += chunk;
-                    });
-                }
-                res.on('end', () => {
-                    eventInterface.addToMetadata(httpEvent, {}, {
-                        response_body: data,
-                    });
-                });
                 if (callback) {
                     callback(res);
                 }
@@ -306,7 +291,7 @@ function httpWrapper(wrappedFunction) {
             if (
                 Object.getPrototypeOf(clientRequest) &&
                 Object.getPrototypeOf(Object.getPrototypeOf(clientRequest) &&
-                !clientRequest.__epsagonPatched) // eslint-disable-line no-underscore-dangle
+                    !clientRequest.__epsagonPatched) // eslint-disable-line no-underscore-dangle
             ) {
                 try {
                     const reqPrototype = Object.getPrototypeOf(
