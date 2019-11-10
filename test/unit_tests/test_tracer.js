@@ -731,4 +731,20 @@ describe('sendTraceSync function tests', () => {
 
         expect(small).to.be.lessThan(maxtrace);
     });
+
+    it('sendCurrentTrace: send only on error flag', () => {
+        this.baseConfig.sendOnlyErrors = true;
+        this.getConfigStub.returns(this.baseConfig);
+        tracer.restart();
+        const event = new serverlessEvent.Event();
+        tracer.addRunner(event);
+        tracer.sendTraceSync();
+        expect(this.postStub.calledOnce).to.be.false;
+
+        const errorEvent = new serverlessEvent.Event();
+        errorEvent.setErrorCode(2);
+        tracer.addRunner(errorEvent);
+        tracer.sendTraceSync();
+        expect(this.postStub.calledOnce).to.be.true;
+    });
 });

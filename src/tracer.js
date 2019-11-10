@@ -230,8 +230,19 @@ function stripOperations(traceJson, attempt) {
  */
 function sendCurrentTrace(traceSender) {
     const tracerObj = module.exports.getTrace();
+    const { sendOnlyErrors } = config.getConfig();
     if (!tracerObj) {
         return Promise.resolve();
+    }
+
+    // Check if got error events
+    if (sendOnlyErrors) {
+        const errorEvents = tracerObj.trace.getEventList().filter(event => event.getErrorCode());
+        if (errorEvents.length === 0) {
+            utils.debugLog('Skip send traces. No error events found.');
+            tracerObj.pendingEvents.clear();
+            return Promise.resolve();
+        }
     }
     const traceJson = {
         app_name: tracerObj.trace.getAppName(),
