@@ -44,7 +44,7 @@
   },
   "devDependencies": {
     "@babel/runtime": "^7.4.5",
-    "@commitlint/cli": "^7.1.2",
+    "@commitlint/cli": "^8.3.3",
     "@commitlint/config-angular": "^7.1.2",
     "@commitlint/config-conventional": "^7.1.2",
     "aws-sdk": "^2.197.0",
@@ -76,7 +76,7 @@
     "rollup-plugin-eslint": "^5.0.0",
     "rollup-plugin-json": "^3.1.0",
     "rollup-plugin-terser": "^3.0.0",
-    "semantic-release": "^15.13.16",
+    "semantic-release": "^15.13.30",
     "sinon": "^4.3.0",
     "uglify-es": "^3.3.9"
   },

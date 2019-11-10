@@ -31,6 +31,7 @@ const config = {
     isEpsagonDisabled: (process.env.DISABLE_EPSAGON || '').toUpperCase() === 'TRUE',
     urlPatternsToIgnore: [],
     internalSampleRate: 1,
+    sendOnlyErrors: (process.env.EPSAGON_SEND_TRACE_ON_ERROR || '').toUpperCase() === 'TRUE',
     /**
      * get isEpsagonPatchDisabled
      * @return {boolean} True if DISABLE_EPSAGON or DISABLE_EPSAGON_PATCH are set to TRUE, false
@@ -111,6 +112,11 @@ module.exports.setConfig = function setConfig(configData) {
     // User-defined URL blacklist.
     if (configData.urlPatternsToIgnore) {
         config.urlPatternsToIgnore = configData.urlPatternsToIgnore;
+    }
+
+    // Send traces only on errors.
+    if (configData.sendOnlyErrors) {
+        config.sendOnlyErrors = configData.sendOnlyErrors;
     }
 
     // User-defined HTTP minimum status code to be treated as an error.
