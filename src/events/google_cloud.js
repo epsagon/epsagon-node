@@ -14,18 +14,15 @@ const common = tryRequire('@google-cloud/common/');
 
 const URL_SPLIT_STRING = 'googleapis.com/';
 const BIG_QUERY = 'bigquery';
+const PUB_SUB = 'pubsub';
 
 /**
  * Wraps the bigQuery makeRequest function.
  * @param {Function} wrappedFunction The makeRequest function
  * @returns {Function} The wrapped function
  */
-function bigQueryWrapper(wrappedFunction) {
-    return function internalOWWrapper(reqOpts, config, callback) {
-        if (reqOpts.uri.indexOf(BIG_QUERY) === -1) {
-            return wrappedFunction.apply(this, [reqOpts, config, callback]);
-        }
 
+function bigQueryWrapper(reqOpts, config, callback) {
         const uri = reqOpts.uri.split(URL_SPLIT_STRING)[1] || '';
         const splitUri = uri.split('/');
         const service = splitUri[0] || 'google-cloud';
@@ -79,7 +76,20 @@ function bigQueryWrapper(wrappedFunction) {
 
         tracer.addEvent(invokeEvent, responsePromise);
         return wrappedFunction.apply(this, [reqOpts, config, patchedCallback]);
-    };
+
+}
+function gcpGeneralWrapper(wrappedFunction) {
+    return function internalOWWrapper(reqOpts, config, callback) {
+        if (reqOpts.uri.indexOf(BIG_QUERY) === -1) {
+            return bigQueryWrapper(wrappedFunction, reqOpts, config, callback);
+        }
+
+        if (reqOpts.uri.indexOf(PUB_SUB) === -1) {
+          //  return wrappedFunction.apply(this, [reqOpts, config, callback]);
+        }
+
+        return wrappedFunction.apply(this, [reqOpts, config, callback]);
+  };
 }
 
 module.exports = {
@@ -87,6 +97,6 @@ module.exports = {
      * Initializes the bigQuery makeRequest tracer
      */
     init() {
-        if (common) shimmer.wrap(common.util, 'makeRequest', bigQueryWrapper);
+        if (common) shimmer.wrap(common.util, 'makeRequest', gcpGeneralWrapper);
     },
 };
