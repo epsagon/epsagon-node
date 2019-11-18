@@ -761,5 +761,4 @@ describe('sendTraceSync function tests', () => {
         tracer.sendTraceSync();
         expect(this.postStub.calledOnce).to.be.true;
     });
-
 });
