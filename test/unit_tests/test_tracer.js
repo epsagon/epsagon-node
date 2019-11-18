@@ -740,10 +740,24 @@ describe('sendTraceSync function tests', () => {
         tracer.addRunner(event);
         tracer.sendTraceSync();
         expect(this.postStub.calledOnce).to.be.false;
-
         const errorEvent = new serverlessEvent.Event();
         errorEvent.setErrorCode(2);
         tracer.addRunner(errorEvent);
+        tracer.sendTraceSync();
+        expect(this.postStub.calledOnce).to.be.true;
+        this.baseConfig.sendOnlyErrors = false;
+    });
+
+
+    it('sendCurrentTrace: trace not sent when epsagon disabled', () => {
+        this.getConfigStub.returns(this.baseConfig);
+        tracer.restart();
+        const event = new serverlessEvent.Event();
+        tracer.disable();
+        tracer.addRunner(event);
+        tracer.sendTraceSync();
+        expect(this.postStub.calledOnce).to.be.false;
+        tracer.enable();
         tracer.sendTraceSync();
         expect(this.postStub.calledOnce).to.be.true;
     });
