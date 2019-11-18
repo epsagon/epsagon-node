@@ -405,7 +405,7 @@ module.exports.postTrace = function postTrace(traceObject) {
  */
 module.exports.sendTrace = function sendTrace(runnerUpdateFunc) {
     const tracerObj = module.exports.getTrace();
-    if (!tracerObj || tracerObj.disabled) {
+    if (!tracerObj || (tracerObj && tracerObj.disabled)) {
         return Promise.resolve();
     }
 
@@ -425,7 +425,7 @@ module.exports.sendTrace = function sendTrace(runnerUpdateFunc) {
  */
 module.exports.sendTraceSync = function sendTraceSync() {
     const tracerObj = module.exports.getTrace();
-    if (!tracerObj || tracerObj.disabled) {
+    if (!tracerObj || (tracerObj && tracerObj.disabled)) {
         return Promise.resolve();
     }
 
