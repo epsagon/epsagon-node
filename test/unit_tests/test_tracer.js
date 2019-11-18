@@ -750,10 +750,10 @@ describe('sendTraceSync function tests', () => {
 
 
     it('sendCurrentTrace: trace not sent when epsagon disabled', () => {
-        this.baseConfig.sendOnlyErrors = true;
         this.getConfigStub.returns(this.baseConfig);
         tracer.restart();
         const event = new serverlessEvent.Event();
+        tracer.disable();
         tracer.addRunner(event);
         tracer.sendTraceSync();
         expect(this.postStub.calledOnce).to.be.false;
