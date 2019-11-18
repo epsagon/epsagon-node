@@ -405,7 +405,7 @@ module.exports.postTrace = function postTrace(traceObject) {
  */
 module.exports.sendTrace = function sendTrace(runnerUpdateFunc) {
     const tracerObj = module.exports.getTrace();
-    if (!tracerObj) {
+    if (!tracerObj || tracerObj.disabled === true) {
         return Promise.resolve();
     }
 
@@ -425,7 +425,7 @@ module.exports.sendTrace = function sendTrace(runnerUpdateFunc) {
  */
 module.exports.sendTraceSync = function sendTraceSync() {
     const tracerObj = module.exports.getTrace();
-    if (!tracerObj) {
+    if (!tracerObj || tracerObj.disabled === true) {
         return Promise.resolve();
     }
 
@@ -481,6 +481,31 @@ module.exports.setError = function setRunnerError(err) {
         return;
     }
     eventInterface.setException(tracerObj.currRunner, err);
+};
+
+/**
+ * Disable tracer
+ */
+module.exports.disable = function disable() {
+    const tracerObj = module.exports.getTrace();
+    if (!tracerObj) {
+        utils.debugLog('Failed to disabled without an active tracer');
+        return;
+    }
+    tracerObj.disabled = true
+};
+
+
+/**
+ * Enable tracer
+ */
+module.exports.enable = function enable() {
+    const tracerObj = module.exports.getTrace();
+    if (!tracerObj) {
+        utils.debugLog('Failed to enable without an active tracer');
+        return;
+    }
+    tracerObj.disabled = false
 };
 
 module.exports.stripOperations = stripOperations;
