@@ -740,12 +740,12 @@ describe('sendTraceSync function tests', () => {
         tracer.addRunner(event);
         tracer.sendTraceSync();
         expect(this.postStub.calledOnce).to.be.false;
-
         const errorEvent = new serverlessEvent.Event();
         errorEvent.setErrorCode(2);
         tracer.addRunner(errorEvent);
         tracer.sendTraceSync();
         expect(this.postStub.calledOnce).to.be.true;
+        this.baseConfig.sendOnlyErrors = false;
     });
 
 

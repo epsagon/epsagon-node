@@ -492,7 +492,7 @@ module.exports.disable = function disable() {
         utils.debugLog('Failed to disabled without an active tracer');
         return;
     }
-    tracerObj.disabled = true
+    tracerObj.disabled = true;
 };
 
 
@@ -505,7 +505,7 @@ module.exports.enable = function enable() {
         utils.debugLog('Failed to enable without an active tracer');
         return;
     }
-    tracerObj.disabled = false
+    tracerObj.disabled = false;
 };
 
 module.exports.stripOperations = stripOperations;
