@@ -164,6 +164,7 @@ module.exports.restart = function restart() {
     if (!tracerObj) {
         return;
     }
+    tracerObj.disabled = false;
     tracerObj.trace.clearExceptionList();
     tracerObj.trace.clearEventList();
     tracerObj.trace.setAppName(config.getConfig().appName);
