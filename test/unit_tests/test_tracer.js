@@ -259,7 +259,7 @@ describe('tracer module tests', () => {
 
     it('addLabel: Labels too big - multiple labels', () => {
         tracer.getTrace = tracerObj.get;
-        const expectedLabel1 = 'x'.repeat(70 * 1024);
+        const expectedLabel1 = 'x'.repeat(30 * 1024);
 
         tracer.label('label1', expectedLabel1);
         tracer.label('label2', 'x'.repeat(40 * 1024));
