@@ -15,6 +15,7 @@ const consts = require('./consts.js');
 const ecs = require('./containers/ecs.js');
 const k8s = require('./containers/k8s.js');
 
+const MAX_STEPS = 3;
 
 /**
  * Returns a function to get the relevant tracer.
@@ -287,11 +288,15 @@ function sendCurrentTrace(traceSender) {
     };
 
 
-    let attempt = 0;
-    if (JSON.stringify(traceJson).length > consts.MAX_TRACE_SIZE_BYTES) {
-        traceJson.events = stripOperations(traceJson, attempt);
-        attempt += 1;
+    if (JSON.stringify(traceJson).length >= consts.MAX_TRACE_SIZE_BYTES) {
+        for (let attempt = 0; attempt <= MAX_STEPS; attempt += 1) {
+            traceJson.events = stripOperations(traceJson, attempt);
+            if (JSON.stringify(traceJson).length < consts.MAX_TRACE_SIZE_BYTES) {
+                break;
+            }
+        }
     }
+
 
     const sendResult = traceSender(traceJson);
     tracerObj.pendingEvents.clear();

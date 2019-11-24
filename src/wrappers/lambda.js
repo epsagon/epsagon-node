@@ -10,7 +10,7 @@ const { getConfig } = require('../config.js');
 const awsLambdaTrigger = require('../triggers/aws_lambda.js');
 const eventInterface = require('../event.js');
 const lambdaRunner = require('../runners/aws_lambda.js');
-const { STEP_ID_NAME } = require('../consts.js');
+const { STEP_ID_NAME, MAX_VALUE_CHARS } = require('../consts.js');
 
 const FAILED_TO_SERIALIZE_MESSAGE = 'Unable to stringify response body as json';
 const TIMEOUT_WINDOW = 200;
@@ -110,7 +110,12 @@ function baseLambdaWrapper(
                 } catch (err) {
                     jsonResult = `${FAILED_TO_SERIALIZE_MESSAGE}: ${err.message}`;
                 }
-                eventInterface.addToMetadata(runner, { return_value: jsonResult });
+                eventInterface.addToMetadata(
+                    runner,
+                    {
+                        return_value: jsonResult.substring(0, MAX_VALUE_CHARS),
+                    }
+                );
             }
 
             // Restoring empty event loop handling.

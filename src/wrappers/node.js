@@ -9,6 +9,9 @@ const consts = require('../consts');
 const serverlessEvent = require('../proto/event_pb.js');
 const eventInterface = require('../event.js');
 const errorCode = require('../proto/error_code_pb.js');
+const { getConfig } = require('../config.js');
+
+const FAILED_TO_SERIALIZE_MESSAGE = 'Unable to stringify response body as json';
 
 /**
  * Creates an Event representing the running function (runner)
@@ -70,6 +73,22 @@ module.exports.nodeWrapper = function nodeWrapper(functionToWrap) {
         try {
             runner.setStartTime(utils.createTimestampFromTime(startTime));
             const result = functionToWrap(...args);
+            if (!getConfig().metadataOnly) {
+                let jsonResult;
+                try {
+                    jsonResult = JSON.stringify(
+                        typeof result === 'undefined' ? null : result
+                    );
+                } catch (err) {
+                    jsonResult = `${FAILED_TO_SERIALIZE_MESSAGE}: ${err.message}`;
+                }
+                eventInterface.addToMetadata(
+                    runner,
+                    {
+                        return_value: jsonResult.substring(0, consts.MAX_VALUE_CHARS),
+                    }
+                );
+            }
             tracer.sendTrace(runnerSendUpdateHandler);
             return result;
         } catch (err) {
