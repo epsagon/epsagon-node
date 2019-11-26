@@ -127,12 +127,16 @@ module.exports.addException = function addException(userError, additionalData) {
 module.exports.initTrace = function initTrace(
     configData
 ) {
-    const ecsMetaUri = ecs.hasECSMetadata();
-    if (ecsMetaUri) {
-        ecs.loadECSMetadata(ecsMetaUri).catch(err => utils.debugLog(err));
-    }
-    if (k8s.hasK8sMetadata()) {
-        k8s.loadK8sMetadata();
+    try {
+        const ecsMetaUri = ecs.hasECSMetadata();
+        if (ecsMetaUri) {
+            ecs.loadECSMetadata(ecsMetaUri).catch(err => utils.debugLog(err));
+        }
+        if (k8s.hasK8sMetadata()) {
+            k8s.loadK8sMetadata();
+        }
+    } catch (err) {
+        utils.debugLog('Could not extract container env data');
     }
 
     config.setConfig(configData);
