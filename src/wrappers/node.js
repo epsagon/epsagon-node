@@ -73,30 +73,40 @@ module.exports.nodeWrapper = function nodeWrapper(functionToWrap) {
         try {
             runner.setStartTime(utils.createTimestampFromTime(startTime));
             const result = functionToWrap(...args);
-            if (!getConfig().metadataOnly) {
-                let jsonResult;
-                try {
-                    jsonResult = JSON.stringify(
-                        typeof result === 'undefined' ? null : result
-                    );
-                } catch (err) {
-                    jsonResult = `${FAILED_TO_SERIALIZE_MESSAGE}: ${err.message}`;
-                }
-                eventInterface.addToMetadata(
-                    runner,
-                    {
-                        return_value: jsonResult.substring(0, consts.MAX_VALUE_CHARS),
+            const promiseResult = Promise.resolve(result).then((resolvedResult) => {
+                if (!getConfig().metadataOnly) {
+                    let jsonResult;
+                    try {
+                        jsonResult = JSON.stringify(
+                            typeof resolvedResult === 'undefined' ? null : resolvedResult
+                        );
+                    } catch (err) {
+                        jsonResult = `${FAILED_TO_SERIALIZE_MESSAGE}: ${err.message}`;
                     }
-                );
+                    eventInterface.addToMetadata(
+                        runner,
+                        {
+                            return_value: jsonResult.substring(0, consts.MAX_VALUE_CHARS),
+                        }
+                    );
+                }
+                tracer.sendTrace(runnerSendUpdateHandler);
+            }).catch((err) => {
+                eventInterface.setException(runner, err);
+                runnerSendUpdateHandler(); // Doing it here since the send is synchronous on error
+                tracer.sendTraceSync().then(() => {
+                    throw err;
+                });
+            });
+            if (result && typeof result.then === 'function') {
+                return promiseResult;
             }
-            tracer.sendTrace(runnerSendUpdateHandler);
             return result;
         } catch (err) {
             eventInterface.setException(runner, err);
             runnerSendUpdateHandler(); // Doing it here since the send is synchronous on error
-            tracer.sendTraceSync().then(() => {
-                throw err;
-            });
+            tracer.sendTraceSync(); // best effort
+            throw err;
         }
     };
 };

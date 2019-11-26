@@ -56,14 +56,17 @@ describe('nodeWrapper tests', () => {
         expect(this.wrappedStub).to.be.a('function');
     });
 
-    it('nodeWrapper: sanity', () => {
+    it('nodeWrapper: sanity', (done) => {
         this.wrappedStub(1, 2, 3);
-        expect(this.restartStub.callCount).to.equal(1);
-        expect(this.addEventStub.callCount).to.equal(1);
-        expect(this.addExceptionStub.called).to.be.false;
-        expect(this.sendTraceStub.callCount).to.equal(1);
-        expect(this.stubFunction.callCount).to.equal(1);
-        expect(this.setExceptionStub.called).to.be.false;
+        setTimeout(() => {
+            expect(this.restartStub.callCount).to.equal(1);
+            expect(this.addEventStub.callCount).to.equal(1);
+            expect(this.addExceptionStub.called).to.be.false;
+            expect(this.sendTraceStub.callCount).to.equal(1);
+            expect(this.stubFunction.callCount).to.equal(1);
+            expect(this.setExceptionStub.called).to.be.false;
+            done();
+        }, 1);
     });
 
     it('nodeWrapper: create correct runner event', () => {
