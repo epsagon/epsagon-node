@@ -1,13 +1,10 @@
 const uuid4 = require('uuid4');
-const shimmer = require('shimmer');
-const tryRequire = require('../try_require.js');
 const utils = require('../utils.js');
 const tracer = require('../tracer.js');
 const serverlessEvent = require('../proto/event_pb.js');
 const eventInterface = require('../event.js');
 const errorCode = require('../proto/error_code_pb.js');
-
-const actions = tryRequire('openwhisk/lib/actions.js');
+const moduleUtils = require('./module_utils.js');
 
 /**
  * Wraps the openwhisk module.
@@ -60,6 +57,11 @@ module.exports = {
      * Initializes the openwhisk tracer
      */
     init() {
-        if (actions) shimmer.wrap(actions.prototype, 'invoke', openWhiskWrapper);
+        moduleUtils.patchModule(
+            'openwhisk/lib/actions.js',
+            'invoke',
+            openWhiskWrapper,
+            actions => actions.prototype
+        );
     },
 };

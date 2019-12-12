@@ -46,7 +46,7 @@ function main(params) {
 
 module.exports.main = epsagon.openWhiskWrapper(main, {
     token_param: 'EPSAGON_TOKEN', // name of the action parameter to take the token from
-    appName: 'my-app-name'
+    appName: 'my-app-name',
     metadataOnly: false // Optional, send more trace data
 });
 ```

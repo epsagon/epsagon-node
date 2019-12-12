@@ -1,13 +1,10 @@
 const uuid4 = require('uuid4');
-const shimmer = require('shimmer');
-const tryRequire = require('../try_require.js');
 const serverlessEvent = require('../proto/event_pb.js');
 const utils = require('../utils.js');
 const tracer = require('../tracer.js');
 const errorCode = require('../proto/error_code_pb.js');
 const eventInterface = require('../event.js');
-
-const redis = tryRequire('redis');
+const moduleUtils = require('./module_utils.js');
 
 /**
  * Wraps the redis' send command function with tracing
@@ -87,6 +84,11 @@ module.exports = {
    * Initializes the Redis tracer
    */
     init() {
-        if (redis) shimmer.wrap(redis.RedisClient.prototype, 'internal_send_command', redisClientWrapper);
+        moduleUtils.patchModule(
+            'redis',
+            'internal_send_command',
+            redisClientWrapper,
+            redis => redis.RedisClient.prototype
+        );
     },
 };

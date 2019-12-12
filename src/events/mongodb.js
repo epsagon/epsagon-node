@@ -1,13 +1,12 @@
 const uuid4 = require('uuid4');
-const tryRequire = require('../try_require.js');
 const serverlessEvent = require('../proto/event_pb.js');
 const utils = require('../utils.js');
 
 const tracer = require('../tracer.js');
 const errorCode = require('../proto/error_code_pb.js');
 const eventInterface = require('../event.js');
+const moduleUtils = require('./module_utils.js');
 
-const mongodb = tryRequire('mongodb');
 const requestsResolvers = {};
 const MAX_DATA_LENGTH = 4096;
 
@@ -124,13 +123,14 @@ module.exports = {
      * Initializes mongodb instrumentation
      */
     init() {
-        if (mongodb) {
+        const modules = moduleUtils.getModules('mongodb');
+        modules.forEach((mongodb) => {
             const listener = mongodb.instrument({}, (error) => {
                 if (error) { utils.debugLog(error); }
             });
             listener.on('started', onStartHook);
             listener.on('succeeded', onSuccessHook);
             listener.on('failed', onFailureHook);
-        }
+        });
     },
 };

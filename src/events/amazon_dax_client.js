@@ -1,16 +1,13 @@
 /**
  * @fileoverview Handlers for the amazon-dax-client js library instrumantation.
  */
-const shimmer = require('shimmer');
 const tracer = require('../tracer');
 const serverlessEvent = require('../proto/event_pb.js');
 const eventInterface = require('../event.js');
 const errorCode = require('../proto/error_code_pb.js');
-const tryRequire = require('../try_require.js');
 const utils = require('../utils.js');
 const { dynamoDBEventCreator } = require('./aws_sdk.js');
-
-const AmazonDaxClient = tryRequire('amazon-dax-client');
+const moduleUtils = require('./module_utils');
 
 /**
  * Wraps the Dax client request methods with tracing
@@ -107,9 +104,18 @@ module.exports = {
    * Initializes the dax tracer
    */
     init() {
-        if (AmazonDaxClient) {
-            shimmer.wrap(AmazonDaxClient.prototype, '_makeWriteRequestWithRetries', DAXWrapper);
-            shimmer.wrap(AmazonDaxClient.prototype, '_makeReadRequestWithRetries', DAXWrapper);
-        }
+        moduleUtils.patchModule(
+            'amazon-dax-client',
+            '_makeWriteRequestWithRetries',
+            DAXWrapper,
+            AmazonDaxClient => AmazonDaxClient.prototype
+        );
+
+        moduleUtils.patchModule(
+            'amazon-dax-client',
+            '_makeReadRequestWithRetries',
+            DAXWrapper,
+            AmazonDaxClient => AmazonDaxClient.prototype
+        );
     },
 };
