@@ -4,19 +4,17 @@
 
 const uuid4 = require('uuid4');
 const uuidToHex = require('uuid-to-hex');
-const shimmer = require('shimmer');
 const http = require('http');
 const https = require('https');
 const urlLib = require('url');
-const tryRequire = require('../try_require.js');
+const shimmer = require('shimmer');
 const utils = require('../utils.js');
 const tracer = require('../tracer.js');
 const serverlessEvent = require('../proto/event_pb.js');
 const eventInterface = require('../event.js');
 const errorCode = require('../proto/error_code_pb.js');
 const config = require('../config.js');
-
-const Wreck = tryRequire('wreck');
+const moduleUtils = require('./module_utils.js');
 
 const URL_BLACKLIST = {
     'tc.epsagon.com': 'endsWith',
@@ -403,12 +401,16 @@ module.exports = {
      * Initializes the http tracer
      */
     init() {
+        // using shimmer directly cause can only be bundled in node
         shimmer.wrap(http, 'get', () => httpGetWrapper(http));
         shimmer.wrap(http, 'request', httpWrapper);
         shimmer.wrap(https, 'get', () => httpGetWrapper(https));
         shimmer.wrap(https, 'request', httpWrapper);
-        if (Wreck) {
-            shimmer.wrap(Wreck, 'request', WreckWrapper);
-        }
+
+        moduleUtils.patchModule(
+            'wreck',
+            'request',
+            WreckWrapper
+        );
     },
 };

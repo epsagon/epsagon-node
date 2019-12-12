@@ -2,15 +2,12 @@
  * @fileoverview Instrumentation for google cloud library.
  */
 const uuid4 = require('uuid4');
-const shimmer = require('shimmer');
-const tryRequire = require('../try_require.js');
 const utils = require('../utils.js');
 const tracer = require('../tracer.js');
 const serverlessEvent = require('../proto/event_pb.js');
 const eventInterface = require('../event.js');
 const errorCode = require('../proto/error_code_pb.js');
-
-const common = tryRequire('@google-cloud/common/');
+const moduleUtils = require('./module_utils.js');
 
 const URL_SPLIT_STRING = 'googleapis.com/';
 const BIG_QUERY = 'bigquery';
@@ -87,6 +84,11 @@ module.exports = {
      * Initializes the bigQuery makeRequest tracer
      */
     init() {
-        if (common) shimmer.wrap(common.util, 'makeRequest', bigQueryWrapper);
+        moduleUtils.patchModule(
+            '@google-cloud/common/',
+            'makeRequest',
+            bigQueryWrapper,
+            common => common.util
+        );
     },
 };

@@ -1,9 +1,5 @@
-const shimmer = require('shimmer');
-const tryRequire = require('../try_require.js');
+const moduleUtils = require('./module_utils.js');
 const sqlWrapper = require('./sql.js');
-
-const mysql2 = tryRequire('mysql2');
-const mysqlConnection = tryRequire('mysql/lib/Connection.js');
 
 /**
  * Wraps Connection.query function with tracing
@@ -60,9 +56,18 @@ module.exports = {
      * Initializes the mysql tracer
      */
     init() {
-        if (mysql2) shimmer.wrap(mysql2.Connection.prototype, 'query', mysqlQueryWrapper);
-        if (mysqlConnection) {
-            shimmer.wrap(mysqlConnection.prototype, 'query', mysqlQueryWrapper);
-        }
+        moduleUtils.patchModule(
+            'mysql2',
+            'query',
+            mysqlQueryWrapper,
+            mysql2 => mysql2.Connection.prototype
+        );
+
+        moduleUtils.patchModule(
+            'mysql/lib/Connection.js',
+            'query',
+            mysqlQueryWrapper,
+            mysqlConnection => mysqlConnection.prototype
+        );
     },
 };

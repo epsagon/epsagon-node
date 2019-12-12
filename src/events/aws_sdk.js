@@ -3,9 +3,7 @@
  */
 const md5 = require('md5');
 const uuid4 = require('uuid4');
-const shimmer = require('shimmer');
 JSON.sortify = require('json.sortify');
-const tryRequire = require('../try_require.js');
 const utils = require('../utils.js');
 const tracer = require('../tracer');
 const serverlessEvent = require('../proto/event_pb.js');
@@ -13,6 +11,8 @@ const eventInterface = require('../event.js');
 const errorCode = require('../proto/error_code_pb.js');
 const { STEP_ID_NAME } = require('../consts.js');
 const resourceUtils = require('../resource_utils/sqs_utils.js');
+const moduleUtils = require('./module_utils');
+const tryRequire = require('../try_require');
 
 const AWS = tryRequire('aws-sdk');
 
@@ -778,7 +778,12 @@ function wrapPromiseOnAdd(wrappedFunction) {
         try {
             // it is OK to just re-wrap, as the original function overrides
             // `promise` anyway
-            shimmer.wrap(AWS.Request.prototype, 'promise', AWSSDKWrapper);
+            moduleUtils.patchModule(
+                'aws-sdk',
+                'promise',
+                AWSSDKWrapper,
+                AWSmod => AWSmod.Request.prototype
+            );
         } catch (err) {
             utils.debugLog('Failed to re-instrument aws-sdk\'s promise method', err);
         }
@@ -791,13 +796,26 @@ module.exports = {
      * Initializes the aws-sdk tracer
      */
     init() {
-        if (AWS) {
-            shimmer.wrap(AWS.Request.prototype, 'send', AWSSDKWrapper);
-            shimmer.wrap(AWS.Request.prototype, 'promise', AWSSDKWrapper);
+        moduleUtils.patchModule(
+            'aws-sdk',
+            'send',
+            AWSSDKWrapper,
+            AWSmod => AWSmod.Request.prototype
+        );
+        moduleUtils.patchModule(
+            'aws-sdk',
+            'promise',
+            AWSSDKWrapper,
+            AWSmod => AWSmod.Request.prototype
+        );
 
-            // This method is static - not in prototype
-            shimmer.wrap(AWS.Request, 'addPromisesToClass', wrapPromiseOnAdd);
-        }
+        // This method is static - not in prototype
+        moduleUtils.patchModule(
+            'aws-sdk',
+            'addPromisesToClass',
+            wrapPromiseOnAdd,
+            AWSmod => AWSmod.Request
+        );
     },
 
     /**

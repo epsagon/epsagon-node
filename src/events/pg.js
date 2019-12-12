@@ -1,12 +1,8 @@
-const shimmer = require('shimmer');
-const tryRequire = require('../try_require.js');
 const utils = require('../utils.js');
 const sqlWrapper = require('./sql.js');
+const moduleUtils = require('./module_utils.js');
 
 const pgPath = process.env.EPSAGON_PG_PATH ? `${process.cwd()}${process.env.EPSAGON_PG_PATH}` : 'pg';
-const pg = tryRequire(pgPath);
-const Pool = tryRequire('pg-pool');
-
 /**
  * Wraps the pg's module request function with tracing
  * @param {Function} wrappedFunction The pg's module
@@ -80,12 +76,19 @@ module.exports = {
         if (process.env.EPSAGON_PG_PATH) {
             utils.debugLog(`EPSAGON_PG_PATH=${process.env.EPSAGON_PG_PATH}`);
             utils.debugLog(`cwd=${process.cwd()}`);
-            utils.debugLog(`pg=${pg}`);
-            if (pg && pg.defaults) {
-                utils.debugLog(`pg.defaults=${JSON.stringify(pg.defaults)}`);
-            }
         }
-        if (pg) shimmer.wrap(pg.Client.prototype, 'query', pgClientWrapper);
-        if (Pool) shimmer.wrap(Pool.prototype, 'query', pgClientWrapper);
+
+        moduleUtils.patchModule(
+            pgPath,
+            'query',
+            pgClientWrapper,
+            pg => pg.Client.prototype
+        );
+        moduleUtils.patchModule(
+            'pg-pool',
+            'query',
+            pgClientWrapper,
+            Pool => Pool.prototype
+        );
     },
 };
