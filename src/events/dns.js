@@ -73,8 +73,6 @@ const getRrtypeArguments = (arg1, arg2, arg3, functionName) => {
     let rrtype = arg2;
     let callback = arg3;
     if (!arg3) {
-        // eslint-disable-next-line no-debugger
-        debugger;
         if (functionName) {
             rrtype = Object.values(rrtypesMethods).find(type => functionName.toLocaleLowerCase().includes((`query${type}`.toLocaleLowerCase())));
         }
@@ -106,8 +104,6 @@ const wrapDnsResolveFunction = original => (arg1, arg2, arg3) => {
     let patchedCallback;
     let clientRequest;
     let options;
-    // eslint-disable-next-line no-debugger
-    debugger;
     const { hostname, rrtype, callback } = getRrtypeArguments(arg1, arg2, arg3, original.name);
     if (!callback) return original.apply(this, buildParams(arg1, arg2, arg3));
     if (typeof arg2 === 'object') options = arg2;
@@ -228,12 +224,16 @@ module.exports = {
      * Initializes the dns tracer
      */
     init() {
-        Object.keys(rrtypesMethods).forEach((functionToTrace) => {
-            shimmer.wrap(dns, functionToTrace, wrapDnsResolveFunction);
-        });
-        shimmer.wrap(dns, 'resolve', () => wrapDnsResolveFunction(dns.resolve));
-        shimmer.wrap(dns, 'reverse', () => wrapDnsReverseFunction(dns.reverse));
-        shimmer.wrap(dns, 'lookup', () => wrapDnsLookupFunction(dns.lookup));
-        shimmer.wrap(dns, 'lookupService', () => wrapDnsLookupServiceFunction(dns.lookupService));
+        // eslint-disable-next-line no-debugger
+        debugger;
+        if ((process.env.DNS_INSTRUMENTATION || '').toUpperCase() === 'TRUE') {
+            Object.keys(rrtypesMethods).forEach((functionToTrace) => {
+                shimmer.wrap(dns, functionToTrace, wrapDnsResolveFunction);
+            });
+            shimmer.wrap(dns, 'resolve', () => wrapDnsResolveFunction(dns.resolve));
+            shimmer.wrap(dns, 'reverse', () => wrapDnsReverseFunction(dns.reverse));
+            shimmer.wrap(dns, 'lookup', () => wrapDnsLookupFunction(dns.lookup));
+            shimmer.wrap(dns, 'lookupService', () => wrapDnsLookupServiceFunction(dns.lookupService));
+        }
     },
 };
