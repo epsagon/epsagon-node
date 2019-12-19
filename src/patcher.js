@@ -13,6 +13,7 @@ const openWhiskPatcher = require('./events/openwhisk.js');
 const googlePatcher = require('./events/google_cloud.js');
 const redisPatcher = require('./events/redis.js');
 const mongoPatcher = require('./events/mongodb.js');
+const dnsPatcher = require('./events/dns.js');
 
 
 /**
@@ -41,5 +42,6 @@ if (!config.getConfig().isEpsagonPatchDisabled) {
         daxPatcher,
         openWhiskPatcher,
         googlePatcher,
+        dnsPatcher,
     ].forEach(patch);
 }
