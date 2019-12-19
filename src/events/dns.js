@@ -73,11 +73,12 @@ const getRrtypeArguments = (arg1, arg2, arg3, functionName) => {
     let rrtype = arg2;
     let callback = arg3;
     if (!arg3) {
+        // eslint-disable-next-line no-debugger
+        debugger;
         if (functionName) {
             rrtype = Object.values(rrtypesMethods).find(type => functionName.toLocaleLowerCase().includes((`query${type}`.toLocaleLowerCase())));
-        } else {
-            rrtype = rrtypesMethods.resolve4;
         }
+        if (!rrtype) rrtype = rrtypesMethods.resolve4;
         callback = arg2;
     }
     return { hostname, rrtype, callback };
@@ -105,6 +106,8 @@ const wrapDnsResolveFunction = original => (arg1, arg2, arg3) => {
     let patchedCallback;
     let clientRequest;
     let options;
+    // eslint-disable-next-line no-debugger
+    debugger;
     const { hostname, rrtype, callback } = getRrtypeArguments(arg1, arg2, arg3, original.name);
     if (!callback) return original.apply(this, buildParams(arg1, arg2, arg3));
     if (typeof arg2 === 'object') options = arg2;
