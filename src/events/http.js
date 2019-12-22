@@ -15,6 +15,7 @@ const eventInterface = require('../event.js');
 const errorCode = require('../proto/error_code_pb.js');
 const config = require('../config.js');
 const moduleUtils = require('./module_utils.js');
+const { isBlacklistURL, isBlacklistHeader } = require('.././helpers/events');
 
 const URL_BLACKLIST = {
     'tc.epsagon.com': 'endsWith',
@@ -25,33 +26,6 @@ const URL_BLACKLIST = {
 };
 
 const USER_AGENTS_BLACKLIST = ['openwhisk-client-js'];
-/**
- * Checks if a URL is in the blacklist
- * @param {string} url The URL to check
- * @param {string} path The Path to check (optional)
- * @returns {boolean} True if it is in the blacklist, False otherwise
- */
-function isBlacklistURL(url, path) {
-    return Object.keys(URL_BLACKLIST).some((key) => {
-        if (typeof URL_BLACKLIST[key] === typeof (() => {})) {
-            return URL_BLACKLIST[key](url, key, path);
-        }
-        return url[URL_BLACKLIST[key]](key);
-    });
-}
-
-/**
- * Checks if a URL is in the blacklist
- * @param {string} headers The Headers to check.
- * @returns {boolean} True if it is in the blacklist, False otherwise
- */
-function isBlacklistHeader(headers) {
-    if (headers) {
-        return USER_AGENTS_BLACKLIST.includes(headers['user-agent']);
-    }
-
-    return false;
-}
 
 /**
  * Checks if a URL is in the user-defined blacklist.
@@ -155,11 +129,11 @@ function httpWrapper(wrappedFunction) {
                 (options && options.headers) || {}
             );
 
-            if (isBlacklistURL(hostname, path)) {
+            if (isBlacklistURL(hostname, URL_BLACKLIST, path)) {
                 utils.debugLog(`filtered blacklist hostname ${hostname}`);
                 return wrappedFunction.apply(this, [a, b, c]);
             }
-            if (isBlacklistHeader(headers)) {
+            if (isBlacklistHeader(headers, USER_AGENTS_BLACKLIST)) {
                 utils.debugLog(`filtered blacklist headers ${JSON.stringify(headers)}`);
                 return wrappedFunction.apply(this, [a, b, c]);
             }
