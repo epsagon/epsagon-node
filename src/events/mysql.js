@@ -64,6 +64,13 @@ module.exports = {
         );
 
         moduleUtils.patchModule(
+            'mysql2',
+            'execute',
+            mysqlQueryWrapper,
+            mysql2 => mysql2.Connection.prototype
+        );
+
+        moduleUtils.patchModule(
             'mysql/lib/Connection.js',
             'query',
             mysqlQueryWrapper,
