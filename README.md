@@ -114,6 +114,11 @@ the `EPSAGON_IGNORED_KEYS` environment variable to get the same effect.
 Support for Express, Hapi, and other frameworks is done through [epsagon-frameworks](https://github.com/epsagon/epsagon-node-frameworks)
 
 
+## Optional instrumentations
+An environment variable must be added to start tracing the following libraries:
+
+dns: `EPSAGON_DNS_INSTRUMENTATION = true`
+
 ## Copyright
 
 Provided under the MIT license. See LICENSE for details.
