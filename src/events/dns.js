@@ -28,7 +28,7 @@ const rrtypesMethods = {
 };
 
 /**
- * Initial Dns event.
+ * Create and initialize a new dns event in the epsagon format.
  * @param {string} name Operation name
  * @returns {Object} Object with dnsEvent and event start time.
  */
@@ -55,37 +55,38 @@ const initialDnsEvent = (name) => {
  * Adding callback data/error to event, and finalize event.
  * @param {serverlessEvent.Event} dnsEvent Dns event.
  * @param {number} startTime Event start time.
- * @param {Error} err Callback error.
+ * @param {Error} error Callback error.
  * @param {string[] | Object[] | Object} metadata Callback metadata.
  */
-const finalizeEvent = (dnsEvent, startTime, err, metadata) => {
-    if (err) {
-        eventInterface.setException(dnsEvent, err);
-    } else {
-        eventInterface.addToMetadata(dnsEvent, metadata);
+const finalizeEvent = (dnsEvent, startTime, error, metadata) => {
+    try {
+        if (error) {
+            eventInterface.setException(dnsEvent, error);
+        } else {
+            eventInterface.addToMetadata(dnsEvent, metadata);
+        }
+        dnsEvent.setDuration(utils.createDurationTimestamp(startTime));
+    } catch (err) {
+        tracer.addException(err);
     }
-    dnsEvent.setDuration(utils.createDurationTimestamp(startTime));
 };
 
 /**
  * Checking resource record type by resolve function name (default resolve4 - 'A').
  * @param {*} arg1 function first argument.
- * @param {*} arg2 function second argument
- * @param {*} arg3 function third argument
- * @param {*} functionName function resolve name.
+ * @param {*} arg2 function second argument.
+ * @param {*} arg3 function third argument.
+ * @param {string} functionName function resolve name.
  * @returns {Object} Object of Hostname to resolve, Resource record type, and callback.
  */
 const getRrtypeArguments = (arg1, arg2, arg3, functionName) => {
     const hostname = arg1;
-    let rrtype = arg2;
+    let rrtype = rrtypesMethods.resolve4;
     let callback = arg3;
-    // in case of arg3 doesnt exist or arg2 is options.
+    // in case of arg3 doesn't exist or arg2 is options.
     if (!arg3 || typeof arg2 === 'object') {
         if (functionName) {
             rrtype = Object.values(rrtypesMethods).find(type => functionName.toLocaleLowerCase().includes((`query${type}`.toLocaleLowerCase())));
-        }
-        if (!rrtype) {
-            rrtype = rrtypesMethods.resolve4;
         }
         if (!arg3) {
             callback = arg2;
@@ -95,11 +96,11 @@ const getRrtypeArguments = (arg1, arg2, arg3, functionName) => {
 };
 
 /**
- * Gettign lookup arguments with options.
+ * Getting lookup arguments with options.
  * @param {*} arg1 function first argument.
  * @param {*} arg2 function second argument
  * @param {*} arg3 function third argument
- * @returns {Object} Object of Hostname, options (if doesnt exist- undifiend) and callback.
+ * @returns {Object} Object of Hostname, options (if doesnt exist - undefined) and callback.
  */
 const getLookupArguments = (arg1, arg2, arg3) => {
     const hostname = arg1;
@@ -120,7 +121,9 @@ const getLookupArguments = (arg1, arg2, arg3) => {
  * (if doesnt exist - records).
  */
 const getCallbackResolveArgument = (arg, rrtype) => {
-    if (!arg) return undefined;
+    if (!arg) {
+        return undefined;
+    }
     let callbackArg;
     if (!rrtype || rrtype === rrtypesMethods.resolveTxt) {
         callbackArg = { records: arg };
@@ -143,16 +146,14 @@ const getCallbackResolveArgument = (arg, rrtype) => {
  * @returns {Object} original function response.
  */
 function handleFunctionWithoutCallback(original, startTime, dnsEvent, args) {
-    let clientRequest;
     try {
-        clientRequest = original.apply(this, args);
+        return original.apply(this, args);
     } catch (err) {
         dnsEvent.setDuration(utils.createDurationTimestamp(startTime));
         eventInterface.setException(dnsEvent, err);
         tracer.addEvent(dnsEvent);
         throw err;
     }
-    return clientRequest;
 }
 
 /**
@@ -171,34 +172,33 @@ function wrapDnsResolveFunction(original) {
         }
         const { dnsEvent, startTime } = initialDnsEvent(original.name);
         if (!callback) {
-            clientRequest = handleFunctionWithoutCallback(
+            return handleFunctionWithoutCallback(
                 original, startTime, dnsEvent, [arg1, arg2, arg3]
             );
-        } else {
-            try {
-                const requestData = {};
-                if (options) {
-                    requestData.options = options;
-                }
-                if (rrtype) {
-                    requestData.rrtype = rrtype;
-                }
-                eventInterface.addToMetadata(dnsEvent, { hostname, ...requestData });
-                const responsePromise = new Promise((resolve) => {
-                    patchedCallback = (err, records) => {
-                        const callbackArgument = getCallbackResolveArgument(records, rrtype);
-                        finalizeEvent(dnsEvent, startTime, err, { ...callbackArgument });
-                        resolve();
-                        if (callback) {
-                            callback(err, records);
-                        }
-                    };
-                });
-                clientRequest = original.apply(this, [hostname, rrtype, patchedCallback]);
-                tracer.addEvent(dnsEvent, responsePromise);
-            } catch (err) {
-                tracer.addException(err);
+        }
+        try {
+            const requestData = {};
+            if (options) {
+                requestData.options = options;
             }
+            if (rrtype) {
+                requestData.rrtype = rrtype;
+            }
+            eventInterface.addToMetadata(dnsEvent, { hostname, ...requestData });
+            const responsePromise = new Promise((resolve) => {
+                patchedCallback = (err, records) => {
+                    const callbackArgument = getCallbackResolveArgument(records, rrtype);
+                    finalizeEvent(dnsEvent, startTime, err, { ...callbackArgument });
+                    resolve();
+                    if (callback) {
+                        callback(err, records);
+                    }
+                };
+            });
+            clientRequest = original.apply(this, [hostname, rrtype, patchedCallback]);
+            tracer.addEvent(dnsEvent, responsePromise);
+        } catch (err) {
+            tracer.addException(err);
         }
         if (!clientRequest) {
             clientRequest = original.apply(this, [arg1, arg2, arg3]);
@@ -217,26 +217,25 @@ function wrapDnsLookupServiceFunction(original) {
         let clientRequest;
         const { dnsEvent, startTime } = initialDnsEvent(original.name);
         if (!callback) {
-            clientRequest = handleFunctionWithoutCallback(
+            return handleFunctionWithoutCallback(
                 original, startTime, dnsEvent, [address, port, callback]
             );
-        } else {
-            try {
-                eventInterface.addToMetadata(dnsEvent, { address, port });
-                const responsePromise = new Promise((resolve) => {
-                    patchedCallback = (err, hostname, service) => {
-                        finalizeEvent(dnsEvent, startTime, err, { hostname, service });
-                        resolve();
-                        if (callback) {
-                            callback(err, hostname, service);
-                        }
-                    };
-                });
-                clientRequest = original.apply(this, [address, port, patchedCallback]);
-                tracer.addEvent(dnsEvent, responsePromise);
-            } catch (err) {
-                tracer.addException(err);
-            }
+        }
+        try {
+            eventInterface.addToMetadata(dnsEvent, { address, port });
+            const responsePromise = new Promise((resolve) => {
+                patchedCallback = (err, hostname, service) => {
+                    finalizeEvent(dnsEvent, startTime, err, { hostname, service });
+                    resolve();
+                    if (callback) {
+                        callback(err, hostname, service);
+                    }
+                };
+            });
+            clientRequest = original.apply(this, [address, port, patchedCallback]);
+            tracer.addEvent(dnsEvent, responsePromise);
+        } catch (err) {
+            tracer.addException(err);
         }
         if (!clientRequest) {
             clientRequest = original.apply(this, [address, port, callback]);
@@ -256,26 +255,25 @@ function wrapDnsReverseFunction(original) {
         let clientRequest;
         const { dnsEvent, startTime } = initialDnsEvent(original.name);
         if (!callback) {
-            clientRequest = handleFunctionWithoutCallback(
+            return handleFunctionWithoutCallback(
                 original, startTime, dnsEvent, [ip, callback]
             );
-        } else {
-            try {
-                eventInterface.addToMetadata(dnsEvent, { ip });
-                const responsePromise = new Promise((resolve) => {
-                    patchedCallback = (err, hostnames) => {
-                        finalizeEvent(dnsEvent, startTime, err, { hostnames });
-                        resolve();
-                        if (callback) {
-                            callback(err, hostnames);
-                        }
-                    };
-                });
-                clientRequest = original.apply(this, [ip, patchedCallback]);
-                tracer.addEvent(dnsEvent, responsePromise);
-            } catch (err) {
-                tracer.addException(err);
-            }
+        }
+        try {
+            eventInterface.addToMetadata(dnsEvent, { ip });
+            const responsePromise = new Promise((resolve) => {
+                patchedCallback = (err, hostnames) => {
+                    finalizeEvent(dnsEvent, startTime, err, { hostnames });
+                    resolve();
+                    if (callback) {
+                        callback(err, hostnames);
+                    }
+                };
+            });
+            clientRequest = original.apply(this, [ip, patchedCallback]);
+            tracer.addEvent(dnsEvent, responsePromise);
+        } catch (err) {
+            tracer.addException(err);
         }
         if (!clientRequest) {
             clientRequest = original.apply(this, [ip, callback]);
@@ -300,34 +298,33 @@ function wrapDnsLookupFunction(original) {
         }
         const { dnsEvent, startTime } = initialDnsEvent(original.name);
         if (!callback) {
-            clientRequest = handleFunctionWithoutCallback(
+            return handleFunctionWithoutCallback(
                 original, startTime, dnsEvent, [arg1, arg2, arg3]
             );
-        } else {
-            try {
-                eventInterface.addToMetadata(dnsEvent, { hostname });
-                if (options) {
-                    eventInterface.addToMetadata(dnsEvent, { options });
-                }
-                const responsePromise = new Promise((resolve) => {
-                    patchedCallback = (err, address, family) => {
-                        finalizeEvent(dnsEvent, startTime, err, { address, family });
-                        resolve();
-                        if (callback) {
-                            callback(err, address, family);
-                        }
-                    };
-                });
-                const arrayOfArgs = [hostname, patchedCallback];
-                // adding options if exist to function arguments array.
-                if (options) {
-                    arrayOfArgs.splice(1, 0, options);
-                }
-                clientRequest = original.apply(this, arrayOfArgs);
-                tracer.addEvent(dnsEvent, responsePromise);
-            } catch (err) {
-                tracer.addException(err);
+        }
+        try {
+            eventInterface.addToMetadata(dnsEvent, { hostname });
+            if (options) {
+                eventInterface.addToMetadata(dnsEvent, { options });
             }
+            const responsePromise = new Promise((resolve) => {
+                patchedCallback = (err, address, family) => {
+                    finalizeEvent(dnsEvent, startTime, err, { address, family });
+                    resolve();
+                    if (callback) {
+                        callback(err, address, family);
+                    }
+                };
+            });
+            const arrayOfArgs = [hostname, patchedCallback];
+            // adding options if exist to function arguments array.
+            if (options) {
+                arrayOfArgs.splice(1, 0, options);
+            }
+            clientRequest = original.apply(this, arrayOfArgs);
+            tracer.addEvent(dnsEvent, responsePromise);
+        } catch (err) {
+            tracer.addException(err);
         }
         if (!clientRequest) {
             clientRequest = original.apply(this, [arg1, arg2, arg3]);
