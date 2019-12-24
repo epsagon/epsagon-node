@@ -13,16 +13,19 @@ const consts = require('./consts.js');
  * Sets an event's exception to the given error
  * @param {proto.event_pb.Event} event The event the exception is set on
  * @param {Error} error The error to set as the exception
+ * @param {boolean} handled False if the exception was raised by the wrapped function
  */
-module.exports.setException = function setException(event, error) {
+module.exports.setException = function setException(event, error, handled = true) {
     try {
         event.setErrorCode(errorCode.ErrorCode.EXCEPTION);
-        event.setException(new exception.Exception([
+        const userException = new exception.Exception([
             error.name,
             error.message,
             error.stack,
             utils.createTimestamp(),
-        ]));
+        ]);
+        event.setException(userException);
+        userException.getAdditionalDataMap().set('handled', handled);
     } catch (err) {
         tracer.addException(err);
     }
