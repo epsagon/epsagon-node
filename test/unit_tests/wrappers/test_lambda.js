@@ -31,6 +31,11 @@ function getReturnValue(addRunnerStub) {
     return runnerMetadata.get('return_value');
 }
 
+function getStatusCode(addRunnerStub) {
+    const runnerMetadata = getRunner(addRunnerStub).getResource().getMetadataMap();
+    return runnerMetadata.get('status_code');
+}
+
 describe('lambdaWrapper tests', () => {
     beforeEach(() => {
         config.setConfig({ metadataOnly: false });
@@ -123,6 +128,27 @@ describe('lambdaWrapper tests', () => {
             expect(this.createFromEventStub.calledWith({}));
             expect(this.addEventStub.callCount).to.equal(1);
             expect(getReturnValue(this.addRunnerStub)).to.equal(JSON.stringify(RETURN_VALUE));
+            expect(this.addExceptionStub.called).to.be.false;
+            expect(this.sendTraceStub.callCount).to.equal(1);
+            expect(this.stubFunction.callCount).to.equal(1);
+            expect(this.callbackStub.callCount).to.equal(1);
+            expect(this.setExceptionStub.called).to.be.false;
+            done();
+        }, 1);
+    });
+
+    it('lambdaWrapper: return status code', (done) => {
+        const result = { statusCode: 200 };
+        this.stubFunction.callsArgWith(2, null, result);
+        this.wrappedStub({}, this.context, this.callbackStub);
+        setTimeout(() => {
+            expect(this.createFromEventStub.callCount).to.equal(1);
+
+            expect(this.restartStub.callCount).to.equal(1);
+            expect(this.createFromEventStub.calledWith({}));
+            expect(this.addEventStub.callCount).to.equal(1);
+            expect(getReturnValue(this.addRunnerStub)).to.equal(JSON.stringify(result));
+            expect(getStatusCode(this.addRunnerStub)).to.equal(200);
             expect(this.addExceptionStub.called).to.be.false;
             expect(this.sendTraceStub.callCount).to.equal(1);
             expect(this.stubFunction.callCount).to.equal(1);
@@ -485,6 +511,32 @@ describe('stepLambdaWrapper tests', () => {
             const returnValue = JSON.parse(getReturnValue(this.addRunnerStub));
             expect(returnValue).to.contain.key('Epsagon');
             expect(returnValue).to.contain.key('result');
+            expect(this.addExceptionStub.called).to.be.false;
+            expect(this.sendTraceStub.callCount).to.equal(1);
+            expect(this.stubFunction.callCount).to.equal(1);
+            expect(this.callbackStub.callCount).to.equal(1);
+            expect(this.setExceptionStub.called).to.be.false;
+            expect(this.uuid4Stub.calledOnce).to.be.true;
+            done();
+        }, 1);
+    });
+
+    it('stepLambdaWrapper: return status code', (done) => {
+        const output = { statusCode: 200 };
+        this.stubFunction.callsArgWith(2, null, output);
+        this.wrappedStub({}, this.context, this.callbackStub);
+        setTimeout(() => {
+            const result = this.callbackStub.getCall(0).args[1];
+            expect(result).to.contain.key('Epsagon');
+            expect(result).to.contain.key('statusCode');
+            expect(this.restartStub.callCount).to.equal(1);
+            expect(this.createFromEventStub.callCount).to.equal(1);
+            expect(this.createFromEventStub.calledWith({}));
+            expect(this.addEventStub.callCount).to.equal(1);
+            const returnValue = JSON.parse(getReturnValue(this.addRunnerStub));
+            expect(returnValue).to.contain.key('Epsagon');
+            expect(returnValue).to.contain.key('statusCode');
+            expect(getStatusCode(this.addRunnerStub)).to.equal(output.statusCode);
             expect(this.addExceptionStub.called).to.be.false;
             expect(this.sendTraceStub.callCount).to.equal(1);
             expect(this.stubFunction.callCount).to.equal(1);

@@ -274,6 +274,12 @@ function sendCurrentTrace(traceSender) {
                 message: entry.getException().getMessage(),
                 traceback: entry.getException().getTraceback(),
                 time: entry.getException().getTime(),
+                additional_data: entry.getException().getAdditionalDataMap()
+                    .toArray().reduce((map, obj) => {
+                        // not linting this line because this is a hack until protobuf
+                        map[obj[0]] = obj[1]; // eslint-disable-line
+                        return map;
+                    }, {}),
             } : {},
         })),
         exceptions: tracerObj.trace.getExceptionList().map(entry => ({

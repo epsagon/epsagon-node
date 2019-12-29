@@ -97,7 +97,12 @@ function baseLambdaWrapper(
             callbackCalled = true;
             if (error) {
                 // not catching false here, but that seems OK
-                eventInterface.setException(runner, error);
+                eventInterface.setException(runner, error, false);
+            }
+
+            const { statusCode } = result || {};
+            if (statusCode) {
+                eventInterface.addToMetadata(runner, { status_code: statusCode });
             }
 
             if (error === null && !getConfig().metadataOnly) {
