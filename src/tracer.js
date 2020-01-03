@@ -412,7 +412,7 @@ module.exports.postTrace = function postTrace(traceObject) {
             utils.debugLog(`Error sending trace. Trace size: ${err.config.data.length}`);
         }
         else {
-             utils.debugLog(`Error sending trace. Error: ${err}`);
+            utils.debugLog(`Error sending trace. Error: ${err}`);
         }
         utils.debugLog(`${err ? err.stack : err}`);
         return err;
