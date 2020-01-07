@@ -1,12 +1,9 @@
-const uuid4 = require('uuid4');
 const dns = require('dns');
 const shimmer = require('shimmer');
 const utils = require('../utils.js');
 const tracer = require('../tracer.js');
-const serverlessEvent = require('../proto/event_pb.js');
 const eventInterface = require('../event.js');
-const errorCode = require('../proto/error_code_pb.js');
-const { isBlacklistURL } = require('.././helpers/events');
+const { isBlacklistURL, initialEvent } = require('.././helpers/events');
 
 const URL_BLACKLIST = {
     'tc.epsagon.com': 'endsWith',
@@ -25,30 +22,6 @@ const rrtypesMethods = {
     resolveSoa: 'SOA',
     resolveSrv: 'SRV',
     resolveTxt: 'TXT',
-};
-
-/**
- * Create and initialize a new dns event in the epsagon format.
- * @param {string} name Operation name
- * @returns {Object} Object with dnsEvent and event start time.
- */
-const initialDnsEvent = (name) => {
-    const startTime = Date.now();
-    const resource = new serverlessEvent.Resource([
-        'dns',
-        'dns',
-        name,
-    ]);
-    const dnsEvent = new serverlessEvent.Event([
-        `dns-${uuid4()}`,
-        utils.createTimestampFromTime(startTime),
-        null,
-        'dns',
-        0,
-        errorCode.ErrorCode.OK,
-    ]);
-    dnsEvent.setResource(resource);
-    return { dnsEvent, startTime };
 };
 
 /**
@@ -170,10 +143,10 @@ function wrapDnsResolveFunction(original) {
         if (typeof arg2 === 'object') {
             options = arg2;
         }
-        const { dnsEvent, startTime } = initialDnsEvent(original.name);
+        const { event, startTime } = initialEvent('dns', original.name, 'dns');
         if (!callback) {
             return handleFunctionWithoutCallback(
-                original, startTime, dnsEvent, [arg1, arg2, arg3]
+                original, startTime, event, [arg1, arg2, arg3]
             );
         }
         try {
@@ -184,11 +157,11 @@ function wrapDnsResolveFunction(original) {
             if (rrtype) {
                 requestData.rrtype = rrtype;
             }
-            eventInterface.addToMetadata(dnsEvent, { hostname, ...requestData });
+            eventInterface.addToMetadata(event, { hostname, ...requestData });
             const responsePromise = new Promise((resolve) => {
                 patchedCallback = (err, records) => {
                     const callbackArgument = getCallbackResolveArgument(records, rrtype);
-                    finalizeEvent(dnsEvent, startTime, err, { ...callbackArgument });
+                    finalizeEvent(event, startTime, err, { ...callbackArgument });
                     resolve();
                     if (callback) {
                         callback(err, records);
@@ -196,7 +169,7 @@ function wrapDnsResolveFunction(original) {
                 };
             });
             clientRequest = original.apply(this, [hostname, rrtype, patchedCallback]);
-            tracer.addEvent(dnsEvent, responsePromise);
+            tracer.addEvent(event, responsePromise);
         } catch (err) {
             tracer.addException(err);
         }
@@ -215,17 +188,17 @@ function wrapDnsLookupServiceFunction(original) {
     return function internalWrapDnsLookupServiceFunction(address, port, callback) {
         let patchedCallback;
         let clientRequest;
-        const { dnsEvent, startTime } = initialDnsEvent(original.name);
+        const { event, startTime } = initialEvent('dns', original.name, 'dns');
         if (!callback) {
             return handleFunctionWithoutCallback(
-                original, startTime, dnsEvent, [address, port, callback]
+                original, startTime, event, [address, port, callback]
             );
         }
         try {
-            eventInterface.addToMetadata(dnsEvent, { address, port });
+            eventInterface.addToMetadata(event, { address, port });
             const responsePromise = new Promise((resolve) => {
                 patchedCallback = (err, hostname, service) => {
-                    finalizeEvent(dnsEvent, startTime, err, { hostname, service });
+                    finalizeEvent(event, startTime, err, { hostname, service });
                     resolve();
                     if (callback) {
                         callback(err, hostname, service);
@@ -233,7 +206,7 @@ function wrapDnsLookupServiceFunction(original) {
                 };
             });
             clientRequest = original.apply(this, [address, port, patchedCallback]);
-            tracer.addEvent(dnsEvent, responsePromise);
+            tracer.addEvent(event, responsePromise);
         } catch (err) {
             tracer.addException(err);
         }
@@ -253,17 +226,18 @@ function wrapDnsReverseFunction(original) {
     return function internalWrapDnsReverseFunction(ip, callback) {
         let patchedCallback;
         let clientRequest;
-        const { dnsEvent, startTime } = initialDnsEvent(original.name);
+        const { event, startTime } = initialEvent('dns', original.name, 'dns');
+
         if (!callback) {
             return handleFunctionWithoutCallback(
-                original, startTime, dnsEvent, [ip, callback]
+                original, startTime, event, [ip, callback]
             );
         }
         try {
-            eventInterface.addToMetadata(dnsEvent, { ip });
+            eventInterface.addToMetadata(event, { ip });
             const responsePromise = new Promise((resolve) => {
                 patchedCallback = (err, hostnames) => {
-                    finalizeEvent(dnsEvent, startTime, err, { hostnames });
+                    finalizeEvent(event, startTime, err, { hostnames });
                     resolve();
                     if (callback) {
                         callback(err, hostnames);
@@ -271,7 +245,7 @@ function wrapDnsReverseFunction(original) {
                 };
             });
             clientRequest = original.apply(this, [ip, patchedCallback]);
-            tracer.addEvent(dnsEvent, responsePromise);
+            tracer.addEvent(event, responsePromise);
         } catch (err) {
             tracer.addException(err);
         }
@@ -296,20 +270,20 @@ function wrapDnsLookupFunction(original) {
             utils.debugLog(`filtered blacklist hostname ${hostname}`);
             return original.apply(this, [arg1, arg2, arg3]);
         }
-        const { dnsEvent, startTime } = initialDnsEvent(original.name);
+        const { event, startTime } = initialEvent('dns', original.name, 'dns');
         if (!callback) {
             return handleFunctionWithoutCallback(
-                original, startTime, dnsEvent, [arg1, arg2, arg3]
+                original, startTime, event, [arg1, arg2, arg3]
             );
         }
         try {
-            eventInterface.addToMetadata(dnsEvent, { hostname });
+            eventInterface.addToMetadata(event, { hostname });
             if (options) {
-                eventInterface.addToMetadata(dnsEvent, { options });
+                eventInterface.addToMetadata(event, { options });
             }
             const responsePromise = new Promise((resolve) => {
                 patchedCallback = (err, address, family) => {
-                    finalizeEvent(dnsEvent, startTime, err, { address, family });
+                    finalizeEvent(event, startTime, err, { address, family });
                     resolve();
                     if (callback) {
                         callback(err, address, family);
@@ -322,7 +296,7 @@ function wrapDnsLookupFunction(original) {
                 arrayOfArgs.splice(1, 0, options);
             }
             clientRequest = original.apply(this, arrayOfArgs);
-            tracer.addEvent(dnsEvent, responsePromise);
+            tracer.addEvent(event, responsePromise);
         } catch (err) {
             tracer.addException(err);
         }
