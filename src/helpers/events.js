@@ -14,7 +14,7 @@ const tracer = require('../tracer.js');
  * @param {string} origin Origin name (optional)
  * @returns {Object} Object with dnsEvent and event start time.
  */
-const initialEvent = (resourceType, name, operation, origin) => {
+const initializeEvent = (resourceType, name, operation, origin) => {
     const startTime = Date.now();
     const resource = new serverlessEvent.Resource([
         name,
@@ -81,5 +81,5 @@ const isBlacklistHeader = (headers, userAgentsBlacklist) => {
 };
 
 module.exports = {
-    isBlacklistURL, isBlacklistHeader, initialEvent, finalizeEvent,
+    isBlacklistURL, isBlacklistHeader, initializeEvent, finalizeEvent,
 };

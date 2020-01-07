@@ -1,11 +1,9 @@
 /**
  * @fileoverview Instrumentation for google cloud library.
  */
-const { PubSub, v1 } = require('@google-cloud/pubsub');
-const shimmer = require('shimmer');
 const uuid4 = require('uuid4');
 const utils = require('../utils.js');
-const { initialEvent, finalizeEvent } = require('../helpers/events');
+const { initializeEvent, finalizeEvent } = require('../helpers/events');
 const tracer = require('../tracer.js');
 const serverlessEvent = require('../proto/event_pb.js');
 const eventInterface = require('../event.js');
@@ -107,7 +105,7 @@ function wrapPubSubRequestFunction(original) {
         let patchedCallback = callback;
         try {
             const pubsubProjectId = this.projectId;
-            const { event, startTime } = initialEvent(
+            const { event, startTime } = initializeEvent(
                 GOOGLE_CLOUD_TYPES.pubsub.name, pubsubProjectId, config.method
             );
             const requestFunctionThis = this;
@@ -178,7 +176,7 @@ function wrapPubSubPullFunction(original) {
                     [, pubsubProjectId] = subscriptionSplited;
                 }
             }
-            const { event, startTime } = initialEvent(
+            const { event, startTime } = initializeEvent(
                 GOOGLE_CLOUD_TYPES.pubsub.name, pubsubProjectId, 'Pull'
             );
             const patchedCallback = (err, res) => {
@@ -226,9 +224,17 @@ module.exports = {
             bigQueryWrapper,
             common => common.util
         );
-
-        shimmer.wrap(PubSub.prototype, 'request', () => wrapPubSubRequestFunction(PubSub.prototype.request));
-        shimmer.wrap(PubSub.prototype, 'subscription', () => wrapPubSubRequestFunction(PubSub.prototype.subscription));
-        shimmer.wrap(v1.SubscriberClient.prototype, 'pull', () => wrapPubSubPullFunction(v1.SubscriberClient.prototype.pull));
+        moduleUtils.patchModule(
+            '@google-cloud/pubsub/',
+            'request',
+            wrapPubSubRequestFunction,
+            pubsub => pubsub.PubSub.prototype
+        );
+        moduleUtils.patchModule(
+            '@google-cloud/pubsub/',
+            'pull',
+            wrapPubSubPullFunction,
+            pubsub => pubsub.v1.SubscriberClient.prototype
+        );
     },
 };

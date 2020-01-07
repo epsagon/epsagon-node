@@ -3,7 +3,7 @@ const shimmer = require('shimmer');
 const utils = require('../utils.js');
 const tracer = require('../tracer.js');
 const eventInterface = require('../event.js');
-const { isBlacklistURL, initialEvent } = require('.././helpers/events');
+const { isBlacklistURL, initializeEvent } = require('.././helpers/events');
 
 const URL_BLACKLIST = {
     'tc.epsagon.com': 'endsWith',
@@ -143,7 +143,7 @@ function wrapDnsResolveFunction(original) {
         if (typeof arg2 === 'object') {
             options = arg2;
         }
-        const { event, startTime } = initialEvent('dns', original.name, 'dns');
+        const { event, startTime } = initializeEvent('dns', original.name, 'dns');
         if (!callback) {
             return handleFunctionWithoutCallback(
                 original, startTime, event, [arg1, arg2, arg3]
@@ -188,7 +188,7 @@ function wrapDnsLookupServiceFunction(original) {
     return function internalWrapDnsLookupServiceFunction(address, port, callback) {
         let patchedCallback;
         let clientRequest;
-        const { event, startTime } = initialEvent('dns', original.name, 'dns');
+        const { event, startTime } = initializeEvent('dns', original.name, 'dns');
         if (!callback) {
             return handleFunctionWithoutCallback(
                 original, startTime, event, [address, port, callback]
@@ -226,7 +226,7 @@ function wrapDnsReverseFunction(original) {
     return function internalWrapDnsReverseFunction(ip, callback) {
         let patchedCallback;
         let clientRequest;
-        const { event, startTime } = initialEvent('dns', original.name, 'dns');
+        const { event, startTime } = initializeEvent('dns', original.name, 'dns');
 
         if (!callback) {
             return handleFunctionWithoutCallback(
@@ -270,7 +270,7 @@ function wrapDnsLookupFunction(original) {
             utils.debugLog(`filtered blacklist hostname ${hostname}`);
             return original.apply(this, [arg1, arg2, arg3]);
         }
-        const { event, startTime } = initialEvent('dns', original.name, 'dns');
+        const { event, startTime } = initializeEvent('dns', original.name, 'dns');
         if (!callback) {
             return handleFunctionWithoutCallback(
                 original, startTime, event, [arg1, arg2, arg3]
