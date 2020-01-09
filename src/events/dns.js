@@ -3,7 +3,7 @@ const shimmer = require('shimmer');
 const utils = require('../utils.js');
 const tracer = require('../tracer.js');
 const eventInterface = require('../event.js');
-const { isBlacklistURL, initializeEvent } = require('.././helpers/events');
+const { isBlacklistURL, initializeEvent, finalizeEvent } = require('.././helpers/events');
 
 const URL_BLACKLIST = {
     'tc.epsagon.com': 'endsWith',
@@ -22,26 +22,6 @@ const rrtypesMethods = {
     resolveSoa: 'SOA',
     resolveSrv: 'SRV',
     resolveTxt: 'TXT',
-};
-
-/**
- * Adding callback data/error to event, and finalize event.
- * @param {serverlessEvent.Event} dnsEvent Dns event.
- * @param {number} startTime Event start time.
- * @param {Error} error Callback error.
- * @param {string[] | Object[] | Object} metadata Callback metadata.
- */
-const finalizeEvent = (dnsEvent, startTime, error, metadata) => {
-    try {
-        if (error) {
-            eventInterface.setException(dnsEvent, error);
-        } else {
-            eventInterface.addToMetadata(dnsEvent, metadata);
-        }
-        dnsEvent.setDuration(utils.createDurationTimestamp(startTime));
-    } catch (err) {
-        tracer.addException(err);
-    }
 };
 
 /**
@@ -143,10 +123,10 @@ function wrapDnsResolveFunction(original) {
         if (typeof arg2 === 'object') {
             options = arg2;
         }
-        const { event, startTime } = initializeEvent('dns', original.name, 'dns');
+        const { event: dnsEvent, startTime } = initializeEvent('dns', original.name, 'dns');
         if (!callback) {
             return handleFunctionWithoutCallback(
-                original, startTime, event, [arg1, arg2, arg3]
+                original, startTime, dnsEvent, [arg1, arg2, arg3]
             );
         }
         try {
@@ -157,11 +137,11 @@ function wrapDnsResolveFunction(original) {
             if (rrtype) {
                 requestData.rrtype = rrtype;
             }
-            eventInterface.addToMetadata(event, { hostname, ...requestData });
+            eventInterface.addToMetadata(dnsEvent, { hostname, ...requestData });
             const responsePromise = new Promise((resolve) => {
                 patchedCallback = (err, records) => {
                     const callbackArgument = getCallbackResolveArgument(records, rrtype);
-                    finalizeEvent(event, startTime, err, { ...callbackArgument });
+                    finalizeEvent(dnsEvent, startTime, err, { ...callbackArgument });
                     resolve();
                     if (callback) {
                         callback(err, records);
@@ -169,7 +149,7 @@ function wrapDnsResolveFunction(original) {
                 };
             });
             clientRequest = original.apply(this, [hostname, rrtype, patchedCallback]);
-            tracer.addEvent(event, responsePromise);
+            tracer.addEvent(dnsEvent, responsePromise);
         } catch (err) {
             tracer.addException(err);
         }

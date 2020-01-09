@@ -131,6 +131,18 @@ function flatten(target) {
     return output;
 }
 
+
+/**
+ * Function to split string into array, which return the last element of the array.
+ * @param {string} string String to be split.
+ * @param {string} seperator Character to split the string.
+ * @returns {string} Last splitted array item.
+ */
+const getLastSplittedItem = (string, seperator) => {
+    const splittedArray = (string && string.split(seperator)) || [];
+    return splittedArray[splittedArray.length - 1];
+};
+
 module.exports.createTimestampFromTime = createTimestampFromTime;
 module.exports.createTimestamp = createTimestamp;
 module.exports.createDurationTimestamp = createDurationTimestamp;
@@ -138,3 +150,4 @@ module.exports.reflectPromise = reflectPromise;
 module.exports.debugLog = debugLog;
 module.exports.makeQueryablePromise = makeQueryablePromise;
 module.exports.flatten = flatten;
+module.exports.getLastSplittedItem = getLastSplittedItem;

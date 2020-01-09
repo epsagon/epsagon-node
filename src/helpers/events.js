@@ -44,7 +44,8 @@ const finalizeEvent = (event, startTime, error, metadata) => {
     try {
         if (error) {
             eventInterface.setException(event, error);
-        } else if (metadata) {
+        }
+        if (metadata) {
             eventInterface.addToMetadata(event, metadata);
         }
         event.setDuration(utils.createDurationTimestamp(startTime));

@@ -87,10 +87,6 @@ function bigQueryWrapper(wrappedFunction) {
     };
 }
 
-const getLastSplittedString = (array) => {
-    const splittedArray = (array && array.split('/')) || [];
-    return splittedArray[splittedArray.length - 1];
-};
 
 /**
  * Wrap pubsub request function.
@@ -99,9 +95,6 @@ const getLastSplittedString = (array) => {
  */
 function wrapPubSubRequestFunction(original) {
     return function internalPubSubRequestFunction(config, callback) {
-        if (!config || !config.method) {
-            return original.apply(this, [config, callback]);
-        }
         let patchedCallback = callback;
         try {
             const pubsubProjectId = this.projectId;
@@ -110,46 +103,47 @@ function wrapPubSubRequestFunction(original) {
             );
             const requestFunctionThis = this;
             const responsePromise = new Promise((resolve) => {
-                patchedCallback = (err, arg2, arg3) => {
+                patchedCallback = (err, arg2, ...arg3) => {
                     if ((!pubsubProjectId || pubsubProjectId === GOOGLE_CLOUD_TYPES
                         .defaultProjectId) && !!requestFunctionThis.projectId) {
                         event.getResource().setName(requestFunctionThis.projectId);
                     }
                     const callbackResponse = {};
-                    if (arg2) {
-                        if (config.method === 'publish') {
-                            const messageIds = arg2.messageIds ? arg2.messageIds : arg2;
-                            if (Array.isArray(messageIds) && messageIds.length) {
-                                callbackResponse.messageIds = messageIds;
-                                const [messageId] = messageIds;
-                                callbackResponse.messageId = messageId;
-                            }
-                        } else if (config.method === 'createSubscription') {
-                            callbackResponse.subscription = arg2;
-                        } else if (config.method === 'deleteSubscription') {
-                            if (config.reqOpts && config.reqOpts.subscription) {
-                                callbackResponse.subscription = getLastSplittedString(
-                                    config.reqOpts.subscription
-                                );
-                            }
-                        } else if (config.method === 'deleteTopic') {
-                            if (config.reqOpts && config.reqOpts.topic) {
-                                callbackResponse.topic = getLastSplittedString(
-                                    config.reqOpts.topic
-                                );
-                            }
-                        } else if (config.method === 'createTopic') {
-                            callbackResponse.topic = arg2;
+                    switch (arg2 && config.method) {
+                    case 'publish': {
+                        const messageIds = arg2.messageIds ? arg2.messageIds : arg2;
+                        callbackResponse.messageIds = messageIds;
+                        break;
+                    }
+                    case 'createSubscription':
+                        callbackResponse.subscription = arg2;
+                        break;
+                    case 'deleteSubscription':
+                        if (config.reqOpts && config.reqOpts.subscription) {
+                            callbackResponse.subscription = utils.getLastSplittedItem(
+                                config.reqOpts.subscription,
+                                '/'
+                            );
                         }
+                        break;
+                    case 'createTopic':
+                        callbackResponse.topic = arg2;
+                        break;
+                    case 'deleteTopic':
+                        if (config.reqOpts && config.reqOpts.topic) {
+                            callbackResponse.topic = utils.getLastSplittedItem(
+                                config.reqOpts.topic,
+                                '/'
+                            );
+                        }
+                        break;
+                    default:
+                        break;
                     }
                     finalizeEvent(event, startTime, err, callbackResponse);
                     resolve();
                     if (callback) {
-                        if (arg3) {
-                            callback(err, arg2, ...arg3);
-                        } else {
-                            callback(err, arg2);
-                        }
+                        callback(err, arg2, ...arg3);
                     }
                 };
             });
@@ -182,21 +176,30 @@ function wrapPubSubPullFunction(original) {
             const patchedCallback = (err, res) => {
                 const callbackResponse = {};
                 if (res && res.receivedMessages) {
-                    const messageIds = res.receivedMessages.reduce((acc, current) => {
-                        acc.push(current.message.messageId);
+                    const receivedMessages = res.receivedMessages.reduce((acc, current) => {
+                        acc.push({ messageId: current.message.messageId, message: `${current.message.data}` });
                         return acc;
                     }, []);
-                    callbackResponse.messageIds = messageIds;
+                    callbackResponse.receivedMessages = receivedMessages;
                 }
                 finalizeEvent(event, startTime, err, callbackResponse);
+                if (callback) {
+                    callback(err, res);
+                }
             };
-            let responsePromise;
             // in case callback has given from the client.
             if (callback) {
-                responsePromise = original.apply(this, [request, options, patchedCallback]);
-                tracer.addEvent(event, responsePromise);
+                let patchedCallbackWithPromise = callback;
+                const promise = new Promise((resolve) => {
+                    patchedCallbackWithPromise = (err, res) => {
+                        patchedCallback(err, res);
+                        resolve();
+                    };
+                });
+                tracer.addEvent(event, promise);
+                return original.apply(this, [request, options, patchedCallbackWithPromise]);
             }
-            responsePromise = original.apply(this, [request, options, callback]);
+            const responsePromise = original.apply(this, [request, options, callback]);
             tracer.addEvent(event, responsePromise);
             return responsePromise.then((res) => {
                 const [response] = res;
