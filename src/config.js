@@ -26,7 +26,7 @@ const config = {
     token: process.env.EPSAGON_TOKEN || '',
     appName: process.env.EPSAGON_APP_NAME || 'Application',
     metadataOnly: (process.env.EPSAGON_METADATA || '').toUpperCase() === 'TRUE',
-    useSSL: (process.env.EPSAGON_SSL || 'TRUE').toUpperCase() === 'TRUE',
+    disableSSL: (process.env.EPSAGON_DISABLE_SSL || 'FALSE').toUpperCase() === 'TRUE',
     traceCollectorURL: consts.TRACE_COLLECTOR_URL,
     isEpsagonDisabled: (process.env.DISABLE_EPSAGON || '').toUpperCase() === 'TRUE',
     urlPatternsToIgnore: [],
@@ -104,9 +104,9 @@ module.exports.setConfig = function setConfig(configData) {
     }
 
     // Use SSL
-    if (configData.useSSL) {
-        config.traceCollectorURL = config.traceCollectorURL.replace('http:', 'https:');
-        config.useSSL = configData.useSSL;
+    if (configData.disableSSL) {
+        config.traceCollectorURL = config.traceCollectorURL.replace('https:', 'http:');
+        config.disableSSL = configData.disableSSL;
     }
 
     // User-defined URL blacklist.

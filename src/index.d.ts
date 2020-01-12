@@ -6,7 +6,7 @@ declare module 'epsagon' {
     token: string
     appName: string
     metadataOnly?: boolean
-    useSSL?: boolean
+    disableSSL?: boolean
     traceCollectorURL?: string
     isEpsagonDisabled?: boolean
     urlPatternsToIgnore?: string[]
