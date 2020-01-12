@@ -30,6 +30,5 @@ result=0
 
 run_acceptance_test ${build_num} nodejs12.x njs12
 run_acceptance_test ${build_num} nodejs10.x njs10
-run_acceptance_test ${build_num} nodejs8.10 njs8
 
 exit ${result}
