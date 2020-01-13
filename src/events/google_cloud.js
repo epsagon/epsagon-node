@@ -3,7 +3,6 @@
  */
 const uuid4 = require('uuid4');
 const utils = require('../utils.js');
-const { initializeEvent, finalizeEvent } = require('../helpers/events');
 const tracer = require('../tracer.js');
 const serverlessEvent = require('../proto/event_pb.js');
 const eventInterface = require('../event.js');
@@ -98,7 +97,7 @@ function wrapPubSubRequestFunction(original) {
         let patchedCallback = callback;
         try {
             const pubsubProjectId = this.projectId;
-            const { event, startTime } = initializeEvent(
+            const { slsEvent: pubsubEvent, startTime } = eventInterface.initializeEvent(
                 GOOGLE_CLOUD_TYPES.pubsub.name, pubsubProjectId, config.method
             );
             const requestFunctionThis = this;
@@ -106,7 +105,7 @@ function wrapPubSubRequestFunction(original) {
                 patchedCallback = (err, arg2, ...arg3) => {
                     if ((!pubsubProjectId || pubsubProjectId === GOOGLE_CLOUD_TYPES
                         .defaultProjectId) && !!requestFunctionThis.projectId) {
-                        event.getResource().setName(requestFunctionThis.projectId);
+                        pubsubEvent.getResource().setName(requestFunctionThis.projectId);
                     }
                     const callbackResponse = {};
                     switch (arg2 && config.method) {
@@ -140,14 +139,14 @@ function wrapPubSubRequestFunction(original) {
                     default:
                         break;
                     }
-                    finalizeEvent(event, startTime, err, callbackResponse);
+                    eventInterface.finalizeEvent(pubsubEvent, startTime, err, callbackResponse);
                     resolve();
                     if (callback) {
                         callback(err, arg2, ...arg3);
                     }
                 };
             });
-            tracer.addEvent(event, responsePromise);
+            tracer.addEvent(pubsubEvent, responsePromise);
         } catch (err) {
             tracer.addException(err);
         }
@@ -170,7 +169,7 @@ function wrapPubSubPullFunction(original) {
                     [, pubsubProjectId] = subscriptionSplited;
                 }
             }
-            const { event, startTime } = initializeEvent(
+            const { slsEvent: pubsubEvent, startTime } = eventInterface.initializeEvent(
                 GOOGLE_CLOUD_TYPES.pubsub.name, pubsubProjectId, 'Pull'
             );
             const patchedCallback = (err, res) => {
@@ -182,7 +181,7 @@ function wrapPubSubPullFunction(original) {
                     }, []);
                     callbackResponse.receivedMessages = receivedMessages;
                 }
-                finalizeEvent(event, startTime, err, callbackResponse);
+                eventInterface.finalizeEvent(pubsubEvent, startTime, err, callbackResponse);
                 if (callback) {
                     callback(err, res);
                 }
@@ -196,11 +195,11 @@ function wrapPubSubPullFunction(original) {
                         resolve();
                     };
                 });
-                tracer.addEvent(event, promise);
+                tracer.addEvent(pubsubEvent, promise);
                 return original.apply(this, [request, options, patchedCallbackWithPromise]);
             }
             const responsePromise = original.apply(this, [request, options, callback]);
-            tracer.addEvent(event, responsePromise);
+            tracer.addEvent(pubsubEvent, responsePromise);
             return responsePromise.then((res) => {
                 const [response] = res;
                 patchedCallback(null, response);

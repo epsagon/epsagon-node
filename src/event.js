@@ -2,12 +2,14 @@
  * @fileoverview an interface to {@link proto.event_pb.Event} objects, with useful methods to
  * manipulate them
  */
+const uuid4 = require('uuid4');
 const utils = require('./utils');
 const errorCode = require('./proto/error_code_pb.js');
 const exception = require('./proto/exception_pb.js');
 const config = require('./config.js');
 const tracer = require('./tracer.js');
 const consts = require('./consts.js');
+const serverlessEvent = require('./proto/event_pb.js');
 
 /**
  * Sets an event's exception to the given error
@@ -101,5 +103,53 @@ module.exports.addLabelToMetadata = function addLabelToMetadata(event, key, valu
     const labelsJson = JSON.stringify(labels);
     if (labelsJson.length <= consts.MAX_LABEL_SIZE) {
         event.getResource().getMetadataMap().set('labels', labelsJson);
+    }
+};
+
+/**
+ * Create and initialize a new serverless event in the epsagon format.
+ * @param {string} resourceType resourceType name
+ * @param {string} name Event name
+ * @param {string} operation Operation name
+ * @param {string} origin Origin name (optional)
+ * @returns {Object} Object with serverlessEvent and event started time.
+ */
+module.exports.initializeEvent = (resourceType, name, operation, origin) => {
+    const startTime = Date.now();
+    const resource = new serverlessEvent.Resource([
+        name,
+        resourceType,
+        operation,
+    ]);
+    const slsEvent = new serverlessEvent.Event([
+        `${resourceType}-${uuid4()}`,
+        utils.createTimestampFromTime(startTime),
+        null,
+        origin || resourceType,
+        0,
+        errorCode.ErrorCode.OK,
+    ]);
+    slsEvent.setResource(resource);
+    return { slsEvent, startTime };
+};
+
+/**
+ * Adding callback data/error to event, and finalize event.
+ * @param {serverlessEvent.Event} slsEvent Serverless event.
+ * @param {number} startTime Event start time.
+ * @param {Error} error Callback error.
+ * @param {string[] | Object[] | Object} metadata Callback metadata.
+ */
+module.exports.finalizeEvent = (slsEvent, startTime, error, metadata) => {
+    try {
+        if (error) {
+            this.setException(slsEvent, error);
+        }
+        if (metadata) {
+            this.addToMetadata(slsEvent, metadata);
+        }
+        slsEvent.setDuration(utils.createDurationTimestamp(startTime));
+    } catch (err) {
+        tracer.addException(err);
     }
 };
