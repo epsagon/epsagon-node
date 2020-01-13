@@ -32,7 +32,7 @@ const USER_AGENTS_BLACKLIST = ['openwhisk-client-js'];
  * @param {string} url The URL to check
  * @returns {boolean} True if it is in the user-defined blacklist, False otherwise.
  */
-function isURLIgnoredByUser(url) { // eslint-disable-line no-unused-vars
+function isURLIgnoredByUser(url) {
     return config.getConfig().urlPatternsToIgnore.some(pattern => url.includes(pattern));
 }
 
@@ -129,7 +129,7 @@ function httpWrapper(wrappedFunction) {
                 (options && options.headers) || {}
             );
 
-            if (isBlacklistURL(hostname, URL_BLACKLIST, path)) {
+            if (isBlacklistURL(hostname, URL_BLACKLIST, path) || isURLIgnoredByUser(hostname)) {
                 utils.debugLog(`filtered blacklist hostname ${hostname}`);
                 return wrappedFunction.apply(this, [a, b, c]);
             }
