@@ -114,7 +114,7 @@ module.exports.addLabelToMetadata = function addLabelToMetadata(event, key, valu
  * @param {string} origin Origin name (optional)
  * @returns {Object} Object with serverlessEvent and event started time.
  */
-module.exports.initializeEvent = (resourceType, name, operation, origin) => {
+module.exports.initializeEvent = function initializeEvent(resourceType, name, operation, origin) {
     const startTime = Date.now();
     const resource = new serverlessEvent.Resource([
         name,
@@ -140,7 +140,7 @@ module.exports.initializeEvent = (resourceType, name, operation, origin) => {
  * @param {Error} error Callback error.
  * @param {string[] | Object[] | Object} metadata Callback metadata.
  */
-module.exports.finalizeEvent = (slsEvent, startTime, error, metadata) => {
+module.exports.finalizeEvent = function finalizeEvent(slsEvent, startTime, error, metadata) {
     try {
         if (error) {
             this.setException(slsEvent, error);
