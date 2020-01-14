@@ -123,7 +123,7 @@ function wrapDnsResolveFunction(original) {
         if (typeof arg2 === 'object') {
             options = arg2;
         }
-        const { slsEvent: dnsEvent, startTime } = eventInterface.initializeEvent('dns', original.name, 'dns');
+        const { slsEvent: dnsEvent, startTime } = eventInterface.initializeEvent('dns', original.name, 'dns', 'dns');
         if (!callback) {
             return handleFunctionWithoutCallback(
                 original, startTime, dnsEvent, [arg1, arg2, arg3]
@@ -168,7 +168,7 @@ function wrapDnsLookupServiceFunction(original) {
     return function internalWrapDnsLookupServiceFunction(address, port, callback) {
         let patchedCallback;
         let clientRequest;
-        const { slsEvent: dnsEvent, startTime } = eventInterface.initializeEvent('dns', original.name, 'dns');
+        const { slsEvent: dnsEvent, startTime } = eventInterface.initializeEvent('dns', original.name, 'dns', 'dns');
         if (!callback) {
             return handleFunctionWithoutCallback(
                 original, startTime, dnsEvent, [address, port, callback]
@@ -206,7 +206,7 @@ function wrapDnsReverseFunction(original) {
     return function internalWrapDnsReverseFunction(ip, callback) {
         let patchedCallback;
         let clientRequest;
-        const { slsEvent: dnsEvent, startTime } = eventInterface.initializeEvent('dns', original.name, 'dns');
+        const { slsEvent: dnsEvent, startTime } = eventInterface.initializeEvent('dns', original.name, 'dns', 'dns');
 
         if (!callback) {
             return handleFunctionWithoutCallback(
@@ -250,7 +250,7 @@ function wrapDnsLookupFunction(original) {
             utils.debugLog(`filtered blacklist hostname ${hostname}`);
             return original.apply(this, [arg1, arg2, arg3]);
         }
-        const { slsEvent: dnsEvent, startTime } = eventInterface.initializeEvent('dns', original.name, 'dns');
+        const { slsEvent: dnsEvent, startTime } = eventInterface.initializeEvent('dns', original.name, 'dns', 'dns');
         if (!callback) {
             return handleFunctionWithoutCallback(
                 original, startTime, dnsEvent, [arg1, arg2, arg3]

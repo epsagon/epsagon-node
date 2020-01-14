@@ -111,7 +111,7 @@ module.exports.addLabelToMetadata = function addLabelToMetadata(event, key, valu
  * @param {string} resourceType resourceType name
  * @param {string} name Event name
  * @param {string} operation Operation name
- * @param {string} origin Origin name (optional)
+ * @param {string} origin Origin name
  * @returns {Object} Object with serverlessEvent and event started time.
  */
 module.exports.initializeEvent = function initializeEvent(resourceType, name, operation, origin) {
@@ -125,7 +125,7 @@ module.exports.initializeEvent = function initializeEvent(resourceType, name, op
         `${resourceType}-${uuid4()}`,
         utils.createTimestampFromTime(startTime),
         null,
-        origin || resourceType,
+        origin,
         0,
         errorCode.ErrorCode.OK,
     ]);

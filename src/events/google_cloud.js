@@ -98,7 +98,10 @@ function wrapPubSubRequestFunction(original) {
         try {
             const pubsubProjectId = this.projectId;
             const { slsEvent: pubsubEvent, startTime } = eventInterface.initializeEvent(
-                GOOGLE_CLOUD_TYPES.pubsub.name, pubsubProjectId, config.method
+                GOOGLE_CLOUD_TYPES.pubsub.name,
+                pubsubProjectId,
+                config.method,
+                GOOGLE_CLOUD_TYPES.pubsub.name
             );
             const requestFunctionThis = this;
             const responsePromise = new Promise((resolve) => {
@@ -107,30 +110,30 @@ function wrapPubSubRequestFunction(original) {
                         .defaultProjectId) && !!requestFunctionThis.projectId) {
                         pubsubEvent.getResource().setName(requestFunctionThis.projectId);
                     }
-                    const callbackResponse = {};
+                    const responseMetadata = {};
                     switch (arg2 && config.method) {
                     case 'publish': {
                         const messageIds = arg2.messageIds ? arg2.messageIds : arg2;
-                        callbackResponse.messageIds = messageIds;
+                        responseMetadata.messageIds = messageIds;
                         break;
                     }
                     case 'createSubscription':
-                        callbackResponse.subscription = arg2;
+                        responseMetadata.subscription = arg2;
                         break;
                     case 'deleteSubscription':
                         if (config.reqOpts && config.reqOpts.subscription) {
-                            callbackResponse.subscription = utils.getLastSplittedItem(
+                            responseMetadata.subscription = utils.getLastSplittedItem(
                                 config.reqOpts.subscription,
                                 '/'
                             );
                         }
                         break;
                     case 'createTopic':
-                        callbackResponse.topic = arg2;
+                        responseMetadata.topic = arg2;
                         break;
                     case 'deleteTopic':
                         if (config.reqOpts && config.reqOpts.topic) {
-                            callbackResponse.topic = utils.getLastSplittedItem(
+                            responseMetadata.topic = utils.getLastSplittedItem(
                                 config.reqOpts.topic,
                                 '/'
                             );
@@ -139,7 +142,7 @@ function wrapPubSubRequestFunction(original) {
                     default:
                         break;
                     }
-                    eventInterface.finalizeEvent(pubsubEvent, startTime, err, callbackResponse);
+                    eventInterface.finalizeEvent(pubsubEvent, startTime, err, responseMetadata);
                     resolve();
                     if (callback) {
                         callback(err, arg2, ...arg3);
@@ -161,6 +164,7 @@ function wrapPubSubRequestFunction(original) {
  */
 function wrapPubSubPullFunction(original) {
     return function internalPubSubPullFunction(request, options, callback) {
+        let clientPromiseRequest;
         try {
             let pubsubProjectId;
             if (request && request.subscription) {
@@ -170,18 +174,18 @@ function wrapPubSubPullFunction(original) {
                 }
             }
             const { slsEvent: pubsubEvent, startTime } = eventInterface.initializeEvent(
-                GOOGLE_CLOUD_TYPES.pubsub.name, pubsubProjectId, 'Pull'
+                GOOGLE_CLOUD_TYPES.pubsub.name, pubsubProjectId, 'Pull', GOOGLE_CLOUD_TYPES.pubsub.name
             );
             const patchedCallback = (err, res) => {
-                const callbackResponse = {};
+                const responseMetadata = {};
                 if (res && res.receivedMessages) {
                     const receivedMessages = res.receivedMessages.reduce((acc, current) => {
                         acc.push({ messageId: current.message.messageId, message: `${current.message.data}` });
                         return acc;
                     }, []);
-                    callbackResponse.receivedMessages = receivedMessages;
+                    responseMetadata.receivedMessages = receivedMessages;
                 }
-                eventInterface.finalizeEvent(pubsubEvent, startTime, err, callbackResponse);
+                eventInterface.finalizeEvent(pubsubEvent, startTime, err, responseMetadata);
                 if (callback) {
                     callback(err, res);
                 }
@@ -191,16 +195,16 @@ function wrapPubSubPullFunction(original) {
                 let patchedCallbackWithPromise = callback;
                 const promise = new Promise((resolve) => {
                     patchedCallbackWithPromise = (err, res) => {
-                        patchedCallback(err, res);
                         resolve();
+                        patchedCallback(err, res);
                     };
                 });
                 tracer.addEvent(pubsubEvent, promise);
                 return original.apply(this, [request, options, patchedCallbackWithPromise]);
             }
-            const responsePromise = original.apply(this, [request, options, callback]);
-            tracer.addEvent(pubsubEvent, responsePromise);
-            return responsePromise.then((res) => {
+            clientPromiseRequest = original.apply(this, [request, options, callback]);
+            tracer.addEvent(pubsubEvent, clientPromiseRequest);
+            clientPromiseRequest.then((res) => {
                 const [response] = res;
                 patchedCallback(null, response);
                 return res;
@@ -211,7 +215,10 @@ function wrapPubSubPullFunction(original) {
         } catch (err) {
             tracer.addException(err);
         }
-        return original.apply(this, [request, options, callback]);
+        if (!clientPromiseRequest) {
+            clientPromiseRequest = original.apply(this, [request, options, callback]);
+        }
+        return clientPromiseRequest;
     };
 }
 
