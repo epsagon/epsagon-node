@@ -8,7 +8,7 @@ describe('tracer config tests', () => {
         token: '',
         appName: 'Application',
         metadataOnly: true,
-        useSSL: false,
+        useSSL: true,
         traceCollectorURL: consts.TRACE_COLLECTOR_URL,
         ignoredKeys: [],
     };
@@ -40,17 +40,17 @@ describe('tracer config tests', () => {
         expect(config.getConfig()).to.contain(updatedConfig);
     });
 
-    it('setConfig: update disable ssl traces url', () => {
-        const disableSSL = true;
-        config.setConfig({ disableSSL });
+    it('setConfig: update no ssl traces url', () => {
+        const useSSL = false;
+        config.setConfig({ useSSL });
         const updatedConfig = DEFAULT_CONFIG;
-        updatedConfig.disableSSL = disableSSL;
+        updatedConfig.useSSL = useSSL;
         updatedConfig.traceCollectorURL = 'http://us-east-1.tc.epsagon.com';
         expect(config.getConfig()).to.contain(updatedConfig);
     });
 
     it('setConfig: custom traces url', () => {
-        const traceCollectorURL = 'http://custom.tc.epsagon.com';
+        const traceCollectorURL = 'https://custom.tc.epsagon.com';
         config.setConfig({ traceCollectorURL });
         const updatedConfig = DEFAULT_CONFIG;
         updatedConfig.traceCollectorURL = traceCollectorURL;
@@ -59,10 +59,10 @@ describe('tracer config tests', () => {
 
     it('setConfig: custom traces url without SSL', () => {
         const traceCollectorURL = 'https://custom.tc.epsagon.com';
-        const disableSSL = true;
-        config.setConfig({ traceCollectorURL, disableSSL });
+        const useSSL = false;
+        config.setConfig({ traceCollectorURL, useSSL });
         const updatedConfig = DEFAULT_CONFIG;
-        updatedConfig.disableSSL = disableSSL;
+        updatedConfig.useSSL = useSSL;
         updatedConfig.traceCollectorURL = traceCollectorURL.replace(
             'https://',
             'http://'
