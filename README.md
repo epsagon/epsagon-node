@@ -93,14 +93,15 @@ function handler(event, context, callback) {
 
 ## Filter sensitive data
 
-You can pass a list of sensitive properties and they will be filtered out:
+You can pass a list of sensitive properties/hostnames and they will be filtered out:
 
 ```javascript
 epsagon.init({
     token: 'my-secret-token',
     appName: 'my-app-name',
     metadataOnly: false, // Optional, send more trace data
-    ignoredKeys: ['password', /.*_token$/ , …]
+    ignoredKeys: ['password', /.*_token$/ , …],
+    urlPatternsToIgnore: ['example.com', 'auth.com'],
 });
 ```
 
@@ -108,6 +109,8 @@ The `ignoredKeys` property can contain strings (will perform a lose match, so th
 
 Alternatively you can pass a comma-separated list of sensitive keys using 
 the `EPSAGON_IGNORED_KEYS` environment variable to get the same effect.
+
+Also you can set `urlPatternsToIgnore` to ignore HTTP calls to specific domains, or set it through `EPSAGON_URLS_TO_IGNORE` as a comma separated string of hostnames.
 
 ## Web frameworks
 
