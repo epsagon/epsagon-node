@@ -26,7 +26,7 @@ const config = {
     token: process.env.EPSAGON_TOKEN || '',
     appName: process.env.EPSAGON_APP_NAME || 'Application',
     metadataOnly: (process.env.EPSAGON_METADATA || '').toUpperCase() === 'TRUE',
-    disableSSL: (process.env.EPSAGON_DISABLE_SSL || 'FALSE').toUpperCase() === 'TRUE',
+    useSSL: (process.env.EPSAGON_SSL || 'TRUE').toUpperCase() === 'TRUE',
     traceCollectorURL: consts.TRACE_COLLECTOR_URL,
     isEpsagonDisabled: (process.env.DISABLE_EPSAGON || '').toUpperCase() === 'TRUE',
     urlPatternsToIgnore: [],
@@ -71,6 +71,13 @@ if (process.env.EPSAGON_IGNORED_KEYS) {
     config.ignoredKeys = process.env.EPSAGON_IGNORED_KEYS.split(',');
 }
 
+if ((process.env.EPSAGON_SSL || 'TRUE').toUpperCase() === 'FALSE') {
+    config.traceCollectorURL = config.traceCollectorURL.replace('https:', 'http:');
+}
+if ((process.env.EPSAGON_SSL || 'TRUE').toUpperCase() === 'TRUE') {
+    config.traceCollectorURL = config.traceCollectorURL.replace('http:', 'https:');
+}
+
 /**
  * @returns {object} The config object
  */
@@ -104,9 +111,13 @@ module.exports.setConfig = function setConfig(configData) {
     }
 
     // Use SSL
-    if (configData.disableSSL) {
+    if (configData.useSSL === false) {
         config.traceCollectorURL = config.traceCollectorURL.replace('https:', 'http:');
-        config.disableSSL = configData.disableSSL;
+        config.useSSL = configData.useSSL;
+    }
+    if (configData.useSSL) {
+        config.traceCollectorURL = config.traceCollectorURL.replace('http:', 'https:');
+        config.useSSL = configData.useSSL;
     }
 
     // User-defined URL blacklist.
