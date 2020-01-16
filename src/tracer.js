@@ -77,7 +77,7 @@ module.exports.addEvent = function addEvent(event, promise) {
     if (!tracerObj) {
         return;
     }
-    if (promise !== undefined) {
+    if (utils.isPromise(promise)) {
         tracerObj.pendingEvents.set(
             event,
             utils.makeQueryablePromise(promise.catch((err) => {
