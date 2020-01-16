@@ -190,7 +190,7 @@ function wrapPubSubPullFunction(original) {
                     callback(err, res);
                 }
             };
-            // in case callback has given from the client.
+            // in case callback was given from the client.
             if (callback) {
                 let patchedCallbackWithPromise = callback;
                 const promise = new Promise((resolve) => {
@@ -202,21 +202,22 @@ function wrapPubSubPullFunction(original) {
                 tracer.addEvent(pubsubEvent, promise);
                 return original.apply(this, [request, options, patchedCallbackWithPromise]);
             }
-            clientPromiseRequest = original.apply(this, [request, options, callback]);
+            clientPromiseRequest = original.apply(this, [request, options, callback]).then(
+                (res) => {
+                    const [response] = res;
+                    patchedCallback(null, response);
+                    return res;
+                }, (err) => {
+                    patchedCallback(err, null);
+                    throw err;
+                }
+            );
             tracer.addEvent(pubsubEvent, clientPromiseRequest);
-            clientPromiseRequest.then((res) => {
-                const [response] = res;
-                patchedCallback(null, response);
-                return res;
-            }, (err) => {
-                patchedCallback(err, null);
-                throw err;
-            });
         } catch (err) {
             tracer.addException(err);
-        }
-        if (!clientPromiseRequest) {
-            clientPromiseRequest = original.apply(this, [request, options, callback]);
+            if (!clientPromiseRequest) {
+                clientPromiseRequest = original.apply(this, [request, options, callback]);
+            }
         }
         return clientPromiseRequest;
     };
