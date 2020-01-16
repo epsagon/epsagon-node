@@ -12,6 +12,15 @@ function createTimestampFromTime(time) {
 }
 
 /**
+ * Check if an object is a Promise.
+ * @param {Object} object the time in miliseconds to generate the timestamp from
+ * @return {Boolean} true if promise, else - false.
+ */
+function isPromise(object) {
+    return !!object && typeof object.then === 'function';
+}
+
+/**
  * Creates a timestamp (according to epsagon-protocol timestamp format) of the current time
  * @return {double} the time in epsagon's format
  */
@@ -151,3 +160,4 @@ module.exports.debugLog = debugLog;
 module.exports.makeQueryablePromise = makeQueryablePromise;
 module.exports.flatten = flatten;
 module.exports.getLastSplittedItem = getLastSplittedItem;
+module.exports.isPromise = isPromise;
