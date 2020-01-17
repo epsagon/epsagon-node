@@ -176,16 +176,24 @@ function wrapPubSubPullFunction(original) {
             const { slsEvent: pubsubEvent, startTime } = eventInterface.initializeEvent(
                 GOOGLE_CLOUD_TYPES.pubsub.name, pubsubProjectId, 'Pull', GOOGLE_CLOUD_TYPES.pubsub.name
             );
-            const patchedCallback = (err, res) => {
+            const patchedCallback = (err, res, promiseResolve) => {
                 const responseMetadata = {};
                 if (res && res.receivedMessages) {
                     const receivedMessages = res.receivedMessages.reduce((acc, current) => {
-                        acc.push({ messageId: current.message.messageId, message: `${current.message.data}` });
+                        let messageObject = { messageId: current.message.messageId };
+                        const messageData = (current.message.data && JSON.parse(`${current.message.data}`));
+                        if (messageData && typeof messageData === 'object') {
+                            messageObject = Object.assign(messageObject, messageData);
+                        }
+                        acc.push(messageObject);
                         return acc;
                     }, []);
                     responseMetadata.receivedMessages = receivedMessages;
                 }
                 eventInterface.finalizeEvent(pubsubEvent, startTime, err, responseMetadata);
+                if (promiseResolve) {
+                    promiseResolve();
+                }
                 if (callback) {
                     callback(err, res);
                 }
@@ -195,8 +203,7 @@ function wrapPubSubPullFunction(original) {
                 let patchedCallbackWithPromise = callback;
                 const promise = new Promise((resolve) => {
                     patchedCallbackWithPromise = (err, res) => {
-                        resolve();
-                        patchedCallback(err, res);
+                        patchedCallback(err, res, resolve);
                     };
                 });
                 tracer.addEvent(pubsubEvent, promise);
