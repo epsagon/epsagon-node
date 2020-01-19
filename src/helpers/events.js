@@ -26,4 +26,6 @@ const isBlacklistHeader = (headers, userAgentsBlacklist) => {
     return false;
 };
 
-module.exports = { isBlacklistURL, isBlacklistHeader };
+module.exports = {
+    isBlacklistURL, isBlacklistHeader,
+};

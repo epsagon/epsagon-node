@@ -12,6 +12,15 @@ function createTimestampFromTime(time) {
 }
 
 /**
+ * Check if an object is a Promise.
+ * @param {Object} object the time in miliseconds to generate the timestamp from
+ * @return {Boolean} true if promise, else - false.
+ */
+function isPromise(object) {
+    return !!object && typeof object.then === 'function';
+}
+
+/**
  * Creates a timestamp (according to epsagon-protocol timestamp format) of the current time
  * @return {double} the time in epsagon's format
  */
@@ -131,6 +140,18 @@ function flatten(target) {
     return output;
 }
 
+
+/**
+ * Function to split string into array, which return the last element of the array.
+ * @param {string} string String to be split.
+ * @param {string} seperator Character to split the string.
+ * @returns {string} Last splitted array item.
+ */
+const getLastSplittedItem = (string, seperator) => {
+    const splittedArray = (string && string.split(seperator)) || [];
+    return splittedArray[splittedArray.length - 1];
+};
+
 module.exports.createTimestampFromTime = createTimestampFromTime;
 module.exports.createTimestamp = createTimestamp;
 module.exports.createDurationTimestamp = createDurationTimestamp;
@@ -138,3 +159,5 @@ module.exports.reflectPromise = reflectPromise;
 module.exports.debugLog = debugLog;
 module.exports.makeQueryablePromise = makeQueryablePromise;
 module.exports.flatten = flatten;
+module.exports.getLastSplittedItem = getLastSplittedItem;
+module.exports.isPromise = isPromise;

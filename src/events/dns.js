@@ -1,11 +1,8 @@
-const uuid4 = require('uuid4');
 const dns = require('dns');
 const shimmer = require('shimmer');
 const utils = require('../utils.js');
 const tracer = require('../tracer.js');
-const serverlessEvent = require('../proto/event_pb.js');
 const eventInterface = require('../event.js');
-const errorCode = require('../proto/error_code_pb.js');
 const { isBlacklistURL } = require('.././helpers/events');
 
 const URL_BLACKLIST = {
@@ -25,50 +22,6 @@ const rrtypesMethods = {
     resolveSoa: 'SOA',
     resolveSrv: 'SRV',
     resolveTxt: 'TXT',
-};
-
-/**
- * Create and initialize a new dns event in the epsagon format.
- * @param {string} name Operation name
- * @returns {Object} Object with dnsEvent and event start time.
- */
-const initialDnsEvent = (name) => {
-    const startTime = Date.now();
-    const resource = new serverlessEvent.Resource([
-        'dns',
-        'dns',
-        name,
-    ]);
-    const dnsEvent = new serverlessEvent.Event([
-        `dns-${uuid4()}`,
-        utils.createTimestampFromTime(startTime),
-        null,
-        'dns',
-        0,
-        errorCode.ErrorCode.OK,
-    ]);
-    dnsEvent.setResource(resource);
-    return { dnsEvent, startTime };
-};
-
-/**
- * Adding callback data/error to event, and finalize event.
- * @param {serverlessEvent.Event} dnsEvent Dns event.
- * @param {number} startTime Event start time.
- * @param {Error} error Callback error.
- * @param {string[] | Object[] | Object} metadata Callback metadata.
- */
-const finalizeEvent = (dnsEvent, startTime, error, metadata) => {
-    try {
-        if (error) {
-            eventInterface.setException(dnsEvent, error);
-        } else {
-            eventInterface.addToMetadata(dnsEvent, metadata);
-        }
-        dnsEvent.setDuration(utils.createDurationTimestamp(startTime));
-    } catch (err) {
-        tracer.addException(err);
-    }
 };
 
 /**
@@ -170,7 +123,7 @@ function wrapDnsResolveFunction(original) {
         if (typeof arg2 === 'object') {
             options = arg2;
         }
-        const { dnsEvent, startTime } = initialDnsEvent(original.name);
+        const { slsEvent: dnsEvent, startTime } = eventInterface.initializeEvent('dns', original.name, 'dns', 'dns');
         if (!callback) {
             return handleFunctionWithoutCallback(
                 original, startTime, dnsEvent, [arg1, arg2, arg3]
@@ -188,7 +141,7 @@ function wrapDnsResolveFunction(original) {
             const responsePromise = new Promise((resolve) => {
                 patchedCallback = (err, records) => {
                     const callbackArgument = getCallbackResolveArgument(records, rrtype);
-                    finalizeEvent(dnsEvent, startTime, err, { ...callbackArgument });
+                    eventInterface.finalizeEvent(dnsEvent, startTime, err, { ...callbackArgument });
                     resolve();
                     if (callback) {
                         callback(err, records);
@@ -215,7 +168,7 @@ function wrapDnsLookupServiceFunction(original) {
     return function internalWrapDnsLookupServiceFunction(address, port, callback) {
         let patchedCallback;
         let clientRequest;
-        const { dnsEvent, startTime } = initialDnsEvent(original.name);
+        const { slsEvent: dnsEvent, startTime } = eventInterface.initializeEvent('dns', original.name, 'dns', 'dns');
         if (!callback) {
             return handleFunctionWithoutCallback(
                 original, startTime, dnsEvent, [address, port, callback]
@@ -225,7 +178,7 @@ function wrapDnsLookupServiceFunction(original) {
             eventInterface.addToMetadata(dnsEvent, { address, port });
             const responsePromise = new Promise((resolve) => {
                 patchedCallback = (err, hostname, service) => {
-                    finalizeEvent(dnsEvent, startTime, err, { hostname, service });
+                    eventInterface.finalizeEvent(dnsEvent, startTime, err, { hostname, service });
                     resolve();
                     if (callback) {
                         callback(err, hostname, service);
@@ -253,7 +206,8 @@ function wrapDnsReverseFunction(original) {
     return function internalWrapDnsReverseFunction(ip, callback) {
         let patchedCallback;
         let clientRequest;
-        const { dnsEvent, startTime } = initialDnsEvent(original.name);
+        const { slsEvent: dnsEvent, startTime } = eventInterface.initializeEvent('dns', original.name, 'dns', 'dns');
+
         if (!callback) {
             return handleFunctionWithoutCallback(
                 original, startTime, dnsEvent, [ip, callback]
@@ -263,7 +217,7 @@ function wrapDnsReverseFunction(original) {
             eventInterface.addToMetadata(dnsEvent, { ip });
             const responsePromise = new Promise((resolve) => {
                 patchedCallback = (err, hostnames) => {
-                    finalizeEvent(dnsEvent, startTime, err, { hostnames });
+                    eventInterface.finalizeEvent(dnsEvent, startTime, err, { hostnames });
                     resolve();
                     if (callback) {
                         callback(err, hostnames);
@@ -296,7 +250,7 @@ function wrapDnsLookupFunction(original) {
             utils.debugLog(`filtered blacklist hostname ${hostname}`);
             return original.apply(this, [arg1, arg2, arg3]);
         }
-        const { dnsEvent, startTime } = initialDnsEvent(original.name);
+        const { slsEvent: dnsEvent, startTime } = eventInterface.initializeEvent('dns', original.name, 'dns', 'dns');
         if (!callback) {
             return handleFunctionWithoutCallback(
                 original, startTime, dnsEvent, [arg1, arg2, arg3]
@@ -309,7 +263,7 @@ function wrapDnsLookupFunction(original) {
             }
             const responsePromise = new Promise((resolve) => {
                 patchedCallback = (err, address, family) => {
-                    finalizeEvent(dnsEvent, startTime, err, { address, family });
+                    eventInterface.finalizeEvent(dnsEvent, startTime, err, { address, family });
                     resolve();
                     if (callback) {
                         callback(err, address, family);
