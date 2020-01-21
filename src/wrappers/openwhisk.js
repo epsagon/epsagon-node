@@ -123,27 +123,23 @@ function openWhiskWrapper(functionToWrap, options) {
             runner.setStartTime(utils.createTimestampFromTime(startTime));
             const result = functionToWrap(originalParams);
             if (result && typeof result.then === 'function') {
-                return result.then((res) => {
-                    tracer.sendTrace(runnerSendUpdateHandler).then(unregisterTracer);
-                    return res;
-                }).catch((err) => {
+                return result.catch((err) => {
                     eventInterface.setException(runner, err);
                     runnerSendUpdateHandler();
-                    return tracer.sendTraceSync().then(() => {
-                        unregisterTracer();
-                        throw err;
-                    });
-                });
+                    throw err;
+                }).finally(() => (
+                    tracer.sendTrace(runnerSendUpdateHandler).catch(
+                        () => {}
+                    ).finally(unregisterTracer)
+                ));
             }
-            tracer.sendTrace(runnerSendUpdateHandler).then(unregisterTracer);
+            tracer.sendTrace(runnerSendUpdateHandler).catch(() => {}).finally(unregisterTracer);
             return result;
         } catch (err) {
             eventInterface.setException(runner, err);
             runnerSendUpdateHandler(); // Doing it here since the send is synchronous on error
-            tracer.sendTraceSync().then(() => {
-                unregisterTracer();
-                throw err;
-            });
+            tracer.sendTraceSync().finally(unregisterTracer);
+            throw err;
         }
     };
 }
