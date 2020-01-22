@@ -21,6 +21,12 @@ describe('openwhiskWrapper tests', () => {
         expect(wrapped).to.be.a('function');
     });
 
+    it('openwhiskWrapper: guards against rewrapping', () => {
+        const wrapped = epsagon.openWhiskWrapper(owsimple);
+        const wrappedTwice = epsagon.openWhiskWrapper(wrapped);
+        expect(wrapped).to.be.equal(wrappedTwice);
+    });
+
     it('openwhiskWrapper: wrapped function returns values', () => {
         const wrapped = epsagon.openWhiskWrapper(owsimple);
         const retval = wrapped();
