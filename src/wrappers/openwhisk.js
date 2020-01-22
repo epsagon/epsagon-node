@@ -112,7 +112,7 @@ function openWhiskWrapper(functionToWrap, options) {
             return functionToWrap(originalParams);
         }
 
-        tracer.addEvent(runner);
+        tracer.addRunner(runner);
 
         const startTime = Date.now();
         const runnerSendUpdateHandler = (() => {
