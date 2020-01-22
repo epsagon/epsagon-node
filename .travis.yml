@@ -12,7 +12,8 @@ install:
 node_js:
   - "6.10"
   - "8.10"
-  - "10.15"
+  - "10.16"
+  - "12.13"
 
 script:
   - ./scripts/build_peg.sh

@@ -7,6 +7,8 @@ const serverlessEvent = require('../proto/event_pb.js');
 const eventInterface = require('../event.js');
 const errorCode = require('../proto/error_code_pb.js');
 
+const epsagonWrapped = Symbol('epsagonWrapped');
+
 /**
  * The tracer map contains the currently active tracers with the openwhisk activationId as key.
  * @type {Map<string, tracer>}
@@ -86,7 +88,7 @@ function createRunner(functionName, originalParams) {
  * that will contain the Epsagon token. The value is only read when `options.token` is falsy
  * @return {function} The original function, wrapped by our tracer
  */
-function openWhiskWrapper(functionToWrap, options) {
+function baseOpenWhiskWrapper(functionToWrap, options) {
     // register the openwhisk specific getter as soon as the wrapper is instrumented.
     tracer.getTrace = getTracer;
 
@@ -112,7 +114,7 @@ function openWhiskWrapper(functionToWrap, options) {
             return functionToWrap(originalParams);
         }
 
-        tracer.addEvent(runner);
+        tracer.addRunner(runner);
 
         const startTime = Date.now();
         const runnerSendUpdateHandler = (() => {
@@ -123,29 +125,45 @@ function openWhiskWrapper(functionToWrap, options) {
             runner.setStartTime(utils.createTimestampFromTime(startTime));
             const result = functionToWrap(originalParams);
             if (result && typeof result.then === 'function') {
-                return result.then((res) => {
-                    tracer.sendTrace(runnerSendUpdateHandler).then(unregisterTracer);
-                    return res;
-                }).catch((err) => {
+                return result.catch((err) => {
                     eventInterface.setException(runner, err);
                     runnerSendUpdateHandler();
-                    return tracer.sendTraceSync().then(() => {
-                        unregisterTracer();
-                        throw err;
-                    });
-                });
+                    throw err;
+                }).finally(() => (
+                    tracer.sendTrace(runnerSendUpdateHandler).catch(
+                        () => {}
+                    ).finally(unregisterTracer)
+                ));
             }
-            tracer.sendTrace(runnerSendUpdateHandler).then(unregisterTracer);
+            tracer.sendTrace(runnerSendUpdateHandler).catch(() => {}).finally(unregisterTracer);
             return result;
         } catch (err) {
             eventInterface.setException(runner, err);
             runnerSendUpdateHandler(); // Doing it here since the send is synchronous on error
-            tracer.sendTraceSync().then(() => {
-                unregisterTracer();
-                throw err;
-            });
+            tracer.sendTraceSync().finally(unregisterTracer);
+            throw err;
         }
     };
 }
 
-module.exports.openWhiskWrapper = openWhiskWrapper;
+/**
+ * Epsagon's OpenWhisk wrapper, wrap an action with it to trace it.
+ * @param {function} functionToWrap The function to wrap and trace
+ * @param {object} options options used to initialize the Epsagon handler
+ * @param {string} options.token_param name of the parameter passed to the OpenWhisk action
+ * that will contain the Epsagon token. The value is only read when `options.token` is falsy
+ * @return {function} The original function, wrapped by our tracer
+ */
+module.exports.openWhiskWrapper = function openWhiskWrapper(functionToWrap, options) {
+    if (functionToWrap[epsagonWrapped]) {
+        return functionToWrap;
+    }
+
+    const wrapped = baseOpenWhiskWrapper(functionToWrap, options);
+    Object.defineProperty(wrapped, epsagonWrapped, {
+        value: true,
+        writable: false,
+    });
+
+    return wrapped;
+};
