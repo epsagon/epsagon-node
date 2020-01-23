@@ -1,4 +1,3 @@
-/* eslint-disable no-param-reassign */
 /* eslint-disable camelcase */
 /**
  * @fileoverview Instrumentation for nats library.
@@ -11,6 +10,7 @@ const moduleUtils = require('./module_utils.js');
 const NATS_TYPES = {
     name: 'nats',
     mainWrappedFunction: 'Client',
+    badMessage: 'NATS_BAD_JSON_MSG',
 };
 
 const getServerHostname = (currentServer) => {
@@ -21,14 +21,21 @@ const getServerHostname = (currentServer) => {
     return serverHostname;
 };
 
-const getPublishParams = (subject, msg, opt_reply, opt_callback) => {
+const getPublishParams = (subject, msg, opt_reply, opt_callback, jsonConnectProperty) => {
     let subject_internal = subject;
     let msg_internal = msg;
     let opt_reply_internal = opt_reply;
     let opt_callback_internal = opt_callback;
+    let msgJsonStringify;
     if (typeof subject_internal === 'function') {
         opt_callback_internal = subject_internal;
         subject_internal = undefined;
+    }
+    if (!jsonConnectProperty) {
+        msg_internal = msg_internal || '';
+    } else {
+        // undefined is not a valid JSON-serializable value, but null is
+        msg_internal = msg_internal === undefined ? null : msg_internal;
     }
     if (typeof msg_internal === 'function') {
         opt_callback_internal = msg;
@@ -39,8 +46,17 @@ const getPublishParams = (subject, msg, opt_reply, opt_callback) => {
         opt_callback_internal = opt_reply;
         opt_reply_internal = undefined;
     }
+    if (!Buffer.isBuffer(msg_internal)) {
+        if (jsonConnectProperty) {
+            try {
+                msgJsonStringify = JSON.stringify(msg_internal);
+            } catch (e) {
+                msgJsonStringify = NATS_TYPES.badMessage;
+            }
+        }
+    }
     return {
-        subject_internal, msg_internal, opt_reply_internal, opt_callback_internal,
+        subject_internal, msg_internal, msgJsonStringify, opt_reply_internal, opt_callback_internal,
     };
 };
 
@@ -48,13 +64,18 @@ const getPublishParams = (subject, msg, opt_reply, opt_callback) => {
  * Wrap nats publish function.
  * @param {Function} original nats publish function.
  * @param {string} serverHostname nats server host name.
+ * @param {Boolean} jsonConnectProperty json connect property.
  * @returns {Function} The wrapped function
  */
-function wrapNatsPublishFunction(original, serverHostname) {
+function wrapNatsPublishFunction(original, serverHostname, jsonConnectProperty) {
     return function internalNatsPublishFunction(subject, msg, opt_reply, opt_callback) {
         const {
-            subject_internal, msg_internal, opt_reply_internal, opt_callback_internal,
-        } = getPublishParams(subject, msg, opt_reply, opt_callback);
+            subject_internal,
+            msg_internal,
+            msgJsonStringify,
+            opt_reply_internal,
+            opt_callback_internal,
+        } = getPublishParams(subject, msg, opt_reply, opt_callback, jsonConnectProperty);
         let clientRequest;
         try {
             // in case of publish call is a part of request call.
@@ -67,7 +88,14 @@ function wrapNatsPublishFunction(original, serverHostname) {
                 'publish',
                 NATS_TYPES.name
             );
-            const responseMetadata = { subject: subject_internal, msg: msg_internal };
+            const responseMetadata = {
+                subject: subject_internal,
+            };
+            if (!jsonConnectProperty) {
+                responseMetadata.msg = msg_internal;
+            } else if (msgJsonStringify && msgJsonStringify !== NATS_TYPES.badMessage) {
+                responseMetadata.msg = msgJsonStringify;
+            }
             let patchedCallback = opt_callback_internal;
 
             if (opt_callback_internal) {
@@ -119,7 +147,9 @@ function wrapNatsConnectFunction(connectFunction) {
                 return connectFunctionResponse;
             }
             const serverHostname = getServerHostname(connectFunctionResponse.currentServer);
-            shimmer.wrap(connectFunctionResponse, 'publish', () => wrapNatsPublishFunction(connectFunctionResponse.publish, serverHostname));
+            const jsonConnectProperty = connectFunctionResponse.options ?
+                connectFunctionResponse.options.json : null;
+            shimmer.wrap(connectFunctionResponse, 'publish', () => wrapNatsPublishFunction(connectFunctionResponse.publish, serverHostname, jsonConnectProperty));
         }
         return connectFunctionResponse;
     };
