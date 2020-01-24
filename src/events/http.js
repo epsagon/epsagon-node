@@ -23,7 +23,7 @@ const URL_BLACKLIST = {
     'amazonaws.com':
         (url, pattern) =>
             url.endsWith(pattern) &&
-            (url.indexOf('execute-api') === -1) &&
+            (url.indexOf('.execute-api.') === -1) &&
             (url.indexOf('.es.') === -1) &&
             (url.indexOf('.elb.') === -1) &&
             (url.indexOf('.appsync-api.') === -1),
