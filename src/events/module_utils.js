@@ -8,11 +8,20 @@ const tryRequire = require('../try_require');
  */
 module.exports.getModules = function getModules(id) {
     const modules = [];
-    const searchPathes = require.resolve.paths(id);
-    if (process.env.EPSAGON_ADD_NODE_PATH) {
-        searchPathes.push(...process.env.EPSAGON_ADD_NODE_PATH.split(':'));
+    if (typeof require.resolve.paths !== 'function') {
+        // running in a bundler that doesn't support require.resolve.paths(). e.g. webpack.
+        const module = tryRequire(id);
+        if (module) {
+            modules.push(module);
+        }
+        return modules;
     }
-    searchPathes.forEach((path) => {
+
+    const searchPaths = require.resolve.paths(id);
+    if (process.env.EPSAGON_ADD_NODE_PATH) {
+        searchPaths.push(...process.env.EPSAGON_ADD_NODE_PATH.split(':'));
+    }
+    searchPaths.forEach((path) => {
         const module = tryRequire(`${path}/${id}`);
         if (module) {
             modules.push(module);
