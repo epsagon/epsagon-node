@@ -31,15 +31,37 @@ function openWhiskWrapper(wrappedFunction) {
         ]);
 
         invokeEvent.setResource(resource);
+        let request;
+        let response;
+        if (options.result) {
+            // action.invoke would return directly `response.result` so we would loose some
+            // of the information from the response.
+            const opts = {
+                ...options,
+                result: false,
+            };
+            request = wrappedFunction.apply(this, [opts, callback]);
+            // ensure we return the originally requested form
+            response = request.then(res => res.response.result);
+        } else {
+            request = wrappedFunction.apply(this, [options, callback]);
+            response = request;
+        }
 
-        const request = wrappedFunction.apply(this, [options, callback]);
         const responsePromise = new Promise((resolve, reject) => {
             request.then((res) => {
+                let resp = res.response;
+                if (resp && resp.result && resp.result.body && resp.result.body.length > 100) {
+                    // create copy so we can trim the long response body
+                    resp = Object.assign({}, resp);
+                    resp.result = Object.assign({}, resp.result);
+                    resp.result.body = `${resp.result.body.substring(0, 100)}...(truncated)`;
+                }
                 eventInterface.addToMetadata(
                     invokeEvent,
                     {
                         activation_id: res.activationId,
-                        response: res.response,
+                        response: resp,
                     }
                 );
                 invokeEvent.setDuration(utils.createDurationTimestamp(startTime));
@@ -51,7 +73,7 @@ function openWhiskWrapper(wrappedFunction) {
         });
 
         tracer.addEvent(invokeEvent, responsePromise);
-        return request;
+        return response;
     };
 }
 
