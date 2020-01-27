@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 /* eslint-disable camelcase */
 /**
  * @fileoverview Instrumentation for nats library.
@@ -10,17 +11,26 @@ const moduleUtils = require('./module_utils.js');
 const NATS_TYPES = {
     name: 'nats',
     mainWrappedFunction: 'Client',
+    serverDefaultHostname: 'unknown',
     badMessage: 'NATS_BAD_JSON_MSG',
 };
 
-const getServerHostname = (currentServer) => {
-    let serverHostname = NATS_TYPES.serverDefaultHostname;
-    if (currentServer.url && currentServer.url.hostname) {
-        serverHostname = currentServer.url.hostname;
-    }
-    return serverHostname;
-};
+const getServerHostname = currentServer => (
+    (currentServer.url && currentServer.url.hostname) ?
+        currentServer.url.hostname :
+        NATS_TYPES.serverDefaultHostname
+);
 
+/**
+ * Build nats parameters.
+ *
+ * @param {String} subject received subject.
+ * @param {String} msg received message.
+ * @param {String} opt_reply received reply (optional).
+ * @param {Function} opt_callback callback function (optional).
+ * @param {Boolean} jsonConnectProperty true if the user initializes nats with json property.
+ * @returns {object} nats paramaters & the message in string format.
+ */
 const getPublishParams = (subject, msg, opt_reply, opt_callback, jsonConnectProperty) => {
     let subject_internal = subject;
     let msg_internal = msg;
@@ -76,12 +86,12 @@ function wrapNatsPublishFunction(original, serverHostname, jsonConnectProperty) 
             opt_reply_internal,
             opt_callback_internal,
         } = getPublishParams(subject, msg, opt_reply, opt_callback, jsonConnectProperty);
-        let clientRequest;
+        let patchedCallback = opt_callback_internal;
+        // in case of publish call is a part of request call.
+        if (opt_reply_internal) {
+            return original.apply(this, [subject, msg, opt_reply, opt_callback]);
+        }
         try {
-            // in case of publish call is a part of request call.
-            if (opt_reply_internal) {
-                return original.apply(this, [subject, msg, opt_reply, opt_callback]);
-            }
             const { slsEvent: natsPublishEvent, startTime } = eventInterface.initializeEvent(
                 NATS_TYPES.name,
                 serverHostname,
@@ -96,41 +106,26 @@ function wrapNatsPublishFunction(original, serverHostname, jsonConnectProperty) 
             } else if (msgJsonStringify && msgJsonStringify !== NATS_TYPES.badMessage) {
                 responseMetadata.msg = msgJsonStringify;
             }
-            let patchedCallback = opt_callback_internal;
-
-            if (opt_callback_internal) {
-                const promise = new Promise((resolve) => {
-                    patchedCallback = () => {
-                        eventInterface.finalizeEvent(
-                            natsPublishEvent,
-                            startTime,
-                            null,
-                            responseMetadata
-                        );
-                        resolve();
+            const promise = new Promise((resolve) => {
+                patchedCallback = () => {
+                    eventInterface.finalizeEvent(
+                        natsPublishEvent,
+                        startTime,
+                        null,
+                        responseMetadata
+                    );
+                    resolve();
+                    if (opt_callback_internal) {
                         opt_callback_internal();
-                    };
-                });
-                tracer.addEvent(natsPublishEvent, promise);
-            } else {
-                tracer.addEvent(natsPublishEvent);
-                eventInterface.finalizeEvent(
-                    natsPublishEvent,
-                    startTime,
-                    null,
-                    responseMetadata
-                );
-            }
-            return original.apply(this,
-                [subject_internal, msg_internal, opt_reply_internal, patchedCallback]);
+                    }
+                };
+            });
+            tracer.addEvent(natsPublishEvent, promise);
         } catch (err) {
             tracer.addException(err);
-            if (!clientRequest) {
-                clientRequest = original.apply(this,
-                    [subject, msg, opt_reply, opt_callback]);
-            }
         }
-        return clientRequest;
+        return original.apply(this,
+            [subject_internal, msg_internal, opt_reply_internal, patchedCallback]);
     };
 }
 
@@ -141,15 +136,21 @@ function wrapNatsPublishFunction(original, serverHostname, jsonConnectProperty) 
  */
 function wrapNatsConnectFunction(connectFunction) {
     return function internalNatsConnectFunction(url, opts) {
-        const connectFunctionResponse = connectFunction(url, opts);
-        if (connectFunctionResponse && connectFunctionResponse.constructor) {
-            if (connectFunctionResponse.constructor.name !== NATS_TYPES.mainWrappedFunction) {
-                return connectFunctionResponse;
+        let connectFunctionResponse;
+        try {
+            connectFunctionResponse = connectFunction(url, opts);
+            if (connectFunctionResponse && connectFunctionResponse.constructor) {
+                if (connectFunctionResponse.constructor.name === NATS_TYPES.mainWrappedFunction) {
+                    const serverHostname = getServerHostname(connectFunctionResponse.currentServer);
+                    const jsonConnectProperty = connectFunctionResponse.options ?
+                        connectFunctionResponse.options.json : null;
+                    shimmer.wrap(connectFunctionResponse, 'publish', () => wrapNatsPublishFunction(connectFunctionResponse.publish, serverHostname, jsonConnectProperty));
+                }
             }
-            const serverHostname = getServerHostname(connectFunctionResponse.currentServer);
-            const jsonConnectProperty = connectFunctionResponse.options ?
-                connectFunctionResponse.options.json : null;
-            shimmer.wrap(connectFunctionResponse, 'publish', () => wrapNatsPublishFunction(connectFunctionResponse.publish, serverHostname, jsonConnectProperty));
+        } catch (err) {
+            if (!connectFunctionResponse) {
+                connectFunctionResponse = connectFunction.apply(this, [url, opts]);
+            }
         }
         return connectFunctionResponse;
     };
@@ -166,5 +167,4 @@ module.exports = {
             wrapNatsConnectFunction
         );
     },
-    getServerHostname,
 };
