@@ -33,7 +33,7 @@ function openWhiskWrapper(wrappedFunction) {
         invokeEvent.setResource(resource);
 
         const request = wrappedFunction.apply(this, [options, callback]);
-        const responsePromise = new Promise((resolve) => {
+        const responsePromise = new Promise((resolve, reject) => {
             request.then((res) => {
                 eventInterface.addToMetadata(
                     invokeEvent,
@@ -44,6 +44,9 @@ function openWhiskWrapper(wrappedFunction) {
                 );
                 invokeEvent.setDuration(utils.createDurationTimestamp(startTime));
                 resolve();
+            }).catch((err) => {
+                eventInterface.setException(invokeEvent, err);
+                reject(err);
             });
         });
 
