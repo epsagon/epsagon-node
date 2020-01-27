@@ -31,6 +31,9 @@ function openWhiskWrapper(wrappedFunction) {
         ]);
 
         invokeEvent.setResource(resource);
+        eventInterface.addToMetadata(invokeEvent, {
+            params: options.params,
+        });
         let request;
         let response;
         if (options.result) {
