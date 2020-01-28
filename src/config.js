@@ -19,6 +19,12 @@ module.exports.processIgnoredKey = function processIgnoredKey(key) {
         .replace(/\s/g, '');
 };
 
+
+/**
+ * The default sendTimeout to send for send operations (both sync and async)
+ */
+const DEFAULT_TIMEOUT_SEC = 0.2;
+
 /**
  * configuration singleton. preconfigured with default values.
  */
@@ -32,6 +38,7 @@ const config = {
     urlPatternsToIgnore: [],
     internalSampleRate: 1,
     sendOnlyErrors: (process.env.EPSAGON_SEND_TRACE_ON_ERROR || '').toUpperCase() === 'TRUE',
+    sendTimeout: (Number(process.env.EPSAGON_SEND_TIMEOUT_SEC) || DEFAULT_TIMEOUT_SEC) * 1000.0,
     /**
      * get isEpsagonPatchDisabled
      * @return {boolean} True if DISABLE_EPSAGON or DISABLE_EPSAGON_PATCH are set to TRUE, false
@@ -141,5 +148,9 @@ module.exports.setConfig = function setConfig(configData) {
 
     if (configData.sampleRate !== null && config.sampleRate !== undefined) {
         config.sampleRate = configData.sampleRate;
+    }
+
+    if (Number(configData.sendTimeout)) { // we do not allow 0 as a timeout
+        config.sendTimeout = Number(configData.sendTimeout);
     }
 };

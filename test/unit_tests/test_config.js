@@ -11,6 +11,7 @@ describe('tracer config tests', () => {
         useSSL: true,
         traceCollectorURL: consts.TRACE_COLLECTOR_URL,
         ignoredKeys: [],
+        sendTimeout: 200,
     };
 
 
@@ -74,5 +75,22 @@ describe('tracer config tests', () => {
         const httpErrorStatusCode = 42;
         config.setConfig({ httpErrorStatusCode });
         expect(config.HTTP_ERR_CODE).to.be.equal(httpErrorStatusCode);
+    });
+
+    it('setConfig: set custom sendTimeout', () => {
+        const sendTimeout = 1000;
+        config.setConfig({ sendTimeout });
+        expect(config.getConfig().sendTimeout).to.be.equal(sendTimeout);
+
+        const sendTimeoutString = '1000';
+        config.setConfig({ sendTimeout: sendTimeoutString });
+        expect(config.getConfig().sendTimeout).to.be.equal(Number(sendTimeoutString));
+
+        const invalidSendTimeoutStrings = ['1200.1.1', 'affewfew', '4.4.a', '234a', '', null, undefined, 0];
+        invalidSendTimeoutStrings.forEach((invalidSendTimeoutString) => {
+            config.setConfig({ sendTimeout: invalidSendTimeoutString });
+            // checking the old value did not change
+            expect(config.getConfig().sendTimeout).to.be.equal(Number(sendTimeoutString));
+        });
     });
 });
