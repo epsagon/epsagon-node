@@ -55,7 +55,7 @@ module.exports.createTracer = function createTracer() {
  * Session for the post requests to the collector
  */
 const session = axios.create({
-    sendTimeout: config.getConfig().sendTimeout,
+    timeout: config.getConfig().sendTimeout,
     httpAgent: new http.Agent({ keepAlive: true }),
     httpsAgent: new https.Agent({ keepAlive: true }),
 });
