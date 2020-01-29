@@ -51,7 +51,7 @@ function openWhiskWrapper(wrappedFunction) {
             response = request;
         }
 
-        const responsePromise = new Promise((resolve, reject) => {
+        const responsePromise = new Promise((resolve) => {
             request.then((res) => {
                 let resp = res.response;
                 if (resp && resp.result && resp.result.body && resp.result.body.length > 100) {
@@ -68,10 +68,10 @@ function openWhiskWrapper(wrappedFunction) {
                     }
                 );
                 invokeEvent.setDuration(utils.createDurationTimestamp(startTime));
-                resolve();
             }).catch((err) => {
                 eventInterface.setException(invokeEvent, err);
-                reject(err);
+            }).finally(() => {
+                resolve();
             });
         });
 
