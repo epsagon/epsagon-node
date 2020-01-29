@@ -60,8 +60,14 @@ function openWhiskWrapper(wrappedFunction) {
                     resp.result = Object.assign({}, resp.result);
                     resp.result.body = `${resp.result.body.substring(0, 100)}...(truncated)`;
                 }
+                const brief = {
+                    activation_id: res.activationId,
+                    status: resp.status,
+                    result_statusCode: resp.result && resp.result.statusCode,
+                };
                 eventInterface.addToMetadata(
                     invokeEvent,
+                    brief,
                     {
                         activation_id: res.activationId,
                         response: resp,
