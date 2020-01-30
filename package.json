@@ -75,7 +75,7 @@
     "rollup-plugin-copy": "^3.1.0",
     "rollup-plugin-eslint": "^5.0.0",
     "rollup-plugin-json": "^3.1.0",
-    "rollup-plugin-terser": "^3.0.0",
+    "rollup-plugin-terser": "^5.2.0",
     "semantic-release": "^15.13.30",
     "sinon": "^4.3.0",
     "uglify-es": "^3.3.9"
