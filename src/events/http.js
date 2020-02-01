@@ -149,7 +149,8 @@ function httpWrapper(wrappedFunction) {
             const spanId = uuidToHex(uuid4()).slice(16);
             const parentSpanId = uuidToHex(uuid4()).slice(16);
 
-            headers['epsagon-trace-id'] = `${hexTraceId}:${spanId}:${parentSpanId}:1`;
+            const epsagonTraceId = `${hexTraceId}:${spanId}:${parentSpanId}:1`;
+            headers['epsagon-trace-id'] = epsagonTraceId;
 
             const agent = (
                 // eslint-disable-next-line no-underscore-dangle
@@ -192,7 +193,10 @@ function httpWrapper(wrappedFunction) {
             httpEvent.setResource(resource);
 
             eventInterface.addToMetadata(httpEvent,
-                { url: requestUrl }, {
+                {
+                    url: requestUrl,
+                    http_trace_id: epsagonTraceId,
+                }, {
                     path,
                     request_headers: headers,
                     request_body: body,
