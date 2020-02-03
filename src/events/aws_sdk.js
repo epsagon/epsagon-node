@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 /**
  * @fileoverview Handlers for the aws-sdk js library instrumantation.
  */
@@ -523,6 +524,9 @@ const stepFunctionsEventCreator = {
      */
     patchInput(request, event) {
         const parameters = request.params || {};
+        console.log('patchInput - request', request);
+        console.log('patchInput - event', event);
+        console.log('patchInput', request.operation);
         switch (request.operation) {
         case 'startExecution': {
             let input;
@@ -546,6 +550,33 @@ const stepFunctionsEventCreator = {
 
             break;
         }
+        case 'sendTaskSuccess': {
+            let output;
+            try {
+                // According to the docs input must be at least "{}". so if it is not
+                // JSON parsable an error will be raised for sure and the machine won't
+                // be invoked anyway.
+                output = JSON.parse(parameters.output);
+            } catch (error) {
+                output = null;
+            }
+
+            let step;
+            console.log('------------------------------------------------------', output);
+            if (output && output[STEP_ID_NAME]) {
+                step = Object.assign({}, output[STEP_ID_NAME]);
+                step.step_num += 1;
+            } else {
+                step = { id: uuid4(), step_num: 0 };
+            }
+
+            output[STEP_ID_NAME] = step; // eslint-disable-line no-param-reassign
+            request.params.output = JSON.stringify(output);
+            eventInterface.addToMetadata(event, {
+                steps_dict: step,
+            });
+            break;
+        }
         default:
             break;
         }
@@ -559,6 +590,9 @@ const stepFunctionsEventCreator = {
     requestHandler(request, event) {
         const parameters = request.params;
         const resource = event.getResource();
+        console.log('patchInput - request', request);
+        console.log('patchInput - event', event);
+        console.log('patchInput', request.operation);
         switch (request.operation) {
         case 'startExecution':
             resource.setName(`${parameters.stateMachineArn.split(':').pop()}`);
@@ -581,6 +615,10 @@ const stepFunctionsEventCreator = {
      * @param {proto.event_pb.Event} event The event to update the data on
      */
     responseHandler(response, event) {
+        console.log('patchInput - response', response);
+        console.log('patchInput - event', event);
+        console.log('patchInput', response.request.operation);
+
         switch (response.request.operation) {
         case 'startExecution':
             eventInterface.addToMetadata(event, {
@@ -588,7 +626,6 @@ const stepFunctionsEventCreator = {
                 'Start Date': `${response.data.startDate}`,
             });
             break;
-
         default:
             break;
         }
@@ -676,7 +713,8 @@ function AWSSDKWrapper(wrappedFunction) {
             const { serviceIdentifier } = (
                 request.service.constructor.prototype
             );
-
+            // eslint-disable-next-line no-console
+            console.log('serviceIdentifier', serviceIdentifier);
             if (!(serviceIdentifier in specificEventCreators)) {
                 // resource is not supported yet
                 return wrappedFunction.apply(this, [callback]);
