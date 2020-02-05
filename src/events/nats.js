@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 /* eslint-disable camelcase */
 /**
  * @fileoverview Instrumentation for nats library.
@@ -136,9 +135,8 @@ function wrapNatsPublishFunction(original, serverHostname, jsonConnectProperty) 
  */
 function wrapNatsConnectFunction(connectFunction) {
     return function internalNatsConnectFunction(url, opts) {
-        let connectFunctionResponse;
+        const connectFunctionResponse = connectFunction.apply(this, [url, opts]);
         try {
-            connectFunctionResponse = connectFunction(url, opts);
             if (connectFunctionResponse && connectFunctionResponse.constructor) {
                 if (connectFunctionResponse.constructor.name === NATS_TYPES.mainWrappedFunction) {
                     const serverHostname = getServerHostname(connectFunctionResponse.currentServer);
@@ -148,9 +146,7 @@ function wrapNatsConnectFunction(connectFunction) {
                 }
             }
         } catch (err) {
-            if (!connectFunctionResponse) {
-                connectFunctionResponse = connectFunction.apply(this, [url, opts]);
-            }
+            tracer.addException(err);
         }
         return connectFunctionResponse;
     };
