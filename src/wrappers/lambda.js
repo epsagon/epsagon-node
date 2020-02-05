@@ -97,7 +97,21 @@ function baseLambdaWrapper(
             callbackCalled = true;
             if (error) {
                 // not catching false here, but that seems OK
-                eventInterface.setException(runner, error, false);
+                let reportedError = error;
+                if (!error.name) {
+                    let errorMessage;
+                    try {
+                        errorMessage = typeof error === 'string' ? error : JSON.stringify(error);
+                    } catch (stringifyErr) {
+                        errorMessage = 'Unserializable Error';
+                    }
+
+                    reportedError = {
+                        name: 'LambdaExecutionError',
+                        message: errorMessage,
+                    };
+                }
+                eventInterface.setException(runner, reportedError, false);
             }
 
             const { statusCode } = result || {};

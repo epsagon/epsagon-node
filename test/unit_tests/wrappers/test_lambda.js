@@ -258,6 +258,25 @@ describe('lambdaWrapper tests', () => {
         }, 1);
     });
 
+    it('lambdaWrapper: wrapped callback string as error', (done) => {
+        const errorString = 'Unauthorized';
+        this.stubFunction.callsArgWith(2, errorString);
+        this.wrappedStub({}, this.context, this.callbackStub);
+        setTimeout(() => {
+            expect(this.createFromEventStub.callCount).to.equal(1);
+            expect(this.createFromEventStub.calledWith({}));
+            expect(this.addEventStub.callCount).to.equal(1);
+            expect(getReturnValue(this.addRunnerStub)).to.be.undefined;
+            expect(this.restartStub.callCount).to.equal(1);
+            expect(this.addExceptionStub.called).to.be.false;
+            expect(this.sendTraceStub.callCount).to.equal(1);
+            expect(this.stubFunction.callCount).to.equal(1);
+            expect(this.callbackStub.callCount).to.equal(1);
+            expect(this.setExceptionStub.callCount).to.equal(1);
+            done();
+        }, 1);
+    });
+
     it('lambdaWrapper: update COLD_START value', () => {
         consts.COLD_START = true;
         this.wrappedStub({}, this.context, this.callbackStub);
