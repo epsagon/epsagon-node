@@ -202,10 +202,6 @@ function httpWrapper(wrappedFunction) {
                     request_body: body,
                 });
 
-            eventInterface.addToMetadata(httpEvent, {
-                http_trace_id: traceId,
-            });
-
             const patchedCallback = (res) => {
                 let metadataFields = {};
                 if ('x-powered-by' in res.headers) {
