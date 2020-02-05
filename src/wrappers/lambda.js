@@ -103,7 +103,7 @@ function baseLambdaWrapper(
                     try {
                         errorMessage = typeof error === 'string' ? error : JSON.stringify(error);
                     } catch (stringifyErr) {
-                        errorMessage = 'Unserializable Error';
+                        errorMessage = '';
                     }
 
                     reportedError = {
