@@ -606,6 +606,7 @@ const stepFunctionsEventCreator = {
                 'Start Date': `${response.data.startDate}`,
             });
             break;
+
         default:
             break;
         }
@@ -693,8 +694,6 @@ function AWSSDKWrapper(wrappedFunction) {
             const { serviceIdentifier } = (
                 request.service.constructor.prototype
             );
-            // eslint-disable-next-line no-console
-            console.log('serviceIdentifier', serviceIdentifier);
             if (!(serviceIdentifier in specificEventCreators)) {
                 // resource is not supported yet
                 return wrappedFunction.apply(this, [callback]);
