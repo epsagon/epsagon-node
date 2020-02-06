@@ -115,6 +115,13 @@ function createSQSTrigger(event, trigger) {
     }, {
         'Message Body': event.Records[0].body,
     });
+    const messageBody = JSON.parse(event.Records[0].body || {});
+    if (messageBody.input && messageBody.input.Epsagon) {
+        eventInterface.addToMetadata(trigger, {
+            steps_dict: messageBody.input.Epsagon,
+        });
+    }
+
     const snsData = resourceUtils.getSNSTrigger(event.Records);
     if (snsData != null) {
         eventInterface.addToMetadata(trigger, { 'SNS Trigger': snsData });
