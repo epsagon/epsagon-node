@@ -515,6 +515,33 @@ const athenaEventCreator = {
     },
 };
 
+/**
+ * Generate a new stpes_dict id, set the step number as -1 to mark the invoker,
+ * and adding the new steps_dict to the event metadata.
+ * @param {object} request The AWS.Request object
+ * @param {string} paramsPropertyName relevant params property
+ * @param {proto.event_pb.Event} event the event to update the new steps dict on
+ */
+const initializeStepsDict = (request, paramsPropertyName, event) => {
+    const data = (request.params || {})[paramsPropertyName];
+    let parsedData;
+    try {
+        // According to the docs input must be at least "{}". so if it is not
+        // JSON parsable an error will be raised for sure and the machine won't
+        // be invoked anyway.
+        parsedData = JSON.parse(data);
+    } catch (error) {
+        parsedData = null;
+    }
+    if (parsedData) {
+        parsedData[STEP_ID_NAME] = { id: uuid4(), step_num: -1 };
+        request.params[paramsPropertyName] = JSON.stringify(parsedData);
+        eventInterface.addToMetadata(event, {
+            steps_dict: parsedData[STEP_ID_NAME],
+        });
+    }
+};
+
 const stepFunctionsEventCreator = {
     /**
      * Patches the input of a step functions AWS Request
@@ -522,46 +549,13 @@ const stepFunctionsEventCreator = {
      * @param {proto.event_pb.Event} event The event to update the data on
      */
     patchInput(request, event) {
-        const parameters = request.params || {};
         switch (request.operation) {
         case 'startExecution': {
-            let input;
-            try {
-                // According to the docs input must be at least "{}". so if it is not
-                // JSON parsable an error will be raised for sure and the machine won't
-                // be invoked anyway.
-                input = JSON.parse(parameters.input);
-            } catch (error) {
-                input = null;
-            }
-
-            if (input) {
-                // Set the step number as -1 to mark the invoker
-                input[STEP_ID_NAME] = { id: uuid4(), step_num: -1 };
-                request.params.input = JSON.stringify(input);
-                eventInterface.addToMetadata(event, {
-                    steps_dict: input[STEP_ID_NAME],
-                });
-            }
-
+            initializeStepsDict(request, 'input', event);
             break;
         }
         case 'sendTaskSuccess': {
-            let output;
-            try {
-                // According to the docs input must be at least "{}". so if it is not
-                // JSON parsable an error will be raised for sure and the machine won't
-                // be invoked anyway.
-                output = JSON.parse(parameters.output);
-            } catch (error) {
-                output = null;
-            }
-            const step = { id: uuid4(), step_num: -1 };
-            output[STEP_ID_NAME] = step; // eslint-disable-line no-param-reassign
-            request.params.output = JSON.stringify(output);
-            eventInterface.addToMetadata(event, {
-                steps_dict: step,
-            });
+            initializeStepsDict(request, 'output', event);
             break;
         }
         default:

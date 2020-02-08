@@ -108,14 +108,16 @@ function createSQSTrigger(event, trigger) {
     trigger.setId(event.Records[0].messageId);
     resource.setName(event.Records[0].eventSourceARN.split(':').slice(-1)[0]);
     resource.setOperation('ReceiveMessage');
+    const sqsMessageBody = event.Records[0].body || '{}';
     eventInterface.addToMetadata(trigger, {
         'MD5 Of Message Body': event.Records[0].md5OfBody,
         Attributes: event.Records[0].attributes,
         'Message Attributes': event.Records[0].messageAttributes,
     }, {
-        'Message Body': event.Records[0].body,
+        'Message Body': sqsMessageBody,
     });
-    const messageBody = JSON.parse(event.Records[0].body || {});
+    const messageBody = JSON.parse(sqsMessageBody);
+    // Extracting sqs data in case of is a part of a step functions flow.
     if (messageBody.input && messageBody.input.Epsagon) {
         eventInterface.addToMetadata(trigger, {
             steps_dict: messageBody.input.Epsagon,
