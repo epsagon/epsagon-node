@@ -99,8 +99,6 @@ const getMessageData = (reqOptsMessages, index) => {
         reqOptsMessages.length > index &&
         reqOptsMessages[index].data
     ) {
-        // eslint-disable-next-line no-debugger
-        debugger;
         const messageData = JSON.parse(`${reqOptsMessages[index].data}`);
         if (typeof messageData === 'object') {
             return messageData;
