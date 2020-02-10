@@ -15,7 +15,8 @@ const BIG_QUERY = 'bigquery';
 const GOOGLE_CLOUD_TYPES = {
     defaultProjectId: '{{projectId}}',
     pubsub: {
-        name: 'pubsub',
+        type: 'pubsub',
+        origin: 'google_cloud/pubsub',
     },
 };
 
@@ -86,6 +87,25 @@ function bigQueryWrapper(wrappedFunction) {
     };
 }
 
+/**
+ * Getting message data from array.
+ * Message data is Buffer which contain a json of js object.
+ * @param {Array} reqOptsMessages array with messages data
+ * @param {number} index index of message
+ * @returns {*} message data, null if not found.
+ */
+const getMessageData = (reqOptsMessages, index) => {
+    if (Array.isArray(reqOptsMessages) &&
+        reqOptsMessages.length > index &&
+        reqOptsMessages[index].data
+    ) {
+        const messageData = JSON.parse(`${reqOptsMessages[index].data}`);
+        if (typeof messageData === 'object') {
+            return messageData;
+        }
+    }
+    return null;
+};
 
 /**
  * Wrap pubsub request function.
@@ -98,10 +118,10 @@ function wrapPubSubRequestFunction(original) {
         try {
             const pubsubProjectId = this.projectId;
             const { slsEvent: pubsubEvent, startTime } = eventInterface.initializeEvent(
-                GOOGLE_CLOUD_TYPES.pubsub.name,
+                GOOGLE_CLOUD_TYPES.pubsub.type,
                 pubsubProjectId,
                 config.method,
-                GOOGLE_CLOUD_TYPES.pubsub.name
+                GOOGLE_CLOUD_TYPES.pubsub.origin
             );
             const requestFunctionThis = this;
             const responsePromise = new Promise((resolve) => {
@@ -114,7 +134,22 @@ function wrapPubSubRequestFunction(original) {
                     switch (arg2 && config.method) {
                     case 'publish': {
                         const messageIds = arg2.messageIds ? arg2.messageIds : arg2;
-                        responseMetadata.messageIds = messageIds;
+                        if (Array.isArray(messageIds)) {
+                            const reqOptsMessages = config.reqOpts && config.reqOpts.messages;
+                            const messages = messageIds.reduce((acc, messageId, currentIndex) => {
+                                let message = { id: messageId };
+                                const messageData = getMessageData(reqOptsMessages, currentIndex);
+                                if (messageData) {
+                                    message = Object.assign(message, messageData);
+                                }
+                                acc.push(message);
+                                return acc;
+                            }, []);
+                            responseMetadata.messages = messages;
+                            if (messageIds.length) {
+                                pubsubEvent.setId(messageIds[0]);
+                            }
+                        }
                         break;
                     }
                     case 'createSubscription':
@@ -174,7 +209,7 @@ function wrapPubSubPullFunction(original) {
                 }
             }
             const { slsEvent: pubsubEvent, startTime } = eventInterface.initializeEvent(
-                GOOGLE_CLOUD_TYPES.pubsub.name, pubsubProjectId, 'Pull', GOOGLE_CLOUD_TYPES.pubsub.name
+                GOOGLE_CLOUD_TYPES.pubsub.type, pubsubProjectId, 'Pull', GOOGLE_CLOUD_TYPES.pubsub.origin
             );
             const patchedCallback = (err, res, promiseResolve) => {
                 const responseMetadata = {};
