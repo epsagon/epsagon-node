@@ -53,6 +53,37 @@ function resolveHttpPromise(httpEvent, resolveFunction, startTime) {
     resolveFunction();
 }
 
+
+/**
+ * Return an Epsagon trace ID to put in the request headers.
+ * @returns {string} Epsagon trace id.
+ */
+function generateEpsagonTraceId() {
+    const traceId = uuid4();
+    const hexTraceId = uuidToHex(traceId);
+    const spanId = uuidToHex(uuid4()).slice(16);
+    const parentSpanId = uuidToHex(uuid4()).slice(16);
+
+    return `${hexTraceId}:${spanId}:${parentSpanId}:1`;
+}
+
+
+/**
+ * Checks if API Gateway details appear in the headers, and update event accordingly
+ * @param {object} headers data
+ * @param {Resource} resource object
+ * @param {Event} httpEvent object
+ */
+function updateAPIGateway(headers, resource, httpEvent) {
+    if ('x-amzn-requestid' in headers) {
+        // This is a request to AWS API Gateway
+        resource.setType('api_gateway');
+        eventInterface.addToMetadata(httpEvent, {
+            request_trace_id: headers['x-amzn-requestid'],
+        });
+    }
+}
+
 /**
  * Builds the HTTP Params array
  * @param {string} url The URL, if exists
@@ -144,12 +175,7 @@ function httpWrapper(wrappedFunction) {
             }
 
             // Inject header to support tracing over HTTP requests to opentracing monitored code
-            const traceId = uuid4();
-            const hexTraceId = uuidToHex(traceId);
-            const spanId = uuidToHex(uuid4()).slice(16);
-            const parentSpanId = uuidToHex(uuid4()).slice(16);
-
-            const epsagonTraceId = `${hexTraceId}:${spanId}:${parentSpanId}:1`;
+            const epsagonTraceId = generateEpsagonTraceId();
             headers['epsagon-trace-id'] = epsagonTraceId;
 
             const agent = (
@@ -227,13 +253,7 @@ function httpWrapper(wrappedFunction) {
                     });
                 }
 
-                if ('x-amzn-requestid' in res.headers) {
-                    // This is a request to AWS API Gateway
-                    resource.setType('api_gateway');
-                    eventInterface.addToMetadata(httpEvent, {
-                        request_trace_id: res.headers['x-amzn-requestid'],
-                    });
-                }
+                updateAPIGateway(res.headers, resource, httpEvent);
 
                 if (callback) {
                     callback(res);
@@ -392,4 +412,10 @@ module.exports = {
             WreckWrapper
         );
     },
+    isURLIgnoredByUser,
+    resolveHttpPromise,
+    USER_AGENTS_BLACKLIST,
+    URL_BLACKLIST,
+    generateEpsagonTraceId,
+    updateAPIGateway,
 };

@@ -7,6 +7,7 @@ const utils = require('./utils.js');
 const awsSDKPatcher = require('./events/aws_sdk.js');
 const daxPatcher = require('./events/amazon_dax_client.js');
 const httpPatcher = require('./events/http.js');
+const http2Patcher = require('./events/http2.js');
 const pgPatcher = require('./events/pg.js');
 const mysqlPatcher = require('./events/mysql.js');
 const openWhiskPatcher = require('./events/openwhisk.js');
@@ -36,6 +37,7 @@ if (!config.getConfig().isEpsagonPatchDisabled) {
     [
         awsSDKPatcher,
         httpPatcher,
+        http2Patcher,
         pgPatcher,
         mysqlPatcher,
         redisPatcher,
