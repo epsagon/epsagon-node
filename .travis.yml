@@ -10,7 +10,6 @@ install:
   - npm install -g serverless
 
 node_js:
-  - "6.10"
   - "8.10"
   - "10.16"
   - "12.13"
@@ -24,13 +23,13 @@ script:
 jobs:
   include:
     - stage: acceptance
-      node_js: "8.10"
+      node_js: "12.13"
       script:
         - npm run build
         - ./test/acceptance/run.sh $TRAVIS_BUILD_NUMBER
 
     - stage: build-and-deploy
-      node_js: "8.16"
+      node_js: "12.13"
       script:
         - npm run build && npm run semantic-release && ./scripts/publish_layers.sh
 
