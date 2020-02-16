@@ -5,7 +5,6 @@
 const uuid4 = require('uuid4');
 const shimmer = require('shimmer');
 const urlLib = require('url');
-const http2 = require('http2');
 const utils = require('../utils.js');
 const tracer = require('../tracer.js');
 const serverlessEvent = require('../proto/event_pb.js');
@@ -20,6 +19,8 @@ const {
     generateEpsagonTraceId,
     updateAPIGateway,
 } = require('./http');
+const tryRequire = require('../try_require');
+const http2 = tryRequire('http22');
 
 
 /**
@@ -112,7 +113,7 @@ function httpWrapper(wrappedFunction, authority) {
                             response_body: responseBody,
                         });
                     } catch (err) {
-                        tracer.addException(err);
+                        utils.debugLog('Could not parse JSON in http2');
                     }
                     resolveHttpPromise(httpEvent, resolve, startTime);
                 });
@@ -161,6 +162,8 @@ module.exports = {
      * Initializes the http2 tracer
      */
     init() {
-        shimmer.wrap(http2, 'connect', wrapHttp2Connect);
+        if (http2) {
+            shimmer.wrap(http2, 'connect', wrapHttp2Connect);
+        }
     },
 };

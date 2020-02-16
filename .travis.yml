@@ -10,6 +10,7 @@ install:
   - npm install -g serverless
 
 node_js:
+  - "6.10"
   - "8.10"
   - "10.16"
   - "12.13"
