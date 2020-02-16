@@ -164,6 +164,7 @@ module.exports = {
      */
     init() {
         if (http2) {
+            utils.debugLog('Patching http2 module');
             shimmer.wrap(http2, 'connect', wrapHttp2Connect);
         }
     },
