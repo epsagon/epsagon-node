@@ -130,7 +130,7 @@ module.exports.initializeEvent = function initializeEvent(resourceType, name, op
         errorCode.ErrorCode.OK,
     ]);
     slsEvent.setResource(resource);
-    return { slsEvent, startTime };
+    return { slsEvent, startTime, resource };
 };
 
 /**

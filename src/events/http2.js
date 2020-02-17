@@ -1,38 +1,37 @@
 /**
- * @fileoverview Handlers for http & https libraries instrumentation
+ * @fileoverview Handlers for http2 libraries instrumentation
  */
 
-const uuid4 = require('uuid4');
 const shimmer = require('shimmer');
 const urlLib = require('url');
 const utils = require('../utils.js');
 const tracer = require('../tracer.js');
-const serverlessEvent = require('../proto/event_pb.js');
 const eventInterface = require('../event.js');
-const errorCode = require('../proto/error_code_pb.js');
-const { isBlacklistURL, isBlacklistHeader } = require('.././helpers/events');
+const { isBlacklistURL, isBlacklistHeader } = require('../helpers/events');
 const {
-    resolveHttpPromise,
     isURLIgnoredByUser,
+    resolveHttpPromise,
     USER_AGENTS_BLACKLIST,
     URL_BLACKLIST,
     generateEpsagonTraceId,
     updateAPIGateway,
-} = require('./http');
+} = require('../helpers/http');
 const tryRequire = require('../try_require');
 
 const http2 = tryRequire('http2');
 
 
 /**
- * Removing ':' from http2 headers.
+ * http2 module adds in the request and response headers also extra fields with a ':' prefix.
+ * For example :path, :method, etc. When we want to record just the headers, we want to clear
+ * out these fields - using this function.
  * @param {object} headers data
  * @returns {object} only real headers without ':'
  */
 function extractHeaders(headers) {
-    return Object.entries(headers)
-        .filter(header => !header[0].startsWith(':'))
-        .reduce((obj, header) => {
+    return Object.entries(headers) // Iterate over key-value pairs
+        .filter(header => !header[0].startsWith(':')) // Filter out keys that start with ':'
+        .reduce((obj, header) => { // Rebuild key-value into object using reduce
             const [key, value] = header;
             obj[key] = value; // eslint-disable-line no-param-reassign
             return obj;
@@ -58,7 +57,7 @@ function httpWrapper(wrappedFunction, authority) {
                 return wrappedFunction.apply(this, [headers, options]);
             }
             if (isBlacklistHeader(reqHeaders, USER_AGENTS_BLACKLIST)) {
-                utils.debugLog(`filtered blacklist headers ${JSON.stringify(reqHeaders)}`);
+                utils.debugLog('filtered blacklist headers');
                 return wrappedFunction.apply(this, [headers, options]);
             }
 
@@ -66,23 +65,12 @@ function httpWrapper(wrappedFunction, authority) {
             const epsagonTraceId = generateEpsagonTraceId();
             headers['epsagon-trace-id'] = epsagonTraceId; // eslint-disable-line no-param-reassign
 
-            const resource = new serverlessEvent.Resource([
+            const { slsEvent: httpEvent, startTime, resource } = eventInterface.initializeEvent(
+                'http',
                 hostname,
-                'http',
                 headers[':method'],
-            ]);
-
-            const startTime = Date.now();
-            const httpEvent = new serverlessEvent.Event([
-                `http2-${uuid4()}`,
-                utils.createTimestampFromTime(startTime),
-                null,
-                'http',
-                0,
-                errorCode.ErrorCode.OK,
-            ]);
-
-            httpEvent.setResource(resource);
+                'http'
+            );
 
             eventInterface.addToMetadata(httpEvent,
                 {
@@ -152,7 +140,11 @@ function httpWrapper(wrappedFunction, authority) {
 function wrapHttp2Connect(connectFunction) {
     return function innerWrapHttp2Connect(authority, options, listener) {
         const clientSession = connectFunction.apply(this, [authority, options, listener]);
-        shimmer.wrap(clientSession, 'request', wrappedFunction => httpWrapper(wrappedFunction, authority));
+        try {
+            shimmer.wrap(clientSession, 'request', wrappedFunction => httpWrapper(wrappedFunction, authority));
+        } catch (err) {
+            utils.debugLog(`Could not instrument http2 session request ${err}`);
+        }
         return clientSession;
     };
 }
