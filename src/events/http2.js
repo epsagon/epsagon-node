@@ -80,7 +80,13 @@ function httpWrapper(wrappedFunction, authority) {
                     request_headers: reqHeaders,
                 });
 
-            clientRequest = wrappedFunction.apply(this, [headers, options]);
+            try {
+                clientRequest = wrappedFunction.apply(this, [headers, options]);
+            } catch (err) {
+                eventInterface.setException(httpEvent, err);
+                tracer.addEvent(httpEvent);
+                throw err;
+            }
             const responsePromise = new Promise((resolve) => {
                 let data = '';
                 clientRequest.on('data', (chunk) => { data += chunk; });
