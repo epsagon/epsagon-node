@@ -15,6 +15,7 @@ const {
     URL_BLACKLIST,
     generateEpsagonTraceId,
     updateAPIGateway,
+    setJsonPayload,
 } = require('../helpers/http');
 const tryRequire = require('../try_require');
 
@@ -47,15 +48,17 @@ function extractHeaders(headers) {
 function httpWrapper(wrappedFunction, authority) {
     return function internalHttpWrapper(headers, options) {
         let clientRequest = null;
+        let httpEvent = null;
+        let startTime = null;
         try {
             const { hostname } = urlLib.parse(authority);
-
-            const reqHeaders = extractHeaders(headers);
 
             if (isBlacklistURL(hostname, URL_BLACKLIST, headers[':path']) || isURLIgnoredByUser(hostname)) {
                 utils.debugLog(`filtered blacklist hostname ${hostname}`);
                 return wrappedFunction.apply(this, [headers, options]);
             }
+
+            const reqHeaders = extractHeaders(headers);
             if (isBlacklistHeader(reqHeaders, USER_AGENTS_BLACKLIST)) {
                 utils.debugLog('filtered blacklist headers');
                 return wrappedFunction.apply(this, [headers, options]);
@@ -65,12 +68,14 @@ function httpWrapper(wrappedFunction, authority) {
             const epsagonTraceId = generateEpsagonTraceId();
             headers['epsagon-trace-id'] = epsagonTraceId; // eslint-disable-line no-param-reassign
 
-            const { slsEvent: httpEvent, startTime, resource } = eventInterface.initializeEvent(
+            const { slsEvent, eventStartTime } = eventInterface.initializeEvent(
                 'http',
                 hostname,
                 headers[':method'],
                 'http'
             );
+            httpEvent = slsEvent;
+            startTime = eventStartTime;
 
             eventInterface.addToMetadata(httpEvent,
                 {
@@ -79,14 +84,23 @@ function httpWrapper(wrappedFunction, authority) {
                     path: headers[':path'],
                     request_headers: reqHeaders,
                 });
-
-            try {
-                clientRequest = wrappedFunction.apply(this, [headers, options]);
-            } catch (err) {
-                eventInterface.setException(httpEvent, err);
+        } catch (error) {
+            tracer.addException(error);
+            if (httpEvent) {
                 tracer.addEvent(httpEvent);
-                throw err;
             }
+            return wrappedFunction.apply(this, [headers, options]);
+        }
+
+        try {
+            clientRequest = wrappedFunction.apply(this, [headers, options]);
+        } catch (err) {
+            eventInterface.setException(httpEvent, err);
+            tracer.addEvent(httpEvent);
+            throw err;
+        }
+
+        try {
             const responsePromise = new Promise((resolve) => {
                 let data = '';
                 clientRequest.on('data', (chunk) => { data += chunk; });
@@ -102,19 +116,12 @@ function httpWrapper(wrappedFunction, authority) {
                 });
 
                 clientRequest.once('close', () => {
-                    try {
-                        const responseBody = JSON.parse(data);
-                        eventInterface.addToMetadata(httpEvent, {}, {
-                            response_body: responseBody,
-                        });
-                    } catch (err) {
-                        utils.debugLog('Could not parse JSON in http2');
-                    }
+                    setJsonPayload(httpEvent, 'response_body', data);
                     resolveHttpPromise(httpEvent, resolve, startTime);
                 });
 
                 clientRequest.once('response', (res) => {
-                    updateAPIGateway(res, resource, httpEvent);
+                    updateAPIGateway(res, httpEvent);
                     eventInterface.addToMetadata(httpEvent, {
                         status: res[':status'],
                     }, {
@@ -128,10 +135,6 @@ function httpWrapper(wrappedFunction, authority) {
             tracer.addEvent(httpEvent, responsePromise);
         } catch (error) {
             tracer.addException(error);
-        }
-
-        if (!clientRequest) {
-            clientRequest = wrappedFunction.apply(this, [headers, options]);
         }
 
         return clientRequest;

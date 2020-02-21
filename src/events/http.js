@@ -22,6 +22,7 @@ const {
     URL_BLACKLIST,
     generateEpsagonTraceId,
     updateAPIGateway,
+    setJsonPayload,
 } = require('../helpers/http');
 
 
@@ -137,7 +138,11 @@ function httpWrapper(wrappedFunction) {
             );
             protocol = protocol.slice(0, -1);
 
-            const body = (options && options.body) || '';
+            const body = (
+                options &&
+                options.body &&
+                (options.body instanceof String || options.body instanceof Buffer)
+            ) ? options.body : '';
             const method = (options && options.method) || 'GET';
 
             const resource = new serverlessEvent.Resource([
@@ -166,8 +171,12 @@ function httpWrapper(wrappedFunction) {
                 }, {
                     path,
                     request_headers: headers,
+                });
+            if (body) {
+                eventInterface.addToMetadata(httpEvent, {}, {
                     request_body: body,
                 });
+            }
 
             const patchedCallback = (res) => {
                 let metadataFields = {};
@@ -194,7 +203,7 @@ function httpWrapper(wrappedFunction) {
                     });
                 }
 
-                updateAPIGateway(res.headers, resource, httpEvent);
+                updateAPIGateway(res.headers, httpEvent);
 
                 if (callback) {
                     callback(res);
@@ -217,12 +226,28 @@ function httpWrapper(wrappedFunction) {
                             (args[0] instanceof String) || (args[0] instanceof Buffer)
                         )
                     ) {
-                        eventInterface.addToMetadata(
-                            httpEvent, {},
-                            { request_body: args[0].toString() }
-                        );
+                        setJsonPayload(httpEvent, 'request_body', args[0]);
                     }
                     return wrappedWriteFunc.apply(this, args);
+                };
+            }
+
+            /**
+             * Wraps 'end' method in a request to terminate the request writing
+             * @param {Function} wrappedEndFunc The wrapped end function
+             * @returns {Function} The wrapped function
+             */
+            function endWrapper(wrappedEndFunc) { // eslint-disable-line no-inner-declarations
+                return function internalEndWrapper(...args) {
+                    if (
+                        (!body || body === '') && args[0] && (
+                            (args[0] instanceof String) || (args[0] instanceof Buffer)
+                        )
+                    ) {
+                        setJsonPayload(httpEvent, 'request_body', args[0]);
+                    }
+                    const result = wrappedEndFunc.apply(this, args);
+                    return result;
                 };
             }
 
@@ -240,13 +265,17 @@ function httpWrapper(wrappedFunction) {
                         // eslint-disable-next-line no-underscore-dangle
                         reqPrototype.__epsagonPatched = true;
                         shimmer.wrap(reqPrototype, 'write', WriteWrapper);
+                        shimmer.wrap(reqPrototype, 'end', endWrapper);
                     }
                 } catch (err) {
                     // In some libs it might not be possible to hook on write
                 }
             }
 
+
             const responsePromise = new Promise((resolve) => {
+                let data = '';
+
                 let isTimeout = false;
                 clientRequest.on('timeout', () => {
                     isTimeout = true;
@@ -277,8 +306,11 @@ function httpWrapper(wrappedFunction) {
                     resolveHttpPromise(httpEvent, resolve, startTime);
                 });
 
-                clientRequest.on('response', () => {
-                    resolveHttpPromise(httpEvent, resolve, startTime);
+                clientRequest.on('response', (res) => {
+                    res.on('data', (chunk) => { data += chunk; });
+                    res.on('end', () => {
+                        setJsonPayload(httpEvent, 'response_body', data);
+                    });
                 });
             }).catch((err) => {
                 tracer.addException(err);

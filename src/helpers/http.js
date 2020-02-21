@@ -43,6 +43,24 @@ function resolveHttpPromise(httpEvent, resolveFunction, startTime) {
 
 
 /**
+ * Set the duration of the event, and resolves the promise using the given function.
+ * @param {object} httpEvent The current event
+ * @param {string} key name in metadata
+ * @param {string} data data to jsonify
+ */
+function setJsonPayload(httpEvent, key, data) {
+    try {
+        const payload = JSON.parse(data);
+        eventInterface.addToMetadata(httpEvent, {}, {
+            [key]: payload,
+        });
+    } catch (err) {
+        utils.debugLog(`Could not parse JSON ${key} in http`);
+    }
+}
+
+
+/**
  * Return an Epsagon trace ID to put in the request headers.
  * @returns {string} Epsagon trace id.
  */
@@ -59,13 +77,12 @@ function generateEpsagonTraceId() {
 /**
  * Checks if API Gateway details appear in the headers, and update event accordingly
  * @param {object} headers data
- * @param {Resource} resource object
  * @param {Event} httpEvent object
  */
-function updateAPIGateway(headers, resource, httpEvent) {
+function updateAPIGateway(headers, httpEvent) {
     if (headers && 'x-amzn-requestid' in headers) {
         // This is a request to AWS API Gateway
-        resource.setType('api_gateway');
+        httpEvent.getResource().setType('api_gateway');
         eventInterface.addToMetadata(httpEvent, {
             request_trace_id: headers['x-amzn-requestid'],
         });
@@ -79,4 +96,5 @@ module.exports = {
     URL_BLACKLIST,
     generateEpsagonTraceId,
     updateAPIGateway,
+    setJsonPayload,
 };
