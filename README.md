@@ -57,6 +57,24 @@ You can then pass the `EPSAGON_TOKEN` as a default parameter into your action us
 $ wsk action update <myaction> --parameter EPSAGON_TOKEN <your-epsagon-token>
 ```
 
+## Getting started (General)
+
+Simply use the nodeWrapper to send traces from your main entry point function:
+
+```javascript
+const epsagon = require('epsagon');
+
+epsagon.init({
+    token: 'my-secret-token',
+    appName: 'my-app-name',
+    metadataOnly: false,
+});
+
+function main = epsagon.nodeWrapper(() => {
+	return 'Hello World!';
+});
+```
+
 ## Custom labels
 
 You can add custom labels to your traces. Filters can later be used for filtering
