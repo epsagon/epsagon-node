@@ -239,15 +239,18 @@ function httpWrapper(wrappedFunction) {
              */
             function endWrapper(wrappedEndFunc) { // eslint-disable-line no-inner-declarations
                 return function internalEndWrapper(...args) {
-                    if (
-                        (!body || body === '') && args[0] && (
-                            (args[0] instanceof String) || (args[0] instanceof Buffer)
-                        )
-                    ) {
-                        setJsonPayload(httpEvent, 'request_body', args[0]);
+                    try {
+                        if (
+                            (!body || body === '') && args[0] && (
+                                (args[0] instanceof String) || (args[0] instanceof Buffer)
+                            )
+                        ) {
+                            setJsonPayload(httpEvent, 'request_body', args[0]);
+                        }
+                    } catch (err) {
+                        utils.debugLog('Could not parse request body in end wrapper');
                     }
-                    const result = wrappedEndFunc.apply(this, args);
-                    return result;
+                    return wrappedEndFunc.apply(this, args);
                 };
             }
 
