@@ -322,6 +322,8 @@ module.exports.filterTrace = function filterTrace(traceObject, ignoredKeys) {
         return (typeof x === 'object') && x !== null;
     }
 
+    const isString = x => typeof x === 'string';
+
     /**
      * Tests if a key is to be ignored or not.
      * @param {string} key a key in an object or hash map
@@ -350,14 +352,32 @@ module.exports.filterTrace = function filterTrace(traceObject, ignoredKeys) {
      * @returns {Object} filtered object
      */
     function filterObject(obj) {
+        if (!isObject(obj)) {
+            return obj;
+        }
+
         const keys = Object
             .keys(obj)
             .filter(isNotIgnored);
 
-        const primitive = keys.filter(k => !isObject(obj[k]));
+        const primitive = keys.filter(k => !isObject(obj[k]) && !isString(obj[k]));
         const objects = keys
             .filter(k => isObject(obj[k]))
             .map(k => ({ [k]: filterObject(obj[k]) }));
+
+        // trying to JSON load strings to filter sensitive data
+        keys.filter(k => isString(obj[k])).forEach((k) => {
+            try {
+                const subObj = JSON.parse(obj[k]);
+                if (subObj && isObject(subObj)) {
+                    objects.push({ [k]: filterObject(subObj) });
+                } else {
+                    primitive.push(k);
+                }
+            } catch (e) {
+                primitive.push(k);
+            }
+        });
 
         return Object.assign({},
             primitive.reduce((sum, key) => Object.assign({}, sum, { [key]: obj[key] }), {}),
