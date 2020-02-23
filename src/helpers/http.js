@@ -50,9 +50,9 @@ function resolveHttpPromise(httpEvent, resolveFunction, startTime) {
  */
 function setJsonPayload(httpEvent, key, data) {
     try {
-        const payload = JSON.parse(data);
+        JSON.parse(data);
         eventInterface.addToMetadata(httpEvent, {}, {
-            [key]: payload,
+            [key]: data,
         });
     } catch (err) {
         utils.debugLog(`Could not parse JSON ${key} in http`);

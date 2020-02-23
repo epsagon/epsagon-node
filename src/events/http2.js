@@ -86,9 +86,6 @@ function httpWrapper(wrappedFunction, authority) {
                 });
         } catch (error) {
             tracer.addException(error);
-            if (httpEvent) {
-                tracer.addEvent(httpEvent);
-            }
             return wrappedFunction.apply(this, [headers, options]);
         }
 
