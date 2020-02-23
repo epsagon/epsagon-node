@@ -3,7 +3,6 @@
  */
 
 const uuid4 = require('uuid4');
-const uuidToHex = require('uuid-to-hex');
 const http = require('http');
 const https = require('https');
 const urlLib = require('url');
@@ -15,43 +14,17 @@ const eventInterface = require('../event.js');
 const errorCode = require('../proto/error_code_pb.js');
 const config = require('../config.js');
 const moduleUtils = require('./module_utils.js');
-const { isBlacklistURL, isBlacklistHeader } = require('.././helpers/events');
+const { isBlacklistURL, isBlacklistHeader } = require('../helpers/events');
+const {
+    isURLIgnoredByUser,
+    resolveHttpPromise,
+    USER_AGENTS_BLACKLIST,
+    URL_BLACKLIST,
+    generateEpsagonTraceId,
+    updateAPIGateway,
+    setJsonPayload,
+} = require('../helpers/http');
 
-const URL_BLACKLIST = {
-    'tc.epsagon.com': 'endsWith',
-    'googleapis.com': 'endsWith',
-    'amazonaws.com':
-        (url, pattern) => url.endsWith(pattern) &&
-            (url.indexOf('.execute-api.') === -1) &&
-            (url.indexOf('.es.') === -1) &&
-            (url.indexOf('.elb.') === -1) &&
-            (url.indexOf('.appsync-api.') === -1),
-    '127.0.0.1': (url, pattern, path) => (url === pattern) && path.startsWith('/2018-06-01/runtime/invocation/'),
-    '169.254.169.254': 'startsWith', // EC2 document ip. Have better filtering in the future
-};
-
-const USER_AGENTS_BLACKLIST = ['openwhisk-client-js'];
-
-/**
- * Checks if a URL is in the user-defined blacklist.
- * @param {string} url The URL to check
- * @returns {boolean} True if it is in the user-defined blacklist, False otherwise.
- */
-function isURLIgnoredByUser(url) {
-    return config.getConfig().urlPatternsToIgnore.some(pattern => url.includes(pattern));
-}
-
-
-/**
- * Set the duration of the event, and resolves the promise using the given function.
- * @param {object} httpEvent The current event
- * @param {Function} resolveFunction Function that will be used to resolve the promise
- * @param {integer} startTime The time the event started at
- */
-function resolveHttpPromise(httpEvent, resolveFunction, startTime) {
-    httpEvent.setDuration(utils.createDurationTimestamp(startTime));
-    resolveFunction();
-}
 
 /**
  * Builds the HTTP Params array
@@ -139,17 +112,12 @@ function httpWrapper(wrappedFunction) {
                 return wrappedFunction.apply(this, [a, b, c]);
             }
             if (isBlacklistHeader(headers, USER_AGENTS_BLACKLIST)) {
-                utils.debugLog(`filtered blacklist headers ${JSON.stringify(headers)}`);
+                utils.debugLog('filtered blacklist headers headers');
                 return wrappedFunction.apply(this, [a, b, c]);
             }
 
             // Inject header to support tracing over HTTP requests to opentracing monitored code
-            const traceId = uuid4();
-            const hexTraceId = uuidToHex(traceId);
-            const spanId = uuidToHex(uuid4()).slice(16);
-            const parentSpanId = uuidToHex(uuid4()).slice(16);
-
-            const epsagonTraceId = `${hexTraceId}:${spanId}:${parentSpanId}:1`;
+            const epsagonTraceId = generateEpsagonTraceId();
             headers['epsagon-trace-id'] = epsagonTraceId;
 
             const agent = (
@@ -170,7 +138,11 @@ function httpWrapper(wrappedFunction) {
             );
             protocol = protocol.slice(0, -1);
 
-            const body = (options && options.body) || '';
+            const body = (
+                options &&
+                options.body &&
+                (options.body instanceof String || options.body instanceof Buffer)
+            ) ? options.body : '';
             const method = (options && options.method) || 'GET';
 
             const resource = new serverlessEvent.Resource([
@@ -199,8 +171,12 @@ function httpWrapper(wrappedFunction) {
                 }, {
                     path,
                     request_headers: headers,
+                });
+            if (body) {
+                eventInterface.addToMetadata(httpEvent, {}, {
                     request_body: body,
                 });
+            }
 
             const patchedCallback = (res) => {
                 let metadataFields = {};
@@ -227,13 +203,7 @@ function httpWrapper(wrappedFunction) {
                     });
                 }
 
-                if ('x-amzn-requestid' in res.headers) {
-                    // This is a request to AWS API Gateway
-                    resource.setType('api_gateway');
-                    eventInterface.addToMetadata(httpEvent, {
-                        request_trace_id: res.headers['x-amzn-requestid'],
-                    });
-                }
+                updateAPIGateway(res.headers, httpEvent);
 
                 if (callback) {
                     callback(res);
@@ -256,12 +226,31 @@ function httpWrapper(wrappedFunction) {
                             (args[0] instanceof String) || (args[0] instanceof Buffer)
                         )
                     ) {
-                        eventInterface.addToMetadata(
-                            httpEvent, {},
-                            { request_body: args[0].toString() }
-                        );
+                        setJsonPayload(httpEvent, 'request_body', args[0]);
                     }
                     return wrappedWriteFunc.apply(this, args);
+                };
+            }
+
+            /**
+             * Wraps 'end' method in a request to terminate the request writing
+             * @param {Function} wrappedEndFunc The wrapped end function
+             * @returns {Function} The wrapped function
+             */
+            function endWrapper(wrappedEndFunc) { // eslint-disable-line no-inner-declarations
+                return function internalEndWrapper(...args) {
+                    try {
+                        if (
+                            (!body || body === '') && args[0] && (
+                                (args[0] instanceof String) || (args[0] instanceof Buffer)
+                            )
+                        ) {
+                            setJsonPayload(httpEvent, 'request_body', args[0]);
+                        }
+                    } catch (err) {
+                        utils.debugLog('Could not parse request body in end wrapper');
+                    }
+                    return wrappedEndFunc.apply(this, args);
                 };
             }
 
@@ -279,13 +268,17 @@ function httpWrapper(wrappedFunction) {
                         // eslint-disable-next-line no-underscore-dangle
                         reqPrototype.__epsagonPatched = true;
                         shimmer.wrap(reqPrototype, 'write', WriteWrapper);
+                        shimmer.wrap(reqPrototype, 'end', endWrapper);
                     }
                 } catch (err) {
                     // In some libs it might not be possible to hook on write
                 }
             }
 
+
             const responsePromise = new Promise((resolve) => {
+                let data = '';
+
                 let isTimeout = false;
                 clientRequest.on('timeout', () => {
                     isTimeout = true;
@@ -316,8 +309,11 @@ function httpWrapper(wrappedFunction) {
                     resolveHttpPromise(httpEvent, resolve, startTime);
                 });
 
-                clientRequest.on('response', () => {
-                    resolveHttpPromise(httpEvent, resolve, startTime);
+                clientRequest.on('response', (res) => {
+                    res.on('data', (chunk) => { data += chunk; });
+                    res.on('end', () => {
+                        setJsonPayload(httpEvent, 'response_body', data);
+                    });
                 });
             }).catch((err) => {
                 tracer.addException(err);
