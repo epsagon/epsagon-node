@@ -10,6 +10,7 @@ const eventInterface = require('./event.js');
 const event = require('./proto/event_pb.js');
 const tryRequire = require('./try_require.js');
 const errorCode = require('./proto/error_code_pb.js');
+const moduleUtils = require('./events/module_utils.js');
 
 // Requiring patcher to instrument modules
 const patcher = require('./patcher.js'); // eslint-disable-line no-unused-vars
@@ -48,3 +49,4 @@ module.exports.init = tracer.initTrace;
 module.exports.disable = tracer.disable;
 
 module.exports.enable = tracer.enable;
+module.exports.moduleUtils = moduleUtils;
