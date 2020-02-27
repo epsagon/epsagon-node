@@ -109,7 +109,9 @@ function wrapNatsPublishFunction(original, serverHostname, jsonConnectProperty) 
             } else if (msgJsonStringify && msgJsonStringify !== NATS_TYPES.badMessage) {
                 responseMetadata.msg = msgJsonStringify;
             }
-            responseMetadata.server_host_name = serverHostname;
+            if (serverHostname) {
+                responseMetadata.server_host_name = serverHostname;
+            }
             const promise = new Promise((resolve) => {
                 patchedCallback = () => {
                     eventInterface.finalizeEvent(
