@@ -138,7 +138,7 @@ Support for Express, Hapi, and other frameworks is done through [epsagon-framewo
 ## Optional instrumentations
 An environment variable must be added to start tracing the following libraries:
 
-dns: `EPSAGON_DNS_INSTRUMENTATION = true`
+dns: `EPSAGON_DNS_INSTRUMENTATION = TRUE`
 
 NATS: `EPSAGON_PROPAGATE_NATS_ID = TRUE` Propagate Nats Identifier for JSON-based messages.
 
