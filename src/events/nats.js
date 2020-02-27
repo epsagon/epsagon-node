@@ -3,6 +3,7 @@
  * @fileoverview Instrumentation for nats library.
  */
 const shimmer = require('shimmer');
+const uuid4 = require('uuid4');
 const tracer = require('../tracer.js');
 const eventInterface = require('../event.js');
 const moduleUtils = require('./module_utils.js');
@@ -55,6 +56,9 @@ const getPublishParams = (subject, msg, opt_reply, opt_callback, jsonConnectProp
         opt_callback_internal = opt_reply;
         opt_reply_internal = undefined;
     }
+    if (jsonConnectProperty && (process.env.EPSAGON_PROPAGATE_NATS_ID || '').toUpperCase() === 'TRUE') {
+        msg_internal.epsagon_id = uuid4();
+    }
     if (!Buffer.isBuffer(msg_internal)) {
         if (jsonConnectProperty) {
             try {
@@ -93,7 +97,7 @@ function wrapNatsPublishFunction(original, serverHostname, jsonConnectProperty) 
         try {
             const { slsEvent: natsPublishEvent, startTime } = eventInterface.initializeEvent(
                 NATS_TYPES.name,
-                serverHostname,
+                subject,
                 'publish',
                 NATS_TYPES.name
             );
@@ -105,6 +109,7 @@ function wrapNatsPublishFunction(original, serverHostname, jsonConnectProperty) 
             } else if (msgJsonStringify && msgJsonStringify !== NATS_TYPES.badMessage) {
                 responseMetadata.msg = msgJsonStringify;
             }
+            responseMetadata.server_host_name = serverHostname;
             const promise = new Promise((resolve) => {
                 patchedCallback = () => {
                     eventInterface.finalizeEvent(

@@ -140,6 +140,9 @@ An environment variable must be added to start tracing the following libraries:
 
 dns: `EPSAGON_DNS_INSTRUMENTATION = true`
 
+NATS: `EPSAGON_PROPAGATE_NATS_ID = TRUE` Propagate Nats Identifier for JSON-based messages.
+
+
 ## Copyright
 
 Provided under the MIT license. See LICENSE for details.
