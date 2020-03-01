@@ -139,15 +139,21 @@ module.exports.initializeEvent = function initializeEvent(resourceType, name, op
  * @param {number} startTime Event start time.
  * @param {Error} error Callback error.
  * @param {string[] | Object[] | Object} metadata Callback metadata.
+ * @param {string[] | Object[] | Object} payload Payload(Will only be added when
+ *  metaDataOnly=FALSE).
  */
-module.exports.finalizeEvent = function finalizeEvent(slsEvent, startTime, error, metadata) {
+module.exports.finalizeEvent = function finalizeEvent(
+    slsEvent,
+    startTime,
+    error,
+    metadata = {},
+    payload = {}
+) {
     try {
         if (error) {
             this.setException(slsEvent, error);
         }
-        if (metadata) {
-            this.addToMetadata(slsEvent, metadata);
-        }
+        this.addToMetadata(slsEvent, metadata, payload);
         slsEvent.setDuration(utils.createDurationTimestamp(startTime));
     } catch (err) {
         tracer.addException(err);
