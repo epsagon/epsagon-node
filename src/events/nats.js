@@ -37,6 +37,7 @@ const getPublishParams = (subject, msg, opt_reply, opt_callback, jsonConnectProp
     let opt_reply_internal = opt_reply;
     let opt_callback_internal = opt_callback;
     let msgJsonStringify;
+    let epsagon_id;
     if (typeof subject_internal === 'function') {
         opt_callback_internal = subject_internal;
         subject_internal = undefined;
@@ -56,20 +57,25 @@ const getPublishParams = (subject, msg, opt_reply, opt_callback, jsonConnectProp
         opt_callback_internal = opt_reply;
         opt_reply_internal = undefined;
     }
-    if (jsonConnectProperty && (process.env.EPSAGON_PROPAGATE_NATS_ID || '').toUpperCase() === 'TRUE') {
-        msg_internal.epsagon_id = uuid4();
+    if (jsonConnectProperty && msg_internal && typeof msg_internal === 'object' &&
+        (process.env.EPSAGON_PROPAGATE_NATS_ID || '').toUpperCase() === 'TRUE') {
+        epsagon_id = uuid4();
+        msg_internal.epsagon_id = epsagon_id;
     }
-    if (!Buffer.isBuffer(msg_internal)) {
-        if (jsonConnectProperty) {
-            try {
-                msgJsonStringify = JSON.stringify(msg_internal);
-            } catch (e) {
-                msgJsonStringify = NATS_TYPES.badMessage;
-            }
+    if (!Buffer.isBuffer(msg_internal) && jsonConnectProperty) {
+        try {
+            msgJsonStringify = JSON.stringify(msg_internal);
+        } catch (e) {
+            msgJsonStringify = NATS_TYPES.badMessage;
         }
     }
     return {
-        subject_internal, msg_internal, msgJsonStringify, opt_reply_internal, opt_callback_internal,
+        subject_internal,
+        msg_internal,
+        msgJsonStringify,
+        opt_reply_internal,
+        opt_callback_internal,
+        epsagon_id,
     };
 };
 
@@ -88,6 +94,7 @@ function wrapNatsPublishFunction(original, serverHostname, jsonConnectProperty) 
             msgJsonStringify,
             opt_reply_internal,
             opt_callback_internal,
+            epsagon_id,
         } = getPublishParams(subject, msg, opt_reply, opt_callback, jsonConnectProperty);
         let patchedCallback = opt_callback_internal;
         // in case of publish call is a part of request call.
@@ -104,13 +111,17 @@ function wrapNatsPublishFunction(original, serverHostname, jsonConnectProperty) 
             const responseMetadata = {
                 subject: subject_internal,
             };
+            const payload = {};
             if (!jsonConnectProperty) {
-                responseMetadata.msg = msg_internal;
+                payload.msg = msg_internal;
             } else if (msgJsonStringify && msgJsonStringify !== NATS_TYPES.badMessage) {
-                responseMetadata.msg = msgJsonStringify;
+                payload.msg = msgJsonStringify;
             }
             if (serverHostname) {
                 responseMetadata.server_host_name = serverHostname;
+            }
+            if (epsagon_id) {
+                responseMetadata.epsagon_id = epsagon_id;
             }
             const promise = new Promise((resolve) => {
                 patchedCallback = () => {
@@ -118,7 +129,8 @@ function wrapNatsPublishFunction(original, serverHostname, jsonConnectProperty) 
                         natsPublishEvent,
                         startTime,
                         null,
-                        responseMetadata
+                        responseMetadata,
+                        payload
                     );
                     resolve();
                     if (opt_callback_internal) {
