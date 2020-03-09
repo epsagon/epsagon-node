@@ -8,6 +8,7 @@ const serverlessEvent = require('../proto/event_pb.js');
 const eventInterface = require('../event.js');
 const errorCode = require('../proto/error_code_pb.js');
 const moduleUtils = require('./module_utils.js');
+const epsagonConfig = require('../config.js');
 
 const URL_SPLIT_STRING = 'googleapis.com/';
 const BIG_QUERY = 'bigquery';
@@ -99,13 +100,60 @@ const getMessageData = (reqOptsMessages, index) => {
         reqOptsMessages.length > index &&
         reqOptsMessages[index].data
     ) {
-        const messageData = JSON.parse(`${reqOptsMessages[index].data}`);
-        if (typeof messageData === 'object') {
-            return messageData;
+        try {
+            const messageData = JSON.parse(`${reqOptsMessages[index].data}`);
+            if (typeof messageData === 'object') {
+                return messageData;
+            }
+        } catch (err) {
+            return null;
         }
     }
     return null;
 };
+
+const handlePublishMethod = (messages, config) => {
+    const messageIds = messages && messages.messageIds ? messages.messageIds : messages;
+    if (Array.isArray(messageIds)) {
+        const reqOptsMessages = config.reqOpts && config.reqOpts.messages;
+        const parsedMessages = messageIds.reduce((acc, messageId, currentIndex) => {
+            let message = { id: messageId };
+            // add message only when METADATA_ONLY === FALSE
+            if (!epsagonConfig.getConfig().metadataOnly) {
+                const messageData = getMessageData(reqOptsMessages, currentIndex);
+                if (messageData) {
+                    message = Object.assign(message, messageData);
+                }
+            }
+
+            acc.push(message);
+            return acc;
+        }, []);
+        return parsedMessages;
+    }
+    return null;
+};
+
+const getMessagesFromResponse = (res) => {
+    // eslint-disable-next-line no-debugger
+    debugger;
+    if (res && res.receivedMessages) {
+        return res.receivedMessages.reduce((acc, current) => {
+            let messageObject = { messageId: current.message.messageId };
+            const messageData = (current.message.data && JSON.parse(`${current.message.data}`));
+            // add message only when METADATA_ONLY === FALSE
+            if (!epsagonConfig.getConfig().metadataOnly) {
+                if (messageData && typeof messageData === 'object') {
+                    messageObject = Object.assign(messageObject, messageData);
+                }
+            }
+            acc.push(messageObject);
+            return acc;
+        }, []);
+    }
+    return null;
+};
+
 
 /**
  * Wrap pubsub request function.
@@ -133,22 +181,10 @@ function wrapPubSubRequestFunction(original) {
                     const responseMetadata = {};
                     switch (arg2 && config.method) {
                     case 'publish': {
-                        const messageIds = arg2.messageIds ? arg2.messageIds : arg2;
-                        if (Array.isArray(messageIds)) {
-                            const reqOptsMessages = config.reqOpts && config.reqOpts.messages;
-                            const messages = messageIds.reduce((acc, messageId, currentIndex) => {
-                                let message = { id: messageId };
-                                const messageData = getMessageData(reqOptsMessages, currentIndex);
-                                if (messageData) {
-                                    message = Object.assign(message, messageData);
-                                }
-                                acc.push(message);
-                                return acc;
-                            }, []);
-                            responseMetadata.messages = messages;
-                            if (messageIds.length) {
-                                pubsubEvent.setId(messageIds[0]);
-                            }
+                        const messages = handlePublishMethod(arg2, config);
+                        responseMetadata.messages = messages;
+                        if (messages.length) {
+                            pubsubEvent.setId(messages[0].id);
                         }
                         break;
                     }
@@ -213,16 +249,8 @@ function wrapPubSubPullFunction(original) {
             );
             const patchedCallback = (err, res, promiseResolve) => {
                 const responseMetadata = {};
-                if (res && res.receivedMessages) {
-                    const receivedMessages = res.receivedMessages.reduce((acc, current) => {
-                        let messageObject = { messageId: current.message.messageId };
-                        const messageData = (current.message.data && JSON.parse(`${current.message.data}`));
-                        if (messageData && typeof messageData === 'object') {
-                            messageObject = Object.assign(messageObject, messageData);
-                        }
-                        acc.push(messageObject);
-                        return acc;
-                    }, []);
+                const receivedMessages = getMessagesFromResponse(res);
+                if (receivedMessages) {
                     responseMetadata.receivedMessages = receivedMessages;
                 }
                 eventInterface.finalizeEvent(pubsubEvent, startTime, err, responseMetadata);
@@ -290,3 +318,7 @@ module.exports = {
         );
     },
 };
+
+module.exports.getMessageData = getMessageData;
+module.exports.handlePublishMethod = handlePublishMethod;
+module.exports.getMessagesFromResponse = getMessagesFromResponse;
