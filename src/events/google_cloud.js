@@ -112,34 +112,39 @@ const getMessageData = (reqOptsMessages, index) => {
     return null;
 };
 
-const handlePublishMethod = (messages, config) => {
+const getMessageIdsArray = (messages) => {
     const messageIds = messages && messages.messageIds ? messages.messageIds : messages;
     if (Array.isArray(messageIds)) {
-        const reqOptsMessages = config.reqOpts && config.reqOpts.messages;
-        const parsedMessages = messageIds.reduce((acc, messageId, currentIndex) => {
-            let message = { id: messageId };
-            // add message only when METADATA_ONLY === FALSE
-            if (!epsagonConfig.getConfig().metadataOnly) {
-                const messageData = getMessageData(reqOptsMessages, currentIndex);
-                if (messageData) {
-                    message = Object.assign(message, messageData);
-                }
-            }
+        return messageIds;
+    }
+    return null;
+};
 
+const handlePublishMethod = (messages, config) => {
+    const messageIdsArray = getMessageIdsArray(messages);
+    if (messageIdsArray) {
+        const reqOptsMessages = config.reqOpts && config.reqOpts.messages;
+        const parsedMessages = messageIdsArray.reduce((acc, messageId, currentIndex) => {
+            let message = { id: messageId };
+            const messageData = getMessageData(reqOptsMessages, currentIndex);
+            if (messageData) {
+                message = Object.assign(message, messageData);
+            }
             acc.push(message);
             return acc;
         }, []);
-        return parsedMessages;
+        return { messages: parsedMessages, messageIdsArray };
     }
     return null;
 };
 
 const getMessagesFromResponse = (res) => {
-    // eslint-disable-next-line no-debugger
-    debugger;
     if (res && res.receivedMessages) {
-        return res.receivedMessages.reduce((acc, current) => {
-            let messageObject = { messageId: current.message.messageId };
+        const messageIdsArray = [];
+        const messages = res.receivedMessages.reduce((acc, current) => {
+            const { messageId } = current.message;
+            messageIdsArray.push(messageId);
+            let messageObject = { messageId };
             const messageData = (current.message.data && JSON.parse(`${current.message.data}`));
             // add message only when METADATA_ONLY === FALSE
             if (!epsagonConfig.getConfig().metadataOnly) {
@@ -150,6 +155,7 @@ const getMessagesFromResponse = (res) => {
             acc.push(messageObject);
             return acc;
         }, []);
+        return { messages, messageIdsArray };
     }
     return null;
 };
@@ -179,12 +185,18 @@ function wrapPubSubRequestFunction(original) {
                         pubsubEvent.getResource().setName(requestFunctionThis.projectId);
                     }
                     const responseMetadata = {};
+                    const payload = {};
                     switch (arg2 && config.method) {
                     case 'publish': {
-                        const messages = handlePublishMethod(arg2, config);
-                        responseMetadata.messages = messages;
-                        if (messages.length) {
-                            pubsubEvent.setId(messages[0].id);
+                        const { messages, messageIdsArray } = handlePublishMethod(arg2, config);
+                        if (messageIdsArray) {
+                            responseMetadata.messageIds = messageIdsArray;
+                            if (messageIdsArray.length) {
+                                pubsubEvent.setId(messageIdsArray[0]);
+                            }
+                        }
+                        if (messages) {
+                            payload.messages = messages;
                         }
                         break;
                     }
@@ -213,7 +225,13 @@ function wrapPubSubRequestFunction(original) {
                     default:
                         break;
                     }
-                    eventInterface.finalizeEvent(pubsubEvent, startTime, err, responseMetadata);
+                    eventInterface.finalizeEvent(
+                        pubsubEvent,
+                        startTime,
+                        err,
+                        responseMetadata,
+                        payload
+                    );
                     resolve();
                     if (callback) {
                         callback(err, arg2, ...arg3);
@@ -249,11 +267,24 @@ function wrapPubSubPullFunction(original) {
             );
             const patchedCallback = (err, res, promiseResolve) => {
                 const responseMetadata = {};
-                const receivedMessages = getMessagesFromResponse(res);
-                if (receivedMessages) {
-                    responseMetadata.receivedMessages = receivedMessages;
+                const payload = {};
+                const { receivedMessages, messageIdsArray } = getMessagesFromResponse(res);
+                if (messageIdsArray) {
+                    responseMetadata.messageIds = messageIdsArray;
+                    if (messageIdsArray.length) {
+                        pubsubEvent.setId(messageIdsArray[0]);
+                    }
                 }
-                eventInterface.finalizeEvent(pubsubEvent, startTime, err, responseMetadata);
+                if (receivedMessages) {
+                    payload.receivedMessages = receivedMessages;
+                }
+                eventInterface.finalizeEvent(
+                    pubsubEvent,
+                    startTime,
+                    err,
+                    responseMetadata,
+                    payload
+                );
                 if (promiseResolve) {
                     promiseResolve();
                 }

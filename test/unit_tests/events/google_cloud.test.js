@@ -24,7 +24,7 @@ describe('Google cloud events tests', () => {
         });
     });
 
-    it('Handle publish method should return array of messasges on valid input', () => {
+    it('Handle publish method should return array of messasges and array of ids on valid input', () => {
         // Arrange
         const mockMessages = { messageIds: ['1027170925339701'] };
         const mockConfig = {
@@ -38,7 +38,7 @@ describe('Google cloud events tests', () => {
                 }],
             },
         };
-        const expectedOutput = [{ id: '1027170925339701', message: 'test' }];
+        const expectedOutput = { messages: [{ id: '1027170925339701', message: 'test' }], messageIdsArray: ['1027170925339701'] };
         // Act
         const messageDataResponse = handlePublishMethod(mockMessages, mockConfig);
         // Assert
@@ -74,7 +74,7 @@ describe('Google cloud events tests', () => {
             }
         );
     });
-    it('Getting messages from pull response should return array of messages when messages arg is valid', () => {
+    it('Getting messages from pull response should return array of messages and array of ids when messages arg is valid', () => {
         // Arrange
         const mockRes = {
             receivedMessages: [{
@@ -97,7 +97,10 @@ describe('Google cloud events tests', () => {
         };
 
 
-        const expectedOutput = [{ message: 'test', messageId: '1027170925339701' }, { messageId: '1027170925339702' }];
+        const expectedOutput = {
+            messages: [{ message: 'test', messageId: '1027170925339701' }, { messageId: '1027170925339702' }],
+            messageIdsArray: ['1027170925339701', '1027170925339702'],
+        };
         // Act
         const messageDataResponse = getMessagesFromResponse(mockRes);
         // Assert
