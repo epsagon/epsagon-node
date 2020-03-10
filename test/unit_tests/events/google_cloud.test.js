@@ -44,31 +44,14 @@ describe('Google cloud events tests', () => {
         // Assert
         expect(messageDataResponse).to.deep.equal(expectedOutput);
     });
-    it('Handle publish method should return null when messages is not array', () => {
+    it('Handle publish method should return empty object when messages is not array', () => {
         [undefined, null, {}].forEach(
             (input) => {
                 // Arrange
-                const expectedOutput = null;
+                const expectedOutput = {};
                 const mockMessages = input;
                 // Act
                 const messageDataResponse = handlePublishMethod(mockMessages, 'not-relveant-for-test');
-                // Assert
-                expect(messageDataResponse).to.equal(expectedOutput);
-            }
-        );
-    });
-    it('Handle publish method should return null when messages is valid but ReqOptsMessages is invalid', () => {
-        [undefined, [], [{}], null, { reqOpts: { messages: null } }].forEach(
-            (input) => {
-                // Arrange
-                const expectedOutput = null;
-                const mockMessages = { messageIds: ['1027170925339701'] };
-                const mockReqOptsMessages = input;
-                // Act
-                const messageDataResponse = getMessagesFromResponse(
-                    mockMessages,
-                    mockReqOptsMessages
-                );
                 // Assert
                 expect(messageDataResponse).to.deep.equal(expectedOutput);
             }
@@ -106,16 +89,16 @@ describe('Google cloud events tests', () => {
         // Assert
         expect(messageDataResponse).to.deep.equal(expectedOutput);
     });
-    it('Getting messages from pull response should return null when res is not valid', () => {
+    it('Getting messages from pull response should return empty object when res is not valid', () => {
         [undefined, [], [{}], null, { receivedMessages: null }].forEach(
             (input) => {
                 // Arrange
-                const expectedOutput = null;
+                const expectedOutput = {};
                 const mockReqOptsMessages = input;
                 // Act
                 const messageDataResponse = getMessagesFromResponse(mockReqOptsMessages);
                 // Assert
-                expect(messageDataResponse).to.equal(expectedOutput);
+                expect(messageDataResponse).to.deep.equal(expectedOutput);
             }
         );
     });

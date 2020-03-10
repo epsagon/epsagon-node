@@ -8,7 +8,6 @@ const serverlessEvent = require('../proto/event_pb.js');
 const eventInterface = require('../event.js');
 const errorCode = require('../proto/error_code_pb.js');
 const moduleUtils = require('./module_utils.js');
-const epsagonConfig = require('../config.js');
 
 const URL_SPLIT_STRING = 'googleapis.com/';
 const BIG_QUERY = 'bigquery';
@@ -135,7 +134,7 @@ const handlePublishMethod = (messages, config) => {
         }, []);
         return { messages: parsedMessages, messageIdsArray };
     }
-    return null;
+    return {};
 };
 
 const getMessagesFromResponse = (res) => {
@@ -154,7 +153,7 @@ const getMessagesFromResponse = (res) => {
         }, []);
         return { messages, messageIdsArray };
     }
-    return null;
+    return {};
 };
 
 
@@ -265,15 +264,15 @@ function wrapPubSubPullFunction(original) {
             const patchedCallback = (err, res, promiseResolve) => {
                 const responseMetadata = {};
                 const payload = {};
-                const { receivedMessages, messageIdsArray } = getMessagesFromResponse(res);
+                const { messages, messageIdsArray } = getMessagesFromResponse(res);
                 if (messageIdsArray) {
                     responseMetadata.messageIds = messageIdsArray;
                     if (messageIdsArray.length) {
                         pubsubEvent.setId(messageIdsArray[0]);
                     }
                 }
-                if (receivedMessages) {
-                    payload.receivedMessages = receivedMessages;
+                if (messages) {
+                    payload.receivedMessages = messages;
                 }
                 eventInterface.finalizeEvent(
                     pubsubEvent,
