@@ -146,11 +146,8 @@ const getMessagesFromResponse = (res) => {
             messageIdsArray.push(messageId);
             let messageObject = { messageId };
             const messageData = (current.message.data && JSON.parse(`${current.message.data}`));
-            // add message only when METADATA_ONLY === FALSE
-            if (!epsagonConfig.getConfig().metadataOnly) {
-                if (messageData && typeof messageData === 'object') {
-                    messageObject = Object.assign(messageObject, messageData);
-                }
+            if (messageData && typeof messageData === 'object') {
+                messageObject = Object.assign(messageObject, messageData);
             }
             acc.push(messageObject);
             return acc;
