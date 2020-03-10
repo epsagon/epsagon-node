@@ -99,13 +99,63 @@ const getMessageData = (reqOptsMessages, index) => {
         reqOptsMessages.length > index &&
         reqOptsMessages[index].data
     ) {
-        const messageData = JSON.parse(`${reqOptsMessages[index].data}`);
-        if (typeof messageData === 'object') {
-            return messageData;
+        try {
+            const messageData = JSON.parse(`${reqOptsMessages[index].data}`);
+            if (typeof messageData === 'object') {
+                return messageData;
+            }
+        } catch (err) {
+            return null;
         }
     }
     return null;
 };
+
+const getMessageIdsArray = (messages) => {
+    const messageIds = messages && messages.messageIds ? messages.messageIds : messages;
+    if (Array.isArray(messageIds)) {
+        return messageIds;
+    }
+    return null;
+};
+
+const handlePublishMethod = (messages, config) => {
+    const messageIdsArray = getMessageIdsArray(messages);
+    if (messageIdsArray) {
+        const reqOptsMessages = config.reqOpts && config.reqOpts.messages;
+        const parsedMessages = messageIdsArray.reduce((acc, messageId, currentIndex) => {
+            let message = { id: messageId };
+            const messageData = getMessageData(reqOptsMessages, currentIndex);
+            if (messageData) {
+                message = Object.assign(message, messageData);
+            }
+            acc.push(message);
+            return acc;
+        }, []);
+        return { messages: parsedMessages, messageIdsArray };
+    }
+    return {};
+};
+
+const getMessagesFromResponse = (res) => {
+    if (res && res.receivedMessages) {
+        const messageIdsArray = [];
+        const messages = res.receivedMessages.reduce((acc, current) => {
+            const { messageId } = current.message;
+            messageIdsArray.push(messageId);
+            let messageObject = { messageId };
+            const messageData = (current.message.data && JSON.parse(`${current.message.data}`));
+            if (messageData && typeof messageData === 'object') {
+                messageObject = Object.assign(messageObject, messageData);
+            }
+            acc.push(messageObject);
+            return acc;
+        }, []);
+        return { messages, messageIdsArray };
+    }
+    return {};
+};
+
 
 /**
  * Wrap pubsub request function.
@@ -131,24 +181,18 @@ function wrapPubSubRequestFunction(original) {
                         pubsubEvent.getResource().setName(requestFunctionThis.projectId);
                     }
                     const responseMetadata = {};
+                    const payload = {};
                     switch (arg2 && config.method) {
                     case 'publish': {
-                        const messageIds = arg2.messageIds ? arg2.messageIds : arg2;
-                        if (Array.isArray(messageIds)) {
-                            const reqOptsMessages = config.reqOpts && config.reqOpts.messages;
-                            const messages = messageIds.reduce((acc, messageId, currentIndex) => {
-                                let message = { id: messageId };
-                                const messageData = getMessageData(reqOptsMessages, currentIndex);
-                                if (messageData) {
-                                    message = Object.assign(message, messageData);
-                                }
-                                acc.push(message);
-                                return acc;
-                            }, []);
-                            responseMetadata.messages = messages;
-                            if (messageIds.length) {
-                                pubsubEvent.setId(messageIds[0]);
+                        const { messages, messageIdsArray } = handlePublishMethod(arg2, config);
+                        if (messageIdsArray) {
+                            responseMetadata.messageIds = messageIdsArray;
+                            if (messageIdsArray.length) {
+                                pubsubEvent.setId(messageIdsArray[0]);
                             }
+                        }
+                        if (messages) {
+                            payload.messages = messages;
                         }
                         break;
                     }
@@ -177,7 +221,13 @@ function wrapPubSubRequestFunction(original) {
                     default:
                         break;
                     }
-                    eventInterface.finalizeEvent(pubsubEvent, startTime, err, responseMetadata);
+                    eventInterface.finalizeEvent(
+                        pubsubEvent,
+                        startTime,
+                        err,
+                        responseMetadata,
+                        payload
+                    );
                     resolve();
                     if (callback) {
                         callback(err, arg2, ...arg3);
@@ -213,19 +263,24 @@ function wrapPubSubPullFunction(original) {
             );
             const patchedCallback = (err, res, promiseResolve) => {
                 const responseMetadata = {};
-                if (res && res.receivedMessages) {
-                    const receivedMessages = res.receivedMessages.reduce((acc, current) => {
-                        let messageObject = { messageId: current.message.messageId };
-                        const messageData = (current.message.data && JSON.parse(`${current.message.data}`));
-                        if (messageData && typeof messageData === 'object') {
-                            messageObject = Object.assign(messageObject, messageData);
-                        }
-                        acc.push(messageObject);
-                        return acc;
-                    }, []);
-                    responseMetadata.receivedMessages = receivedMessages;
+                const payload = {};
+                const { messages, messageIdsArray } = getMessagesFromResponse(res);
+                if (messageIdsArray) {
+                    responseMetadata.messageIds = messageIdsArray;
+                    if (messageIdsArray.length) {
+                        pubsubEvent.setId(messageIdsArray[0]);
+                    }
                 }
-                eventInterface.finalizeEvent(pubsubEvent, startTime, err, responseMetadata);
+                if (messages) {
+                    payload.receivedMessages = messages;
+                }
+                eventInterface.finalizeEvent(
+                    pubsubEvent,
+                    startTime,
+                    err,
+                    responseMetadata,
+                    payload
+                );
                 if (promiseResolve) {
                     promiseResolve();
                 }
@@ -290,3 +345,7 @@ module.exports = {
         );
     },
 };
+
+module.exports.getMessageData = getMessageData;
+module.exports.handlePublishMethod = handlePublishMethod;
+module.exports.getMessagesFromResponse = getMessagesFromResponse;
