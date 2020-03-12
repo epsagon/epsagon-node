@@ -1,3 +1,4 @@
+const zlib = require('zlib');
 const uuid4 = require('uuid4');
 const uuidToHex = require('uuid-to-hex');
 const config = require('../config.js');
@@ -17,6 +18,18 @@ const URL_BLACKLIST = {
     '127.0.0.1': (url, pattern, path) => (url === pattern) && path.startsWith('/2018-06-01/runtime/invocation/'),
     '169.254.169.254': 'startsWith', // EC2 document ip. Have better filtering in the future
 };
+
+
+// Brotli decompression exists since Node v10
+const ENCODING_FUNCTIONS = {
+    br: zlib.brotliDecompressSync,
+    brotli: zlib.brotliDecompressSync,
+    gzip: zlib.gunzipSync,
+    deflate: zlib.deflateSync,
+};
+
+// Whether to try and decode HTTP response
+const DECODE_HTTP = (process.env.EPSAGON_DECODE_HTTP || 'TRUE').toUpperCase() === 'TRUE';
 
 const USER_AGENTS_BLACKLIST = ['openwhisk-client-js'];
 
@@ -47,12 +60,21 @@ function resolveHttpPromise(httpEvent, resolveFunction, startTime) {
  * @param {object} httpEvent The current event
  * @param {string} key name in metadata
  * @param {string} data data to jsonify
+ * @param {string} encoding data encoding from the headers
  */
-function setJsonPayload(httpEvent, key, data) {
+function setJsonPayload(httpEvent, key, data, encoding) {
     try {
-        JSON.parse(data);
+        let jsonData = data;
+        if (DECODE_HTTP && ENCODING_FUNCTIONS[encoding]) {
+            try {
+                jsonData = ENCODING_FUNCTIONS[encoding](data);
+            } catch (err) {
+                utils.debugLog(`Could not parse ${encoding} ${key} in http`);
+            }
+        }
+        JSON.parse(jsonData);
         eventInterface.addToMetadata(httpEvent, {}, {
-            [key]: data,
+            [key]: jsonData.toString(),
         });
     } catch (err) {
         utils.debugLog(`Could not parse JSON ${key} in http`);

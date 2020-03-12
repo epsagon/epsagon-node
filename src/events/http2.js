@@ -99,8 +99,9 @@ function httpWrapper(wrappedFunction, authority) {
 
         try {
             const responsePromise = new Promise((resolve) => {
-                let data = '';
-                clientRequest.on('data', (chunk) => { data += chunk; });
+                const chunks = [];
+                let responseHeaders;
+                clientRequest.on('data', (chunk) => { chunks.push(chunk); });
 
                 clientRequest.once('error', (error) => {
                     eventInterface.setException(httpEvent, error);
@@ -113,16 +114,17 @@ function httpWrapper(wrappedFunction, authority) {
                 });
 
                 clientRequest.once('close', () => {
-                    setJsonPayload(httpEvent, 'response_body', data);
+                    setJsonPayload(httpEvent, 'response_body', Buffer.concat(chunks), responseHeaders['content-encoding']);
                     resolveHttpPromise(httpEvent, resolve, startTime);
                 });
 
                 clientRequest.once('response', (res) => {
                     updateAPIGateway(res, httpEvent);
+                    responseHeaders = extractHeaders(res);
                     eventInterface.addToMetadata(httpEvent, {
                         status: res[':status'],
                     }, {
-                        response_headers: extractHeaders(res),
+                        response_headers: responseHeaders,
                     });
                 });
             }).catch((err) => {

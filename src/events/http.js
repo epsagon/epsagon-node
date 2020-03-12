@@ -277,7 +277,7 @@ function httpWrapper(wrappedFunction) {
 
 
             const responsePromise = new Promise((resolve) => {
-                let data = '';
+                const chunks = [];
 
                 let isTimeout = false;
                 clientRequest.on('timeout', () => {
@@ -305,14 +305,11 @@ function httpWrapper(wrappedFunction) {
                     }
                 });
 
-                clientRequest.on('close', () => {
-                    resolveHttpPromise(httpEvent, resolve, startTime);
-                });
-
                 clientRequest.on('response', (res) => {
-                    res.on('data', (chunk) => { data += chunk; });
+                    res.on('data', (chunk) => { chunks.push(chunk); });
                     res.on('end', () => {
-                        setJsonPayload(httpEvent, 'response_body', data);
+                        setJsonPayload(httpEvent, 'response_body', Buffer.concat(chunks), res.headers['content-encoding']);
+                        resolveHttpPromise(httpEvent, resolve, startTime);
                     });
                 });
             }).catch((err) => {
