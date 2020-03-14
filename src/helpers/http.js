@@ -69,7 +69,7 @@ function setJsonPayload(httpEvent, key, data, encoding) {
             try {
                 jsonData = ENCODING_FUNCTIONS[encoding](data);
             } catch (err) {
-                utils.debugLog(`Could not parse ${encoding} ${key} in http`);
+                utils.debugLog(`Could decode ${key} with ${encoding} in http`);
             }
         }
         JSON.parse(jsonData);
