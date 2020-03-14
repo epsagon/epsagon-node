@@ -68,7 +68,7 @@ function httpWrapper(wrappedFunction, authority) {
             const epsagonTraceId = generateEpsagonTraceId();
             headers['epsagon-trace-id'] = epsagonTraceId; // eslint-disable-line no-param-reassign
 
-            const { slsEvent, eventStartTime } = eventInterface.initializeEvent(
+            const { slsEvent, startTime: eventStartTime } = eventInterface.initializeEvent(
                 'http',
                 hostname,
                 headers[':method'],

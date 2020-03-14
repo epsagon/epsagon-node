@@ -28,9 +28,6 @@ const ENCODING_FUNCTIONS = {
     deflate: zlib.deflateSync,
 };
 
-// Whether to try and decode HTTP response
-const DECODE_HTTP = (process.env.EPSAGON_DECODE_HTTP || 'TRUE').toUpperCase() === 'TRUE';
-
 const USER_AGENTS_BLACKLIST = ['openwhisk-client-js'];
 
 /**
@@ -65,7 +62,7 @@ function resolveHttpPromise(httpEvent, resolveFunction, startTime) {
 function setJsonPayload(httpEvent, key, data, encoding) {
     try {
         let jsonData = data;
-        if (DECODE_HTTP && ENCODING_FUNCTIONS[encoding]) {
+        if (config.getConfig().decodeHTTP && ENCODING_FUNCTIONS[encoding]) {
             try {
                 jsonData = ENCODING_FUNCTIONS[encoding](data);
             } catch (err) {
