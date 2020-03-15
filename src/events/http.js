@@ -14,6 +14,7 @@ const eventInterface = require('../event.js');
 const errorCode = require('../proto/error_code_pb.js');
 const config = require('../config.js');
 const moduleUtils = require('./module_utils.js');
+const { MAX_HTTP_VALUE_SIZE } = require('../consts.js');
 const { isBlacklistURL, isBlacklistHeader } = require('../helpers/events');
 const {
     isURLIgnoredByUser,
@@ -306,7 +307,12 @@ function httpWrapper(wrappedFunction) {
                 });
 
                 clientRequest.on('response', (res) => {
-                    res.on('data', (chunk) => { chunks.push(chunk); });
+                    res.on('data', (chunk) => {
+                        const totalSize = chunks.reduce((total, item) => item.length + total, 0);
+                        if (totalSize + chunk.length <= MAX_HTTP_VALUE_SIZE) {
+                            chunks.push(chunk);
+                        }
+                    });
                     res.on('end', () => {
                         setJsonPayload(httpEvent, 'response_body', Buffer.concat(chunks), res.headers['content-encoding']);
                         resolveHttpPromise(httpEvent, resolve, startTime);

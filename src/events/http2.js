@@ -7,6 +7,7 @@ const urlLib = require('url');
 const utils = require('../utils.js');
 const tracer = require('../tracer.js');
 const eventInterface = require('../event.js');
+const { MAX_HTTP_VALUE_SIZE } = require('../consts.js');
 const { isBlacklistURL, isBlacklistHeader } = require('../helpers/events');
 const {
     isURLIgnoredByUser,
@@ -101,7 +102,12 @@ function httpWrapper(wrappedFunction, authority) {
             const responsePromise = new Promise((resolve) => {
                 const chunks = [];
                 let responseHeaders;
-                clientRequest.on('data', (chunk) => { chunks.push(chunk); });
+                clientRequest.on('data', (chunk) => {
+                    const totalSize = chunks.reduce((total, item) => item.length + total, 0);
+                    if (totalSize + chunk.length <= MAX_HTTP_VALUE_SIZE) {
+                        chunks.push(chunk);
+                    }
+                });
 
                 clientRequest.once('error', (error) => {
                     eventInterface.setException(httpEvent, error);
