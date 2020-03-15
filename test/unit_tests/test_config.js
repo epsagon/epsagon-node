@@ -77,6 +77,11 @@ describe('tracer config tests', () => {
         expect(config.HTTP_ERR_CODE).to.be.equal(httpErrorStatusCode);
     });
 
+    it('setConfig: set decodeHTTP to false', () => {
+        config.setConfig({ decodeHTTP: false });
+        expect(config.getConfig()).to.contain({ decodeHTTP: false });
+    });
+
     it('setConfig: set custom sendTimeout', () => {
         const sendTimeout = 1000;
         config.setConfig({ sendTimeout });
