@@ -15,13 +15,13 @@ function publishWrapper(originalPublishFunc) {
 
         try {
             const { slsEvent: mqttEvent, startTime } = eventInterface.initializeEvent('MQTT',
-                this.options.host,
+                topic,
                 'publish',
                 'mqtt');
             const responseMetadata = {
                 region: this.options.region,
                 protocol: this.options.protocol,
-                topic,
+                host: this.options.host,
             };
             const payload = {
                 clientId: this.options.clientId,
@@ -79,7 +79,7 @@ function mqttClientWrapper(originalConstructorFunc) {
 
 module.exports = {
     /**
-   * Initializes the AWS IOT tracer.
+   * Initializes the AWS MQTT tracer.
    */
     init() {
         moduleUtils.patchModule(
