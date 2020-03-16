@@ -39,6 +39,7 @@ const config = {
     internalSampleRate: 1,
     sendOnlyErrors: (process.env.EPSAGON_SEND_TRACE_ON_ERROR || '').toUpperCase() === 'TRUE',
     sendTimeout: (Number(process.env.EPSAGON_SEND_TIMEOUT_SEC) || DEFAULT_TIMEOUT_SEC) * 1000.0,
+    decodeHTTP: (process.env.EPSAGON_DECODE_HTTP || 'TRUE').toUpperCase() === 'TRUE',
     /**
      * get isEpsagonPatchDisabled
      * @return {boolean} True if DISABLE_EPSAGON or DISABLE_EPSAGON_PATCH are set to TRUE, false
@@ -140,6 +141,11 @@ module.exports.setConfig = function setConfig(configData) {
     // User-defined HTTP minimum status code to be treated as an error.
     if (configData.httpErrorStatusCode) {
         module.exports.HTTP_ERR_CODE = configData.httpErrorStatusCode;
+    }
+
+    // Whether to decode HTTP responses (with gzip, brotli, etc.).
+    if (configData.decodeHTTP === false) {
+        config.decodeHTTP = configData.decodeHTTP;
     }
 
     if (configData.ignoredKeys) {
