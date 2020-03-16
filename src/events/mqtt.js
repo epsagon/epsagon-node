@@ -72,7 +72,7 @@ function mqttClientWrapper(originalConstructorFunc) {
         } catch (error) {
             tracer.addException(error);
         }
-        return mqttClient
+        return mqttClient;
     };
 }
 
