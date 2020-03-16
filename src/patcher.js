@@ -48,6 +48,6 @@ if (!config.getConfig().isEpsagonPatchDisabled) {
         googlePatcher,
         dnsPatcher,
         natsPatcher,
-        mqttPatcher
+        mqttPatcher,
     ].forEach(patch);
 }
