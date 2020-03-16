@@ -7,6 +7,7 @@ const urlLib = require('url');
 const utils = require('../utils.js');
 const tracer = require('../tracer.js');
 const eventInterface = require('../event.js');
+const { MAX_HTTP_VALUE_SIZE } = require('../consts.js');
 const { isBlacklistURL, isBlacklistHeader } = require('../helpers/events');
 const {
     isURLIgnoredByUser,
@@ -68,7 +69,7 @@ function httpWrapper(wrappedFunction, authority) {
             const epsagonTraceId = generateEpsagonTraceId();
             headers['epsagon-trace-id'] = epsagonTraceId; // eslint-disable-line no-param-reassign
 
-            const { slsEvent, eventStartTime } = eventInterface.initializeEvent(
+            const { slsEvent, startTime: eventStartTime } = eventInterface.initializeEvent(
                 'http',
                 hostname,
                 headers[':method'],
@@ -99,8 +100,14 @@ function httpWrapper(wrappedFunction, authority) {
 
         try {
             const responsePromise = new Promise((resolve) => {
-                let data = '';
-                clientRequest.on('data', (chunk) => { data += chunk; });
+                const chunks = [];
+                let responseHeaders;
+                clientRequest.on('data', (chunk) => {
+                    const totalSize = chunks.reduce((total, item) => item.length + total, 0);
+                    if (totalSize + chunk.length <= MAX_HTTP_VALUE_SIZE) {
+                        chunks.push(chunk);
+                    }
+                });
 
                 clientRequest.once('error', (error) => {
                     eventInterface.setException(httpEvent, error);
@@ -113,16 +120,17 @@ function httpWrapper(wrappedFunction, authority) {
                 });
 
                 clientRequest.once('close', () => {
-                    setJsonPayload(httpEvent, 'response_body', data);
+                    setJsonPayload(httpEvent, 'response_body', Buffer.concat(chunks), responseHeaders['content-encoding']);
                     resolveHttpPromise(httpEvent, resolve, startTime);
                 });
 
                 clientRequest.once('response', (res) => {
                     updateAPIGateway(res, httpEvent);
+                    responseHeaders = extractHeaders(res);
                     eventInterface.addToMetadata(httpEvent, {
                         status: res[':status'],
                     }, {
-                        response_headers: extractHeaders(res),
+                        response_headers: responseHeaders,
                     });
                 });
             }).catch((err) => {
