@@ -62,24 +62,23 @@ function publishWrapper(originalPublishFunc) {
  */
 function mqttClientWrapper(originalConstructorFunc) {
     return function internalMqttClientWrapper(streamBuilder, options) {
+        const mqttClient = originalConstructorFunc.apply(this, [streamBuilder, options]);
         try {
-            const mqttClient = originalConstructorFunc.apply(this, [streamBuilder, options]);
             shimmer.wrap(
                 mqttClient,
                 'publish',
                 func => publishWrapper(func)
             );
-            return mqttClient;
         } catch (error) {
             tracer.addException(error);
         }
-        return originalConstructorFunc.apply(this, [options]);
+        return mqttClient
     };
 }
 
 module.exports = {
     /**
-   * Initializes the AWS MQTT tracer.
+   * Initializes the MQTT tracer.
    */
     init() {
         moduleUtils.patchModule(
