@@ -17,7 +17,7 @@
   "scripts": {
     "pretest": "./scripts/build_peg.sh",
     "test": "./scripts/run_tests.sh",
-    "lint:js": "eslint --max-warnings=0 ./src/ ./examples/ ./test/unit_tests ./index.js -f table --ext .js --ext .jsx",
+    "lint:js": "eslint --max-warnings=0 ./src/ ./examples/ ./test/unit_tests ./index.js -f table --ext .js --ext .jsx --fix",
     "lint": "npm run lint:js",
     "build:dev": "./scripts/build_peg.sh && rollup -c",
     "build": "./scripts/build_peg.sh && NODE_ENV=production rollup -c",
