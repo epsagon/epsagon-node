@@ -310,7 +310,7 @@ function httpWrapper(wrappedFunction) {
                     res.on('data', (chunk) => {
                         const totalSize = chunks.reduce((total, item) => item.length + total, 0);
                         if (totalSize + chunk.length <= MAX_HTTP_VALUE_SIZE) {
-                            chunks.push(chunk);
+                            chunks.push(typeof(chunk) === 'string' ? Buffer(chunk) : chunk);
                         }
                     });
                     res.on('end', () => {
