@@ -30,7 +30,7 @@ function publishWrapper(originalPublishFunc) {
                 message,
             };
             const promise = new Promise((resolve) => {
-                patchedCallback = (err) => {
+                patchedCallback = (err, ...rest) => {
                     eventInterface.finalizeEvent(
                         mqttEvent,
                         startTime,
@@ -39,7 +39,7 @@ function publishWrapper(originalPublishFunc) {
                         payload
                     );
                     if (callback) {
-                        callback(err);
+                        callback(err, ...rest);
                     }
                     resolve();
                 };
@@ -78,7 +78,7 @@ function subscribeWrapper(originalSubscribeFunc) {
                 protocolVersion: this.options.protocolVersion,
             };
             const promise = new Promise((resolve) => {
-                patchedCallback = (err, granted) => {
+                patchedCallback = (err, ...rest) => {
                     eventInterface.finalizeEvent(
                         mqttEvent,
                         startTime,
@@ -87,7 +87,7 @@ function subscribeWrapper(originalSubscribeFunc) {
                         payload
                     );
                     if (callback) {
-                        callback(err, granted);
+                        callback(err, ...rest);
                     }
                     resolve();
                 };
