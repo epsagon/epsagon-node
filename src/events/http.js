@@ -308,9 +308,13 @@ function httpWrapper(wrappedFunction) {
 
                 clientRequest.on('response', (res) => {
                     res.on('data', (chunk) => {
+                        if (!chunk) {
+                            // Skip empty data
+                            return;
+                        }
                         const totalSize = chunks.reduce((total, item) => item.length + total, 0);
                         if (totalSize + chunk.length <= MAX_HTTP_VALUE_SIZE) {
-                            chunks.push(typeof(chunk) === 'string' ? Buffer(chunk) : chunk);
+                            chunks.push(typeof chunk === 'string' ? Buffer.from(chunk) : chunk);
                         }
                     });
                     res.on('end', () => {
