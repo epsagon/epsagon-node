@@ -4,6 +4,24 @@ const eventInterface = require('../event.js');
 const moduleUtils = require('./module_utils.js');
 
 /**
+ *  Build pub sub parameters.
+ * @param {Object} options options object (optional).
+ * @param {Function} callback callback function (optional).
+ * @returns {Object} Wrapped object.
+ */
+function getPubSubParams(options, callback) {
+    let internalCallback = callback;
+    let internalOptions = options;
+    if (typeof internalOptions === 'function') {
+        internalCallback = options;
+        internalOptions = undefined;
+    }
+
+    return { internalCallback, internalOptions };
+}
+
+
+/**
  * Wraps the publish command function with tracing
  * @param {Function} originalPublishFunc The wrapped function
  * from mqtt module
@@ -11,8 +29,8 @@ const moduleUtils = require('./module_utils.js');
  */
 function publishWrapper(originalPublishFunc) {
     return function internalPublishWrapper(topic, message, options, callback) {
-        let patchedCallback = callback;
-
+        const { internalCallback, internalOptions } = getPubSubParams(options, callback);
+        let patchedCallback = internalCallback;
         try {
             const { slsEvent: mqttEvent, startTime } = eventInterface.initializeEvent('mqtt',
                 topic,
@@ -38,8 +56,8 @@ function publishWrapper(originalPublishFunc) {
                         responseMetadata,
                         payload
                     );
-                    if (callback) {
-                        callback(err, ...rest);
+                    if (internalCallback) {
+                        internalCallback(err, ...rest);
                     }
                     resolve();
                 };
@@ -49,7 +67,7 @@ function publishWrapper(originalPublishFunc) {
             tracer.addException(err);
         }
 
-        return originalPublishFunc.apply(this, [topic, message, options, patchedCallback]);
+        return originalPublishFunc.apply(this, [topic, message, internalOptions, patchedCallback]);
     };
 }
 
@@ -61,7 +79,8 @@ function publishWrapper(originalPublishFunc) {
  */
 function subscribeWrapper(originalSubscribeFunc) {
     return function internalSubscribeWrapper(topic, options, callback) {
-        let patchedCallback = callback;
+        const { internalCallback, internalOptions } = getPubSubParams(options, callback);
+        let patchedCallback = internalCallback;
         try {
             const { slsEvent: mqttEvent, startTime } = eventInterface.initializeEvent('mqtt',
                 topic,
@@ -86,8 +105,8 @@ function subscribeWrapper(originalSubscribeFunc) {
                         responseMetadata,
                         payload
                     );
-                    if (callback) {
-                        callback(err, ...rest);
+                    if (internalCallback) {
+                        internalCallback(err, ...rest);
                     }
                     resolve();
                 };
@@ -97,10 +116,57 @@ function subscribeWrapper(originalSubscribeFunc) {
             tracer.addException(err);
         }
 
-        return originalSubscribeFunc.apply(this, [topic, options, patchedCallback]);
+        return originalSubscribeFunc.apply(this, [topic, internalOptions, patchedCallback]);
     };
 }
 
+/**
+ * Wraps the on command function with tracing
+ * @param {Function} originalOnFunc The wrapped function
+ * from mqtt module
+ * @returns {Function} The wrapped function
+ */
+function onWrapper(originalOnFunc) {
+    return function internalOnWrapper(funcName, callback) {
+        let patchedCallback = callback;
+        try {
+            if (funcName === 'message') {
+                const responseMetadata = {
+                    region: this.options.region,
+                    protocol: this.options.protocol,
+                    host: this.options.host,
+                };
+                const payload = {
+                    clientId: this.options.clientId,
+                    protocolId: this.options.protocolId,
+                    protocolVersion: this.options.protocolVersion,
+                };
+                const promise = new Promise((resolve) => {
+                    patchedCallback = (topic, message, ...rest) => {
+                        const { slsEvent: mqttEvent, startTime } = eventInterface.initializeEvent('mqtt', topic, 'onMessage', 'mqtt');
+                        payload.message = message ? message.toString() : message;
+                        eventInterface.finalizeEvent(
+                            mqttEvent,
+                            startTime,
+                            null,
+                            responseMetadata,
+                            payload
+                        );
+                        if (callback) {
+                            callback(topic, message, ...rest);
+                        }
+                        tracer.addEvent(mqttEvent, promise);
+                        resolve();
+                    };
+                });
+            }
+        } catch (err) {
+            tracer.addException(err);
+        }
+
+        return originalOnFunc.apply(this, [funcName, patchedCallback]);
+    };
+}
 
 /**
  * Wraps the constructor' command function
@@ -121,6 +187,11 @@ function mqttClientWrapper(originalConstructorFunc) {
                 mqttClient,
                 'subscribe',
                 func => subscribeWrapper(func)
+            );
+            shimmer.wrap(
+                mqttClient,
+                'on',
+                func => onWrapper(func)
             );
         } catch (error) {
             tracer.addException(error);
