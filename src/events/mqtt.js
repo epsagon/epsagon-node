@@ -20,6 +20,14 @@ function getPubSubParams(options, callback) {
     return { internalCallback, internalOptions };
 }
 
+/**
+ * Check if the host is part of amazon iot
+ * @param {String} host the host of the connection.
+ * @returns {Boolean} true or false.
+ */
+function checkIfHostIsIot(host) {
+    return host.includes('iot') && host.includes('amazonaws.com');
+}
 
 /**
  * Wraps the publish command function with tracing
@@ -32,7 +40,8 @@ function publishWrapper(originalPublishFunc) {
         const { internalCallback, internalOptions } = getPubSubParams(options, callback);
         let patchedCallback = internalCallback;
         try {
-            const { slsEvent: mqttEvent, startTime } = eventInterface.initializeEvent('mqtt',
+            const resourceType = checkIfHostIsIot(this.options.host) ? 'iot' : 'mqtt';
+            const { slsEvent: mqttEvent, startTime } = eventInterface.initializeEvent(resourceType,
                 topic,
                 'publish',
                 'mqtt');
@@ -82,7 +91,8 @@ function subscribeWrapper(originalSubscribeFunc) {
         const { internalCallback, internalOptions } = getPubSubParams(options, callback);
         let patchedCallback = internalCallback;
         try {
-            const { slsEvent: mqttEvent, startTime } = eventInterface.initializeEvent('mqtt',
+            const resourceType = checkIfHostIsIot(this.options.host) ? 'iot' : 'mqtt';
+            const { slsEvent: mqttEvent, startTime } = eventInterface.initializeEvent(resourceType,
                 topic,
                 'subscribe',
                 'mqtt');
@@ -127,10 +137,11 @@ function subscribeWrapper(originalSubscribeFunc) {
  * @returns {Function} The wrapped function
  */
 function onWrapper(originalOnFunc) {
-    return function internalOnWrapper(funcName, callback) {
+    return function internalOnWrapper(eventName, callback) {
         let patchedCallback = callback;
         try {
-            if (funcName === 'message') {
+            const resourceType = checkIfHostIsIot(this.options.host) ? 'iot' : 'mqtt';
+            if (eventName === 'message') {
                 const responseMetadata = {
                     region: this.options.region,
                     protocol: this.options.protocol,
@@ -141,30 +152,27 @@ function onWrapper(originalOnFunc) {
                     protocolId: this.options.protocolId,
                     protocolVersion: this.options.protocolVersion,
                 };
-                const promise = new Promise((resolve) => {
-                    patchedCallback = (topic, message, ...rest) => {
-                        const { slsEvent: mqttEvent, startTime } = eventInterface.initializeEvent('mqtt', topic, 'onMessage', 'mqtt');
-                        payload.message = message ? message.toString() : message;
-                        eventInterface.finalizeEvent(
-                            mqttEvent,
-                            startTime,
-                            null,
-                            responseMetadata,
-                            payload
-                        );
-                        if (callback) {
-                            callback(topic, message, ...rest);
-                        }
-                        tracer.addEvent(mqttEvent, promise);
-                        resolve();
-                    };
-                });
+                patchedCallback = (topic, message, ...rest) => {
+                    const { slsEvent: mqttEvent, startTime } = eventInterface.initializeEvent(resourceType, topic, 'onMessage', 'mqtt');
+                    payload.message = message ? message.toString() : message;
+                    eventInterface.finalizeEvent(
+                        mqttEvent,
+                        startTime,
+                        null,
+                        responseMetadata,
+                        payload
+                    );
+                    if (callback) {
+                        callback(topic, message, ...rest);
+                    }
+                    tracer.addEvent(mqttEvent);
+                };
             }
         } catch (err) {
             tracer.addException(err);
         }
 
-        return originalOnFunc.apply(this, [funcName, patchedCallback]);
+        return originalOnFunc.apply(this, [eventName, patchedCallback]);
     };
 }
 
