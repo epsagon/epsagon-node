@@ -21,15 +21,6 @@ function getPubSubParams(options, callback) {
 }
 
 /**
- * Check if the host is part of amazon iot
- * @param {String} host the host of the connection.
- * @returns {Boolean} true or false.
- */
-function checkIfHostIsIot(host) {
-    return host.includes('iot') && host.includes('amazonaws.com');
-}
-
-/**
  * Wraps the publish command function with tracing
  * @param {Function} originalPublishFunc The wrapped function
  * from mqtt module
@@ -40,8 +31,7 @@ function publishWrapper(originalPublishFunc) {
         const { internalCallback, internalOptions } = getPubSubParams(options, callback);
         let patchedCallback = internalCallback;
         try {
-            const resourceType = checkIfHostIsIot(this.options.host) ? 'iot' : 'mqtt';
-            const { slsEvent: mqttEvent, startTime } = eventInterface.initializeEvent(resourceType,
+            const { slsEvent: mqttEvent, startTime } = eventInterface.initializeEvent('mqtt',
                 topic,
                 'publish',
                 'mqtt');
@@ -91,8 +81,7 @@ function subscribeWrapper(originalSubscribeFunc) {
         const { internalCallback, internalOptions } = getPubSubParams(options, callback);
         let patchedCallback = internalCallback;
         try {
-            const resourceType = checkIfHostIsIot(this.options.host) ? 'iot' : 'mqtt';
-            const { slsEvent: mqttEvent, startTime } = eventInterface.initializeEvent(resourceType,
+            const { slsEvent: mqttEvent, startTime } = eventInterface.initializeEvent('mqtt',
                 topic,
                 'subscribe',
                 'mqtt');
@@ -140,7 +129,6 @@ function onWrapper(originalOnFunc) {
     return function internalOnWrapper(eventName, callback) {
         let patchedCallback = callback;
         try {
-            const resourceType = checkIfHostIsIot(this.options.host) ? 'iot' : 'mqtt';
             if (eventName === 'message') {
                 const responseMetadata = {
                     region: this.options.region,
@@ -153,7 +141,7 @@ function onWrapper(originalOnFunc) {
                     protocolVersion: this.options.protocolVersion,
                 };
                 patchedCallback = (topic, message, ...rest) => {
-                    const { slsEvent: mqttEvent, startTime } = eventInterface.initializeEvent(resourceType, topic, 'onMessage', 'mqtt');
+                    const { slsEvent: mqttEvent, startTime } = eventInterface.initializeEvent('mqtt', topic, 'onMessage', 'mqtt');
                     payload.message = message ? message.toString() : message;
                     eventInterface.finalizeEvent(
                         mqttEvent,
