@@ -17,6 +17,7 @@ const mongoPatcher = require('./events/mongodb.js');
 const dnsPatcher = require('./events/dns.js');
 const natsPatcher = require('./events/nats.js');
 const mqttPatcher = require('./events/mqtt.js');
+const kafkajsPatcher = require('./events/kafkajs.js');
 
 
 /**
@@ -49,5 +50,6 @@ if (!config.getConfig().isEpsagonPatchDisabled) {
         dnsPatcher,
         natsPatcher,
         mqttPatcher,
+        kafkajsPatcher,
     ].forEach(patch);
 }
