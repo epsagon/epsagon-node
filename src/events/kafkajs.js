@@ -25,6 +25,7 @@ function kafkaMiddleware(messages, producer) {
             'kafkajs'
         );
 
+        const epsagonId = generateEpsagonTraceId();
         // eslint-disable-next-line no-param-reassign
         messages.messages = messages.messages.map((message) => {
             if (!message.headers) {
@@ -32,7 +33,7 @@ function kafkaMiddleware(messages, producer) {
                 message.headers = {};
             }
             // eslint-disable-next-line no-param-reassign
-            message.headers[EPSAGON_HEADER] = generateEpsagonTraceId();
+            message.headers[EPSAGON_HEADER] = epsagonId;
             return message;
         });
 
@@ -53,6 +54,7 @@ function kafkaMiddleware(messages, producer) {
                     originalHandlerAsyncError,
                     {
                         messages_count: messages.messages.length,
+                        epsagon_id: epsagonId,
                     },
                     {
                         messages,
