@@ -2,11 +2,11 @@
  * @fileoverview Handlers for kafkajs instrumentation
  */
 
+const uuid4 = require('uuid4');
 const tracer = require('../tracer.js');
 const eventInterface = require('../event.js');
 const moduleUtils = require('./module_utils.js');
 const { EPSAGON_HEADER } = require('../consts.js');
-const { generateEpsagonTraceId } = require('../helpers/http.js');
 
 
 /**
@@ -25,7 +25,7 @@ function kafkaMiddleware(messages, producer) {
             'kafkajs'
         );
 
-        const epsagonId = generateEpsagonTraceId();
+        const epsagonId = uuid4();
         // eslint-disable-next-line no-param-reassign
         messages.messages = messages.messages.map((message) => {
             if (!message.headers) {
@@ -54,7 +54,7 @@ function kafkaMiddleware(messages, producer) {
                     originalHandlerAsyncError,
                     {
                         messages_count: messages.messages.length,
-                        epsagon_id: epsagonId,
+                        [EPSAGON_HEADER]: epsagonId,
                     },
                     {
                         messages,
