@@ -32,9 +32,11 @@ function setEpsagonIdToMessage(epsagonId, message) {
         return { ...message, epsagonId };
     } if (typeof message === 'string') {
         try {
-            const resultMsg =
-            { ...JSON.parse(message), epsagonId };
-            return JSON.stringify(resultMsg);
+            const resultMsg = JSON.parse(message);
+            if (resultMsg) {
+                resultMsg.epsagonId = epsagonId;
+                return JSON.stringify(resultMsg);
+            }
         } catch (e) {
             /* eslint no-empty: "error" */
         }
