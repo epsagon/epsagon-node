@@ -1,4 +1,5 @@
 const shimmer = require('shimmer');
+const uuid4 = require('uuid4');
 const tracer = require('../tracer.js');
 const eventInterface = require('../event.js');
 const moduleUtils = require('./module_utils.js');
@@ -14,10 +15,52 @@ function getPubSubParams(options, callback) {
     let internalOptions = options;
     if (typeof internalOptions === 'function') {
         internalCallback = options;
-        internalOptions = undefined;
+        internalOptions = {};
     }
 
     return { internalCallback, internalOptions };
+}
+
+/**
+ * Set hidden epsagon id in user props.
+ * @param {*} epsagonId - epsagon identifier.
+ * @param {*} message - mqtt message property.
+ * @returns {Object} options with epsagon id.
+ */
+function setEpsagonIdToMessage(epsagonId, message) {
+    if (typeof message === 'object') {
+        return { ...message, epsagonId };
+    } if (typeof message === 'string') {
+        try {
+            const resultMsg =
+            { ...JSON.parse(message), epsagonId };
+            return JSON.stringify(resultMsg);
+        } catch (e) {
+            /* eslint no-empty: "error" */
+        }
+    }
+
+    return message;
+}
+
+/**
+ * Set hidden epsagon id in user props.
+ * @param {*} message - mqtt message property.
+ * @returns {Object} options with epsagon id.
+ */
+function getEpsagonIdFromMessage(message) {
+    if (typeof message === 'object') {
+        return message.epsagonId;
+    } if (typeof message === 'string') {
+        try {
+            const resultMsg = JSON.parse(message);
+            return resultMsg.epsagonId;
+        } catch (e) {
+            /* eslint no-empty: "error" */
+        }
+    }
+
+    return undefined;
 }
 
 /**
@@ -29,6 +72,8 @@ function getPubSubParams(options, callback) {
 function publishWrapper(originalPublishFunc) {
     return function internalPublishWrapper(topic, message, options, callback) {
         const { internalCallback, internalOptions } = getPubSubParams(options, callback);
+        const epsagonId = uuid4();
+        const internalMessage = setEpsagonIdToMessage(epsagonId, message);
         let patchedCallback = internalCallback;
         try {
             const { slsEvent: mqttEvent, startTime } = eventInterface.initializeEvent('mqtt',
@@ -39,12 +84,13 @@ function publishWrapper(originalPublishFunc) {
                 region: this.options.region,
                 protocol: this.options.protocol,
                 host: this.options.host,
+                epsagonId,
             };
             const payload = {
                 clientId: this.options.clientId,
                 protocolId: this.options.protocolId,
                 protocolVersion: this.options.protocolVersion,
-                message,
+                internalMessage,
             };
             const promise = new Promise((resolve) => {
                 patchedCallback = (err, ...rest) => {
@@ -66,7 +112,8 @@ function publishWrapper(originalPublishFunc) {
             tracer.addException(err);
         }
 
-        return originalPublishFunc.apply(this, [topic, message, internalOptions, patchedCallback]);
+        return originalPublishFunc.apply(this,
+            [topic, internalMessage, internalOptions, patchedCallback]);
     };
 }
 
@@ -143,6 +190,10 @@ function onWrapper(originalOnFunc) {
                 patchedCallback = (topic, message, ...rest) => {
                     const { slsEvent: mqttEvent, startTime } = eventInterface.initializeEvent('mqtt', topic, 'onMessage', 'mqtt');
                     payload.message = message ? message.toString() : message;
+                    const epsagonId = getEpsagonIdFromMessage(message);
+                    if (epsagonId) {
+                        responseMetadata.epsagonId = epsagonId;
+                    }
                     eventInterface.finalizeEvent(
                         mqttEvent,
                         startTime,
