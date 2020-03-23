@@ -51,18 +51,21 @@ function setEpsagonIdToMessage(epsagonId, message) {
  * @returns {Object} options with epsagon id.
  */
 function getEpsagonIdFromMessage(message) {
-    if (typeof message === 'object') {
-        return message.epsagonId;
-    } if (typeof message === 'string') {
+    let internalMessage = message;
+    if (typeof internalMessage === 'object') {
+        if (Buffer.isBuffer(internalMessage)) {
+            internalMessage = internalMessage.toString();
+        }
+    }
+    if (typeof internalMessage === 'string') {
         try {
-            const resultMsg = JSON.parse(message);
-            return resultMsg.epsagonId;
+            internalMessage = JSON.parse(internalMessage);
         } catch (e) {
             /* eslint no-empty: "error" */
         }
     }
 
-    return undefined;
+    return internalMessage.epsagonId;
 }
 
 /**
@@ -86,13 +89,13 @@ function publishWrapper(originalPublishFunc) {
                 region: this.options.region,
                 protocol: this.options.protocol,
                 host: this.options.host,
-                epsagonId,
+                epsagon_id: epsagonId,
             };
             const payload = {
                 clientId: this.options.clientId,
                 protocolId: this.options.protocolId,
                 protocolVersion: this.options.protocolVersion,
-                internalMessage,
+                message: internalMessage,
             };
             const promise = new Promise((resolve) => {
                 patchedCallback = (err, ...rest) => {
@@ -194,7 +197,7 @@ function onWrapper(originalOnFunc) {
                     payload.message = message ? message.toString() : message;
                     const epsagonId = getEpsagonIdFromMessage(message);
                     if (epsagonId) {
-                        responseMetadata.epsagonId = epsagonId;
+                        responseMetadata.epsagon_id = epsagonId;
                     }
                     eventInterface.finalizeEvent(
                         mqttEvent,
