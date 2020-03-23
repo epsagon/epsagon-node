@@ -56,7 +56,8 @@ function getEpsagonIdFromMessage(message) {
         if (Buffer.isBuffer(internalMessage)) {
             internalMessage = internalMessage.toString();
         }
-    } if (typeof internalMessage === 'string') {
+    }
+    if (typeof internalMessage === 'string') {
         try {
             internalMessage = JSON.parse(internalMessage);
         } catch (e) {
