@@ -5,6 +5,7 @@
 const uuid4 = require('uuid4');
 const tracer = require('../tracer.js');
 const eventInterface = require('../event.js');
+const utils = require('../utils.js');
 const moduleUtils = require('./module_utils.js');
 const { EPSAGON_HEADER } = require('../consts.js');
 
@@ -16,16 +17,21 @@ const { EPSAGON_HEADER } = require('../consts.js');
  * @returns {Promise} The response promise
  */
 function kafkaMiddleware(messages, producer) {
-    let response = Promise.resolve();
+    let result;
+    let originalHandlerAsyncError;
+    const epsagonId = uuid4();
+    let kafkaEvent;
+    let startTime;
     try {
-        const { slsEvent: kafkaEvent, startTime } = eventInterface.initializeEvent(
+        const { slsEvent, startTime: eventStartTime } = eventInterface.initializeEvent(
             'kafka',
             messages.topic,
-            'send',
+            'produce',
             'kafkajs'
         );
+        kafkaEvent = slsEvent;
+        startTime = eventStartTime;
 
-        const epsagonId = uuid4();
         // eslint-disable-next-line no-param-reassign
         messages.messages = messages.messages.map((message) => {
             if (!message.headers) {
@@ -36,38 +42,45 @@ function kafkaMiddleware(messages, producer) {
             message.headers[EPSAGON_HEADER] = epsagonId;
             return message;
         });
-
-        response = producer.originalSend(messages);
-
-        const sendPromise = new Promise((resolve) => {
-            let result;
-            let originalHandlerAsyncError;
-            response.then((res) => {
-                result = res;
-            }).catch((err) => {
-                originalHandlerAsyncError = err;
-                throw err;
-            }).finally(() => {
-                eventInterface.finalizeEvent(
-                    kafkaEvent,
-                    startTime,
-                    originalHandlerAsyncError,
-                    {
-                        messages_count: messages.messages.length,
-                        [EPSAGON_HEADER]: epsagonId,
-                    },
-                    {
-                        messages,
-                        response: result,
-                    }
-                );
-            });
-            resolve();
-        });
-        tracer.addEvent(kafkaEvent, sendPromise);
     } catch (err) {
         tracer.addException(err);
     }
+
+    const response = producer.originalSend(messages);
+    if (kafkaEvent) {
+        tracer.addEvent(kafkaEvent, response);
+    }
+
+    response.then((res) => {
+        result = res;
+    }).catch((err) => {
+        originalHandlerAsyncError = err;
+        throw err;
+    }).finally(() => {
+        try {
+            if (!kafkaEvent) {
+                utils.debugLog('Could not initialize kafkajs, so skipping response.');
+                return;
+            }
+            eventInterface.finalizeEvent(
+                kafkaEvent,
+                startTime,
+                originalHandlerAsyncError,
+                {
+                    messages_count: messages.messages.length,
+                    [EPSAGON_HEADER]: epsagonId,
+                },
+                {
+                    messages,
+                    response: result,
+                }
+            );
+        } catch (err) {
+            tracer.addException(err);
+        }
+    });
+
+
     return response;
 }
 
@@ -82,7 +95,7 @@ function kafkaWrapper(wrappedFunction) {
         const producer = wrappedFunction.apply(this, [options]);
         const patchedSend = messages => kafkaMiddleware(messages, producer);
         producer.originalSend = producer.send;
-        producer.send = patchedSend;
+        producer.send = patchedSend.bind(producer);
         return producer;
     };
 }

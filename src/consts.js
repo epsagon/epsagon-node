@@ -28,4 +28,4 @@ module.exports.MAX_HTTP_VALUE_SIZE = 10 * 1024;
 module.exports.MAX_TRACE_SIZE_BYTES = 64 * 1024;
 
 // Key name to inject epsagon correlation ID
-module.exports.EPSAGON_HEADER = 'epsagon-id';
+module.exports.EPSAGON_HEADER = 'epsagon-trace-id';
