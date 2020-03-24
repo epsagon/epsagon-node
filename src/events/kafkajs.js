@@ -2,12 +2,12 @@
  * @fileoverview Handlers for kafkajs instrumentation
  */
 
-const uuid4 = require('uuid4');
 const tracer = require('../tracer.js');
 const eventInterface = require('../event.js');
 const utils = require('../utils.js');
 const moduleUtils = require('./module_utils.js');
 const { EPSAGON_HEADER } = require('../consts.js');
+const { generateEpsagonTraceId } = require('../helpers/http');
 
 
 /**
@@ -19,9 +19,10 @@ const { EPSAGON_HEADER } = require('../consts.js');
 function kafkaMiddleware(messages, producer) {
     let result;
     let originalHandlerAsyncError;
-    const epsagonId = uuid4();
+    const epsagonId = generateEpsagonTraceId();
     let kafkaEvent;
     let startTime;
+    let response;
     try {
         const { slsEvent, startTime: eventStartTime } = eventInterface.initializeEvent(
             'kafka',
@@ -46,9 +47,13 @@ function kafkaMiddleware(messages, producer) {
         tracer.addException(err);
     }
 
-    const response = producer.originalSend(messages);
-    if (kafkaEvent) {
-        tracer.addEvent(kafkaEvent, response);
+    try {
+        response = producer.originalSend(messages);
+    } catch (err) {
+        if (kafkaEvent) {
+            eventInterface.setException(kafkaEvent, err);
+        }
+        throw err;
     }
 
     response.then((res) => {
@@ -80,6 +85,9 @@ function kafkaMiddleware(messages, producer) {
         }
     });
 
+    if (kafkaEvent) {
+        tracer.addEvent(kafkaEvent, response);
+    }
 
     return response;
 }
