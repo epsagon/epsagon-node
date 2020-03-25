@@ -52,12 +52,14 @@ function kafkaMiddleware(messages, producer) {
     } catch (err) {
         if (kafkaEvent) {
             eventInterface.setException(kafkaEvent, err);
+            tracer.addEvent(kafkaEvent);
         }
         throw err;
     }
 
-    response.then((res) => {
+    response = response.then((res) => {
         result = res;
+        return res;
     }).catch((err) => {
         originalHandlerAsyncError = err;
         throw err;
