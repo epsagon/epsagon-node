@@ -21,7 +21,7 @@ const FAILED_TO_SERIALIZE_MESSAGE = 'Unable to stringify response body as json';
  */
 function createRunner(functionToWrap, args) {
     const runnerResource = new serverlessEvent.Resource([
-        functionToWrap.name,
+        functionToWrap.name || 'handler',
         'node_function',
         'invoke',
         {},
