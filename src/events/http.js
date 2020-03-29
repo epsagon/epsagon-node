@@ -275,7 +275,9 @@ function httpWrapper(wrappedFunction) {
                 };
             }
 
-            shimmer.wrap(clientRequest, 'on', requestOnWrapper);
+            if (options && options.epsagonSkipResponseData) {
+                shimmer.wrap(clientRequest, 'on', requestOnWrapper);
+            }
 
             /**
              * Wraps 'write' method in a request to pick up request body
