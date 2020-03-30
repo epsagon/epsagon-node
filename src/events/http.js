@@ -180,10 +180,14 @@ function httpWrapper(wrappedFunction) {
             }
 
             const patchedCallback = (res) => {
-                let metadataFields = {};
-                if ('x-powered-by' in res.headers) {
-                    // This field is used to identify responses from 'Express'
-                    metadataFields = { response_headers: { 'x-powered-by': res.headers['x-powered-by'] } };
+                const metadataFields = {};
+                if ('x-openwhisk-activation-id' in res.headers) {
+                    // This field is used to identify activation ID from 'OpenWhisk'
+                    metadataFields.openwhisk_act_id = res.headers['x-openwhisk-activation-id'];
+                }
+                if ('x-request-id' in res.headers) {
+                    // This field is used to identify transaction ID from 'OpenWhisk'
+                    metadataFields.request_id = res.headers['x-request-id'];
                 }
                 eventInterface.addToMetadata(httpEvent, { status: res.statusCode });
                 if (res.statusCode >= config.HTTP_ERR_CODE) {
@@ -198,7 +202,7 @@ function httpWrapper(wrappedFunction) {
                 // available on `options.headers`
                 // eslint-disable-next-line no-underscore-dangle
                 if (res.req && res.req._headers) {
-                    eventInterface.addToMetadata(httpEvent, metadataFields, {
+                    eventInterface.addToMetadata(httpEvent, {}, {
                         // eslint-disable-next-line no-underscore-dangle
                         request_headers: res.req._headers,
                     });
