@@ -180,14 +180,14 @@ function httpWrapper(wrappedFunction) {
             }
 
             const patchedCallback = (res) => {
-                let metadataFields = {};
+                const metadataFields = {};
                 if ('x-openwhisk-activation-id' in res.headers) {
                     // This field is used to identify activation ID from 'OpenWhisk'
-                    metadataFields.openwhisk_act_id = res.headers['x-openwhisk-activation-id']
+                    metadataFields.openwhisk_act_id = res.headers['x-openwhisk-activation-id'];
                 }
                 if ('x-request-id' in res.headers) {
                     // This field is used to identify transaction ID from 'OpenWhisk'
-                    metadataFields.request_id = res.headers['x-request-id']
+                    metadataFields.request_id = res.headers['x-request-id'];
                 }
                 eventInterface.addToMetadata(httpEvent, { status: res.statusCode });
                 if (res.statusCode >= config.HTTP_ERR_CODE) {
