@@ -13,7 +13,6 @@ const serverlessEvent = require('../proto/event_pb.js');
 const eventInterface = require('../event.js');
 const errorCode = require('../proto/error_code_pb.js');
 const config = require('../config.js');
-const moduleUtils = require('./module_utils.js');
 const { MAX_HTTP_VALUE_SIZE } = require('../consts.js');
 const { isBlacklistURL, isBlacklistHeader } = require('../helpers/events');
 const {
@@ -418,18 +417,6 @@ function httpGetWrapper(module) {
     };
 }
 
-
-/**
- * Flagging fetch-h2 http1 requests with a flag to omit our response.on('data') because of collision
- * @param {Function} wrappedFunc connect function
- * @return {Function} the wrapped function
- */
-function fetchH2Wrapper(wrappedFunc) {
-    return function internalFetchH2Wrapper(options) {
-        return wrappedFunc.apply(this, [{ ...options, epsagonSkipResponseData: true }]);
-    };
-}
-
 module.exports = {
     /**
      * Initializes the http tracer
@@ -440,12 +427,5 @@ module.exports = {
         shimmer.wrap(http, 'request', httpWrapper);
         shimmer.wrap(https, 'get', () => httpGetWrapper(https));
         shimmer.wrap(https, 'request', httpWrapper);
-
-        moduleUtils.patchModule(
-            'fetch-h2/dist/lib/context-http1',
-            'connect',
-            fetchH2Wrapper,
-            fetch => fetch.OriginPool.prototype
-        );
     },
 };
