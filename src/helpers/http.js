@@ -4,7 +4,7 @@ const uuidToHex = require('uuid-to-hex');
 const config = require('../config.js');
 const eventInterface = require('../event.js');
 const utils = require('../utils.js');
-
+const { MAX_HTTP_VALUE_SIZE } = require('../consts.js');
 
 const URL_BLACKLIST = {
     'tc.epsagon.com': 'endsWith',
@@ -108,6 +108,21 @@ function updateAPIGateway(headers, httpEvent) {
     }
 }
 
+
+/**
+ * Adding HTTP response chunks into the array, according to the constraints
+ * @param {Object} chunk the part in String or Buffer
+ * @param {Array} chunks array of chunks
+ */
+function addChunk(chunk, chunks) {
+    if (chunk) {
+        const totalSize = chunks.reduce((total, item) => item.length + total, 0);
+        if (totalSize + chunk.length <= MAX_HTTP_VALUE_SIZE) {
+            chunks.push(typeof chunk === 'string' ? Buffer.from(chunk) : chunk);
+        }
+    }
+}
+
 module.exports = {
     isURLIgnoredByUser,
     resolveHttpPromise,
@@ -116,4 +131,5 @@ module.exports = {
     generateEpsagonTraceId,
     updateAPIGateway,
     setJsonPayload,
+    addChunk,
 };

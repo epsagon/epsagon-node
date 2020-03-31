@@ -14,7 +14,6 @@ const eventInterface = require('../event.js');
 const errorCode = require('../proto/error_code_pb.js');
 const config = require('../config.js');
 const moduleUtils = require('./module_utils.js');
-const { MAX_HTTP_VALUE_SIZE } = require('../consts.js');
 const { isBlacklistURL, isBlacklistHeader } = require('../helpers/events');
 const {
     isURLIgnoredByUser,
@@ -24,6 +23,7 @@ const {
     generateEpsagonTraceId,
     updateAPIGateway,
     setJsonPayload,
+    addChunk,
 } = require('../helpers/http');
 
 
@@ -45,6 +45,61 @@ function buildParams(url, options, callback) {
     }
     // url is missing - returning options and callback
     return [options, callback];
+}
+
+
+/**
+ * Wraps 'on' method in a response to capture data event.
+ * @param {Function} wrappedResFunction The wrapped end function
+ * @param {Array} chunks array of chunks
+ * @returns {Function} The wrapped function
+ */
+function responseOnWrapper(wrappedResFunction, chunks) {
+    return function internalResponseOnWrapper(resEvent, resCallback) {
+        if (resEvent !== 'data' || typeof resCallback !== 'function') {
+            return wrappedResFunction.apply(this, [resEvent, resCallback]);
+        }
+        const resPatchedCallback = (chunk) => {
+            addChunk(chunk, chunks);
+            return resCallback(chunk);
+        };
+        return wrappedResFunction.apply(
+            this,
+            [resEvent, resPatchedCallback.bind(this)]
+        );
+    };
+}
+
+
+/**
+ * Wraps 'on' method in a request to capture response event.
+ * @param {Function} wrappedReqFunction The wrapped end function
+ * @param {Array} chunks array of chunks
+ * @returns {Function} The wrapped function
+ */
+function requestOnWrapper(wrappedReqFunction, chunks) {
+    // epsagonMarker is sent only on our call in this module and it equals to 'skip'
+    return function internalRequestOnWrapper(reqEvent, reqCallback, epsagonMarker) {
+        if (
+            reqEvent !== 'response' ||
+            epsagonMarker === 'skip' ||
+            typeof reqCallback !== 'function'
+        ) {
+            return wrappedReqFunction.apply(this, [reqEvent, reqCallback]);
+        }
+        const reqPatchedCallback = (res) => {
+            if (res && res.EPSAGON_PATCH) {
+                return reqCallback(res);
+            }
+            res.EPSAGON_PATCH = true;
+            shimmer.wrap(res, 'on', wrapped => responseOnWrapper(wrapped, chunks));
+            return reqCallback(res);
+        };
+        return wrappedReqFunction.apply(
+            this,
+            [reqEvent, reqPatchedCallback.bind(this)]
+        );
+    };
 }
 
 /**
@@ -220,67 +275,12 @@ function httpWrapper(wrappedFunction) {
                 this, buildParams(url, options, patchedCallback)
             );
 
-            /**
-             * Wraps 'on' method in a response to capture data event.
-             * @param {Function} wrappedResFunction The wrapped end function
-             * @returns {Function} The wrapped function
-             */
-            function responseOnWrapper(wrappedResFunction) { // eslint-disable-line no-inner-declarations,max-len
-                return function internalResponseOnWrapper(resEvent, resCallback) {
-                    if (resEvent !== 'data' || typeof resCallback !== 'function') {
-                        return wrappedResFunction.apply(this, [resEvent, resCallback]);
-                    }
-                    const resPatchedCallback = (chunk) => {
-                        if (chunk) {
-                            const totalSize = chunks.reduce(
-                                (total, item) => item.length + total,
-                                0
-                            );
-                            if (totalSize + chunk.length <= MAX_HTTP_VALUE_SIZE) {
-                                chunks.push(typeof chunk === 'string' ? Buffer.from(chunk) : chunk);
-                            }
-                        }
-                        return resCallback(chunk);
-                    };
-                    return wrappedResFunction.apply(
-                        this,
-                        [resEvent, resPatchedCallback.bind(this)]
-                    );
-                };
-            }
-
-            /**
-             * Wraps 'on' method in a request to capture response event.
-             * @param {Function} wrappedReqFunction The wrapped end function
-             * @returns {Function} The wrapped function
-             */
-            function requestOnWrapper(wrappedReqFunction) { // eslint-disable-line no-inner-declarations,max-len
-                // epsagonMarker is sent only on our call in this module
-                return function internalRequestOnWrapper(reqEvent, reqCallback, epsagonMarker) {
-                    if (
-                        reqEvent !== 'response' ||
-                        epsagonMarker ||
-                        typeof reqCallback !== 'function'
-                    ) {
-                        return wrappedReqFunction.apply(this, [reqEvent, reqCallback]);
-                    }
-                    const reqPatchedCallback = (res) => {
-                        if (res.EPSAGON_PATCH) {
-                            return reqCallback(res);
-                        }
-                        res.EPSAGON_PATCH = true;
-                        shimmer.wrap(res, 'on', responseOnWrapper);
-                        return reqCallback(res);
-                    };
-                    return wrappedReqFunction.apply(
-                        this,
-                        [reqEvent, reqPatchedCallback.bind(this)]
-                    );
-                };
-            }
-
             if (options && options.epsagonSkipResponseData) {
-                shimmer.wrap(clientRequest, 'on', requestOnWrapper);
+                shimmer.wrap(
+                    clientRequest,
+                    'on',
+                    wrapped => requestOnWrapper(wrapped, chunks)
+                );
             }
 
             /**
@@ -375,23 +375,13 @@ function httpWrapper(wrappedFunction) {
                 clientRequest.on('response', (res) => {
                     // Listening to data only if options.epsagonSkipResponseData!=true or no options
                     if (!options || (options && !options.epsagonSkipResponseData)) {
-                        res.on('data', (chunk) => {
-                            if (chunk) {
-                                const totalSize = chunks.reduce(
-                                    (total, item) => item.length + total,
-                                    0
-                                );
-                                if (totalSize + chunk.length <= MAX_HTTP_VALUE_SIZE) {
-                                    chunks.push(typeof chunk === 'string' ? Buffer.from(chunk) : chunk);
-                                }
-                            }
-                        });
+                        res.on('data', chunk => addChunk(chunk, chunks));
                     }
                     res.on('end', () => {
                         setJsonPayload(httpEvent, 'response_body', Buffer.concat(chunks), res.headers['content-encoding']);
                         resolveHttpPromise(httpEvent, resolve, startTime);
                     });
-                }, true); // true is for epsagonMarker
+                }, 'skip'); // skip is for epsagonMarker
             }).catch((err) => {
                 tracer.addException(err);
             });
