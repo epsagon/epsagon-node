@@ -14,7 +14,6 @@ const eventInterface = require('../event.js');
 const errorCode = require('../proto/error_code_pb.js');
 const config = require('../config.js');
 const moduleUtils = require('./module_utils.js');
-const { MAX_HTTP_VALUE_SIZE } = require('../consts.js');
 const { isBlacklistURL, isBlacklistHeader } = require('../helpers/events');
 const {
     isURLIgnoredByUser,
@@ -24,6 +23,7 @@ const {
     generateEpsagonTraceId,
     updateAPIGateway,
     setJsonPayload,
+    addChunk,
 } = require('../helpers/http');
 
 
@@ -47,6 +47,61 @@ function buildParams(url, options, callback) {
     return [options, callback];
 }
 
+
+/**
+ * Wraps 'on' method in a response to capture data event.
+ * @param {Function} wrappedResFunction The wrapped end function
+ * @param {Array} chunks array of chunks
+ * @returns {Function} The wrapped function
+ */
+function responseOnWrapper(wrappedResFunction, chunks) {
+    return function internalResponseOnWrapper(resEvent, resCallback) {
+        if (resEvent !== 'data' || typeof resCallback !== 'function') {
+            return wrappedResFunction.apply(this, [resEvent, resCallback]);
+        }
+        const resPatchedCallback = (chunk) => {
+            addChunk(chunk, chunks);
+            return resCallback(chunk);
+        };
+        return wrappedResFunction.apply(
+            this,
+            [resEvent, resPatchedCallback.bind(this)]
+        );
+    };
+}
+
+
+/**
+ * Wraps 'on' method in a request to capture response event.
+ * @param {Function} wrappedReqFunction The wrapped end function
+ * @param {Array} chunks array of chunks
+ * @returns {Function} The wrapped function
+ */
+function requestOnWrapper(wrappedReqFunction, chunks) {
+    // epsagonMarker is sent only on our call in this module and it equals to 'skip'
+    return function internalRequestOnWrapper(reqEvent, reqCallback, epsagonMarker) {
+        if (
+            reqEvent !== 'response' ||
+            epsagonMarker === 'skip' ||
+            typeof reqCallback !== 'function'
+        ) {
+            return wrappedReqFunction.apply(this, [reqEvent, reqCallback]);
+        }
+        const reqPatchedCallback = (res) => {
+            if (res && res.EPSAGON_PATCH) {
+                return reqCallback(res);
+            }
+            res.EPSAGON_PATCH = true;
+            shimmer.wrap(res, 'on', wrapped => responseOnWrapper(wrapped, chunks));
+            return reqCallback(res);
+        };
+        return wrappedReqFunction.apply(
+            this,
+            [reqEvent, reqPatchedCallback.bind(this)]
+        );
+    };
+}
+
 /**
  * Wraps the http's module request function with tracing
  * @param {Function} wrappedFunction The http's request module
@@ -57,6 +112,7 @@ function httpWrapper(wrappedFunction) {
         let url = a;
         let options = b;
         let callback = c;
+        const chunks = [];
         // handling case of request(options, callback)
         if (!(['string', 'URL'].includes(typeof url)) && !callback) {
             callback = b;
@@ -219,6 +275,14 @@ function httpWrapper(wrappedFunction) {
                 this, buildParams(url, options, patchedCallback)
             );
 
+            if (options && options.epsagonSkipResponseData) {
+                shimmer.wrap(
+                    clientRequest,
+                    'on',
+                    wrapped => requestOnWrapper(wrapped, chunks)
+                );
+            }
+
             /**
              * Wraps 'write' method in a request to pick up request body
              * @param {Function} wrappedWriteFunc The wrapped write function
@@ -282,8 +346,6 @@ function httpWrapper(wrappedFunction) {
 
 
             const responsePromise = new Promise((resolve) => {
-                const chunks = [];
-
                 let isTimeout = false;
                 clientRequest.on('timeout', () => {
                     isTimeout = true;
@@ -311,21 +373,15 @@ function httpWrapper(wrappedFunction) {
                 });
 
                 clientRequest.on('response', (res) => {
-                    res.on('data', (chunk) => {
-                        if (!chunk) {
-                            // Skip empty data
-                            return;
-                        }
-                        const totalSize = chunks.reduce((total, item) => item.length + total, 0);
-                        if (totalSize + chunk.length <= MAX_HTTP_VALUE_SIZE) {
-                            chunks.push(typeof chunk === 'string' ? Buffer.from(chunk) : chunk);
-                        }
-                    });
+                    // Listening to data only if options.epsagonSkipResponseData!=true or no options
+                    if (!options || (options && !options.epsagonSkipResponseData)) {
+                        res.on('data', chunk => addChunk(chunk, chunks));
+                    }
                     res.on('end', () => {
                         setJsonPayload(httpEvent, 'response_body', Buffer.concat(chunks), res.headers['content-encoding']);
                         resolveHttpPromise(httpEvent, resolve, startTime);
                     });
-                });
+                }, 'skip'); // skip is for epsagonMarker
             }).catch((err) => {
                 tracer.addException(err);
             });
@@ -344,31 +400,6 @@ function httpWrapper(wrappedFunction) {
 }
 
 /**
- * Wraps Wreck's request to add "isWreck" flag.
- * This flag is used to mark to not extract the data from the response since we override it.
- * @param {Function} wrappedFunction The Wreck's request module
- * @returns {Function} The wrapped function
- */
-function WreckWrapper(wrappedFunction) {
-    return function internalWreckWrapper() {
-        // Marking all possible agents
-        if (this.agents.https && !this.agents.https.isWreck) {
-            this.agents.https.isWreck = true;
-            utils.debugLog('Setting Wreck flag on https');
-        }
-        if (this.agents.http && !this.agents.http.isWreck) {
-            this.agents.http.isWreck = true;
-            utils.debugLog('Setting Wreck flag on http');
-        }
-        if (this.agents.httpsAllowUnauthorized && !this.agents.httpsAllowUnauthorized.isWreck) {
-            this.agents.httpsAllowUnauthorized.isWreck = true;
-            utils.debugLog('Setting Wreck flag on httpsAllowUnauthorized');
-        }
-        return wrappedFunction.apply(this, arguments); // eslint-disable-line prefer-rest-params
-    };
-}
-
-/**
  * We have to replace http.get since it uses a closure to reference
  * the requeset
  * @param {Module} module The module to use (http or https)
@@ -379,6 +410,18 @@ function httpGetWrapper(module) {
         const req = module.request(url, options, callback);
         req.end();
         return req;
+    };
+}
+
+
+/**
+ * Flagging fetch-h2 http1 requests with a flag to omit our response.on('data') because of collision
+ * @param {Function} wrappedFunc connect function
+ * @return {Function} the wrapped function
+ */
+function fetchH2Wrapper(wrappedFunc) {
+    return function internalFetchH2Wrapper(options) {
+        return wrappedFunc.apply(this, [{ ...options, epsagonSkipResponseData: true }]);
     };
 }
 
@@ -394,9 +437,10 @@ module.exports = {
         shimmer.wrap(https, 'request', httpWrapper);
 
         moduleUtils.patchModule(
-            'wreck',
-            'request',
-            WreckWrapper
+            'fetch-h2/dist/lib/context-http1',
+            'connect',
+            fetchH2Wrapper,
+            fetch => fetch.OriginPool.prototype
         );
     },
 };
