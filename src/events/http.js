@@ -382,10 +382,11 @@ function httpWrapper(wrappedFunction) {
 
                 clientRequest.on('response', (res) => {
                     // Listening to data only if options.epsagonSkipResponseData!=true or no options
-                    if (!config.getConfig().disableHttpResponseBodyCapture) {
-                        if (!options || (options && !options.epsagonSkipResponseData)) {
-                            res.on('data', chunk => addChunk(chunk, chunks));
-                        }
+                    if (
+                        (!options || (options && !options.epsagonSkipResponseData)) &&
+                        !config.getConfig().disableHttpResponseBodyCapture
+                    ) {
+                        res.on('data', chunk => addChunk(chunk, chunks));
                     }
                     res.on('end', () => {
                         setJsonPayload(httpEvent, 'response_body', Buffer.concat(chunks), res.headers['content-encoding']);
