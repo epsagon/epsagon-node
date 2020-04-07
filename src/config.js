@@ -40,6 +40,7 @@ const config = {
     sendOnlyErrors: (process.env.EPSAGON_SEND_TRACE_ON_ERROR || '').toUpperCase() === 'TRUE',
     sendTimeout: (Number(process.env.EPSAGON_SEND_TIMEOUT_SEC) || DEFAULT_TIMEOUT_SEC) * 1000.0,
     decodeHTTP: (process.env.EPSAGON_DECODE_HTTP || 'TRUE').toUpperCase() === 'TRUE',
+    disableHttpResponseBodyCapture: (process.env.EPSAGON_DISABLE_HTTP_RESPONSE || '').toUpperCase() === 'TRUE',
     /**
      * get isEpsagonPatchDisabled
      * @return {boolean} True if DISABLE_EPSAGON or DISABLE_EPSAGON_PATCH are set to TRUE, false
@@ -146,6 +147,11 @@ module.exports.setConfig = function setConfig(configData) {
     // Whether to decode HTTP responses (with gzip, brotli, etc.).
     if (configData.decodeHTTP === false) {
         config.decodeHTTP = configData.decodeHTTP;
+    }
+
+    // Whether to ignore HTTP responses capture
+    if (configData.disableHttpResponseBodyCapture) {
+        config.disableHttpResponseBodyCapture = configData.disableHttpResponseBodyCapture;
     }
 
     if (configData.ignoredKeys) {
