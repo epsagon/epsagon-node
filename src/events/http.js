@@ -241,6 +241,10 @@ function httpWrapper(wrappedFunction) {
                     // This field is used to identify activation ID from 'OpenWhisk'
                     metadataFields.openwhisk_act_id = res.headers['x-openwhisk-activation-id'];
                 }
+                if ('x-last-activation-id' in res.headers) {
+                    // Used to identify the last activation ID from 'OpenWhisk' sequences
+                    metadataFields.openwhisk_last_act_id = res.headers['x-last-activation-id'];
+                }
                 if ('x-request-id' in res.headers) {
                     // This field is used to identify transaction ID from 'OpenWhisk'
                     metadataFields.request_id = res.headers['x-request-id'];
