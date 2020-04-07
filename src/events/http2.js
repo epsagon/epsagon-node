@@ -7,6 +7,7 @@ const urlLib = require('url');
 const utils = require('../utils.js');
 const tracer = require('../tracer.js');
 const eventInterface = require('../event.js');
+const config = require('../config.js');
 const { MAX_HTTP_VALUE_SIZE } = require('../consts.js');
 const { isBlacklistURL, isBlacklistHeader } = require('../helpers/events');
 const {
@@ -102,16 +103,18 @@ function httpWrapper(wrappedFunction, authority) {
             const responsePromise = new Promise((resolve) => {
                 const chunks = [];
                 let responseHeaders;
-                clientRequest.on('data', (chunk) => {
-                    if (!chunk) {
-                        // Skip empty data
-                        return;
-                    }
-                    const totalSize = chunks.reduce((total, item) => item.length + total, 0);
-                    if (totalSize + chunk.length <= MAX_HTTP_VALUE_SIZE) {
-                        chunks.push(typeof chunk === 'string' ? Buffer.from(chunk) : chunk);
-                    }
-                });
+                if (!config.getConfig().disableHttpResponseBodyCapture) {
+                    clientRequest.on('data', (chunk) => {
+                        if (!chunk) {
+                            // Skip empty data
+                            return;
+                        }
+                        const totalSize = chunks.reduce((total, item) => item.length + total, 0);
+                        if (totalSize + chunk.length <= MAX_HTTP_VALUE_SIZE) {
+                            chunks.push(typeof chunk === 'string' ? Buffer.from(chunk) : chunk);
+                        }
+                    });
+                }
 
                 clientRequest.once('error', (error) => {
                     eventInterface.setException(httpEvent, error);

@@ -279,7 +279,11 @@ function httpWrapper(wrappedFunction) {
                 this, buildParams(url, options, patchedCallback)
             );
 
-            if (options && options.epsagonSkipResponseData) {
+            if (
+                options &&
+                options.epsagonSkipResponseData &&
+                !config.getConfig().disableHttpResponseBodyCapture
+            ) {
                 shimmer.wrap(
                     clientRequest,
                     'on',
@@ -378,7 +382,10 @@ function httpWrapper(wrappedFunction) {
 
                 clientRequest.on('response', (res) => {
                     // Listening to data only if options.epsagonSkipResponseData!=true or no options
-                    if (!options || (options && !options.epsagonSkipResponseData)) {
+                    if (
+                        (!options || (options && !options.epsagonSkipResponseData)) &&
+                        !config.getConfig().disableHttpResponseBodyCapture
+                    ) {
                         res.on('data', chunk => addChunk(chunk, chunks));
                     }
                     res.on('end', () => {
