@@ -123,18 +123,18 @@ Some require installing also [`epsagon-frameworks`](https://github.com/epsagon/e
 
 |Framework          |Supported Version          |Epsagon Library                                    |Auto-tracing Supported                              |
 |-------------------|---------------------------|---------------------------------------------------|----------------------------------------------------|
-|AWS Lambda         |                           |`epsagon`                                          |<ul><li>- [x] (Through the dashboard only)</li></ul>|
-|Step Functions     |                           |`epsagon`                                          |<ul><li>- [ ]</li></ul>                             |
-|OpenWhisk Action   |                           |`epsagon`                                          |<ul><li>- [ ]</li></ul>                             |
-|AWS Batch          |                           |`epsagon`                                          |<ul><li>- [ ]</li></ul>                             |
-|Generic            |                           |`epsagon`                                          |<ul><li>- [ ]</li></ul>                             |
-|Express            |`>=3.0.0`                  |`epsagon-frameworks`                               |<ul><li>- [x]</li></ul>                             |
-|Hapi               |`>=17.0.0`                 |`epsagon-frameworks`                               |<ul><li>- [x]</li></ul>                             |
-|Koa                |`>=1.1.0`                  |`epsagon-frameworks`                               |<ul><li>- [x]</li></ul>                             |
-|KafkaJS            |`>=1.2.0`                  |`epsagon-frameworks`                               |<ul><li>- [x]</li></ul>                             |
-|PubSub             |`>=1.1.0`                  |`epsagon-frameworks`                               |<ul><li>- [x]</li></ul>                             |
-|SQS Consumer       |`>=4.0.0`                  |`epsagon-frameworks`                               |<ul><li>- [x]</li></ul>                             |
-|NATS               |`>=1.4.0`                  |`epsagon-frameworks`                               |<ul><li>- [x]</li></ul>                             |
+|AWS Lambda         |All                        |`epsagon`                                          |<ul><li>- [x] (Through the dashboard only)</li></ul>|
+|Step Functions     |All                        |`epsagon`                                          |<ul><li>- [ ] </li></ul>                             |
+|OpenWhisk Action   |All                        |`epsagon`                                          |<ul><li>- [ ] </li></ul>                             |
+|AWS Batch          |All                        |`epsagon`                                          |<ul><li>- [ ] </li></ul>                             |
+|Generic            |All                        |`epsagon`                                          |<ul><li>- [ ] </li></ul>                             |
+|Express            |`>=3.0.0`                  |`epsagon-frameworks`                               |<ul><li>- [x] </li></ul>                             |
+|Hapi               |`>=17.0.0`                 |`epsagon-frameworks`                               |<ul><li>- [x] </li></ul>                             |
+|Koa                |`>=1.1.0`                  |`epsagon-frameworks`                               |<ul><li>- [x] </li></ul>                             |
+|KafkaJS            |`>=1.2.0`                  |`epsagon-frameworks`                               |<ul><li>- [x] </li></ul>                             |
+|PubSub             |`>=1.1.0`                  |`epsagon-frameworks`                               |<ul><li>- [x] </li></ul>                             |
+|SQS Consumer       |`>=4.0.0`                  |`epsagon-frameworks`                               |<ul><li>- [x] </li></ul>                             |
+|NATS               |`>=1.4.0`                  |`epsagon-frameworks`                               |<ul><li>- [x] </li></ul>                             |
 
 
 ### AWS Lambda
