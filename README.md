@@ -65,9 +65,9 @@ Another simple alternative is to copy the snippet into your code:
 const epsagon = require('epsagon-frameworks');
 
 epsagon.init({
-    token: 'epsagon-token',
-    appName: 'app-name-stage',
-    metadataOnly: false,
+  token: 'epsagon-token',
+  appName: 'app-name-stage',
+  metadataOnly: false,
 });
 ```
 
@@ -110,11 +110,11 @@ You can pass a list of sensitive properties and hostnames and they will be filte
 
 ```javascript
 epsagon.init({
-    token: 'epsagon-token',
-    appName: 'app-name-stage',
-    metadataOnly: false,
-    ignoredKeys: ['password', /.*_token$/],
-    urlPatternsToIgnore: ['example.com', 'auth.com'],
+  token: 'epsagon-token',
+  appName: 'app-name-stage',
+  metadataOnly: false,
+  ignoredKeys: ['password', /.*_token$/],
+  urlPatternsToIgnore: ['example.com', 'auth.com'],
 });
 ```
 
@@ -165,9 +165,9 @@ Calling the SDK is simple:
 ```javascript
 const epsagon = require('epsagon');
 epsagon.init({
-    token: '<epsagon-token>',
-    appName: '<app-name-stage>',
-    metadataOnly: false,
+  token: 'epsagon-token',
+  appName: 'app-name-stage',
+  metadataOnly: false,
 });
 
 // Wrap your entry point
@@ -188,9 +188,9 @@ Tracing Step Functions is similar to regular Lambda functions, but the wrapper c
 ```javascript
 const epsagon = require('epsagon');
 epsagon.init({
-    token: '<epsagon-token>',
-    appName: '<app-name-stage>',
-    metadataOnly: false,
+  token: 'epsagon-token',
+  appName: 'app-name-stage',
+  metadataOnly: false,
 });
 
 // Wrap your entry point
@@ -233,9 +233,9 @@ Tracing batch jobs running in AWS Batch can be done by wrapping the main handler
 ```javascript
 const epsagon = require('epsagon');
 epsagon.init({
-    token: '<epsagon-token>',
-    appName: '<app-name-stage>',
-    metadataOnly: false,
+  token: 'epsagon-token',
+  appName: 'app-name-stage',
+  metadataOnly: false,
 });
 
 
@@ -258,10 +258,19 @@ Calling the SDK is simple, and should be done in your main `js` file where the a
 const epsagon = require('epsagon-frameworks');
 
 epsagon.init({
-    token: 'epsagon-token',
-    appName: 'app-name-stage',
-    metadataOnly: false,
+  token: 'epsagon-token',
+  appName: 'app-name-stage',
+  metadataOnly: false,
 });
+```
+
+Tagging traces or setting custom errors can be by:
+
+```javascript
+app.get('/', (req, res) => {
+  req.epsagon.label('key', 'value');
+  req.epsagon.setError(Error('My custom error'));
+}
 ```
 
 ### Hapi
@@ -276,9 +285,22 @@ Calling the SDK is simple, and should be done in your main `js` file where the a
 const epsagon = require('epsagon-frameworks');
 
 epsagon.init({
-    token: 'epsagon-token',
-    appName: 'app-name-stage',
-    metadataOnly: false,
+  token: 'epsagon-token',
+  appName: 'app-name-stage',
+  metadataOnly: false,
+});
+```
+
+Tagging traces or setting custom errors can be by:
+
+```javascript
+server.route({
+  method: 'GET',
+  path:'/',
+  handler: (request, h) => {
+      request.epsagon.label('key', 'value');
+      request.epsagon.setError(Error('My custom error'));
+  }
 });
 ```
 
@@ -294,9 +316,18 @@ Calling the SDK is simple, and should be done in your main `js` file where the a
 const epsagon = require('epsagon-frameworks');
 
 epsagon.init({
-    token: 'epsagon-token',
-    appName: 'app-name-stage',
-    metadataOnly: false,
+  token: 'epsagon-token',
+  appName: 'app-name-stage',
+  metadataOnly: false,
+});
+```
+
+Tagging traces or setting custom errors can be by:
+
+```javascript
+app.use(async ctx => {
+  ctx.epsagon.label('key', 'value');
+  ctx.epsagon.setError(Error('My custom error'));
 });
 ```
 
@@ -312,10 +343,21 @@ Calling the SDK is simple, and should be done in your main `js` file where the c
 const epsagon = require('epsagon-frameworks');
 
 epsagon.init({
-    token: 'epsagon-token',
-    appName: 'app-name-stage',
-    metadataOnly: false,
+  token: 'epsagon-token',
+  appName: 'app-name-stage',
+  metadataOnly: false,
 });
+```
+
+Tagging traces or setting custom errors can be by:
+
+```javascript
+await consumer.run({
+  eachMessage: async ({ topic, partition, message }) => {
+    message.epsagon.label('key', 'value');
+    message.epsagon.setError(Error('My custom error'));
+  },
+})
 ```
 
 ### PubSub
@@ -330,10 +372,21 @@ Calling the SDK is simple, and should be done in your main `js` file where the c
 const epsagon = require('epsagon-frameworks');
 
 epsagon.init({
-    token: 'epsagon-token',
-    appName: 'app-name-stage',
-    metadataOnly: false,
+  token: 'epsagon-token',
+  appName: 'app-name-stage',
+  metadataOnly: false,
 });
+```
+
+Tagging traces or setting custom errors can be by:
+
+```javascript
+await consumer.run({
+  eachMessage: async ({ topic, partition, message }) => {
+    message.epsagon.label('key', 'value');
+    message.epsagon.setError(Error('My custom error'));
+  },
+})
 ```
 
 ### SQS Consumer
@@ -348,10 +401,19 @@ Calling the SDK is simple, and should be done in your main `js` file where the c
 const epsagon = require('epsagon-frameworks');
 
 epsagon.init({
-    token: 'epsagon-token',
-    appName: 'app-name-stage',
-    metadataOnly: false,
+  token: 'epsagon-token',
+  appName: 'app-name-stage',
+  metadataOnly: false,
 });
+```
+
+Tagging traces or setting custom errors can be by:
+
+```javascript
+const messageHandler = message => {
+  message.epsagon.label('key', 'value');
+  message.epsagon.setError(Error('My custom error'));
+};
 ```
 
 ### NATS
@@ -366,9 +428,9 @@ Calling the SDK is simple, and should be done in your main `js` file where the c
 const epsagon = require('epsagon-frameworks');
 
 epsagon.init({
-    token: 'epsagon-token',
-    appName: 'app-name-stage',
-    metadataOnly: false,
+  token: 'epsagon-token',
+  appName: 'app-name-stage',
+  metadataOnly: false,
 });
 ```
 
@@ -380,9 +442,9 @@ For any tracing, you can simply use the generic Epsagon wrapper using the follow
 ```javascript
 const epsagon = require('epsagon');
 epsagon.init({
-    token: '<epsagon-token>',
-    appName: '<app-name-stage>',
-    metadataOnly: false,
+  token: 'epsagon-token',
+  appName: 'app-name-stage',
+  metadataOnly: false,
 });
 
 
