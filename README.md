@@ -135,20 +135,20 @@ epsagon.ignoreEndpoints(['/healthcheck'])
 The following frameworks are supported with Epsagon.
 Some require installing also [`epsagon-frameworks`](https://github.com/epsagon/epsagon-node-frameworks)
 
-|Framework          |Supported Version          |Epsagon Library                                    |Auto-tracing Supported                              |
-|-------------------|---------------------------|---------------------------------------------------|----------------------------------------------------|
-|AWS Lambda         |All                        |`epsagon`                                          |<ul><li>- [x] (Through the dashboard only)</li></ul>|
-|Step Functions     |All                        |`epsagon`                                          |<ul><li>- [ ] </li></ul>                             |
-|OpenWhisk Action   |All                        |`epsagon`                                          |<ul><li>- [ ] </li></ul>                             |
-|AWS Batch          |All                        |`epsagon`                                          |<ul><li>- [ ] </li></ul>                             |
-|Generic            |All                        |`epsagon`                                          |<ul><li>- [ ] </li></ul>                             |
-|Express            |`>=3.0.0`                  |`epsagon-frameworks`                               |<ul><li>- [x] </li></ul>                             |
-|Hapi               |`>=17.0.0`                 |`epsagon-frameworks`                               |<ul><li>- [x] </li></ul>                             |
-|Koa                |`>=1.1.0`                  |`epsagon-frameworks`                               |<ul><li>- [x] </li></ul>                             |
-|KafkaJS            |`>=1.2.0`                  |`epsagon-frameworks`                               |<ul><li>- [x] </li></ul>                             |
-|PubSub             |`>=1.1.0`                  |`epsagon-frameworks`                               |<ul><li>- [x] </li></ul>                             |
-|SQS Consumer       |`>=4.0.0`                  |`epsagon-frameworks`                               |<ul><li>- [x] </li></ul>                             |
-|NATS               |`>=1.4.0`                  |`epsagon-frameworks`                               |<ul><li>- [x] </li></ul>                             |
+|Framework                               |Supported Version          |Epsagon Library                                    |Auto-tracing Supported                              |
+|----------------------------------------|---------------------------|---------------------------------------------------|----------------------------------------------------|
+|[AWS Lambda](#aws-lambda)               |All                        |`epsagon`                                          |<ul><li>- [x] (Through the dashboard only)</li></ul>|
+|[Step Functions](#step-functions)       |All                        |`epsagon`                                          |<ul><li>- [ ] </li></ul>                             |
+|[OpenWhisk Action](#openwhisk-action)   |All                        |`epsagon`                                          |<ul><li>- [ ] </li></ul>                             |
+|[AWS Batch](#aws-batch)                 |All                        |`epsagon`                                          |<ul><li>- [ ] </li></ul>                             |
+|[Generic](#generic)                     |All                        |`epsagon`                                          |<ul><li>- [ ] </li></ul>                             |
+|[Express](#express)                     |`>=3.0.0`                  |`epsagon-frameworks`                               |<ul><li>- [x] </li></ul>                             |
+|[Hapi](#hapi)                           |`>=17.0.0`                 |`epsagon-frameworks`                               |<ul><li>- [x] </li></ul>                             |
+|[Koa](#koa)                             |`>=1.1.0`                  |`epsagon-frameworks`                               |<ul><li>- [x] </li></ul>                             |
+|[KafkaJS](#kafkajs)                     |`>=1.2.0`                  |`epsagon-frameworks`                               |<ul><li>- [x] </li></ul>                             |
+|[PubSub](#pubsub)                       |`>=1.1.0`                  |`epsagon-frameworks`                               |<ul><li>- [x] </li></ul>                             |
+|[SQS Consumer](#sqs-consumer)           |`>=4.0.0`                  |`epsagon-frameworks`                               |<ul><li>- [x] </li></ul>                             |
+|[NATS](#nats)                           |`>=1.4.0`                  |`epsagon-frameworks`                               |<ul><li>- [x] </li></ul>                             |
 
 
 ### AWS Lambda
