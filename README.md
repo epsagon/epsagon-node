@@ -21,6 +21,7 @@ This package provides tracing to Node.js applications for collection of distribu
   - [Tagging Traces](#tagging-traces)
   - [Custom Errors](#custom-errors)
   - [Filter Sensitive Data](#filter-sensitive-data)
+  - [Ignore Endpoints](#ignore-endpoints)
 - [Frameworks](#frameworks)
 - [Integrations](#integrations)
 - [Configuration](#configuration)
@@ -121,6 +122,14 @@ The `ignoredKeys` property can contain strings (will perform a lose match, so th
 Also you can set `urlPatternsToIgnore` to ignore HTTP calls to specific domains.
 
 
+### Ignore Endpoints
+
+You can ignore certain incoming requests by specifying endpoints:
+```javascript
+epsagon.ignoreEndpoints(['/healthcheck'])
+```
+
+
 ## Frameworks
 
 The following frameworks are supported with Epsagon.
@@ -144,29 +153,245 @@ Some require installing also [`epsagon-frameworks`](https://github.com/epsagon/e
 
 ### AWS Lambda
 
-list plugins
+Tracing Lambda functions can be done in three methods:
+1. Auto-tracing through the Epsagon dashboard.
+2. Using the [`serverless-plugin-epsagon`](https://github.com/epsagon/serverless-plugin-epsagon) if you're using The Serverless Framework.
+3. Calling the SDK.
+
+**Make sure to choose just one of the methods**
+
+Calling the SDK is simple:
+
+```javascript
+const epsagon = require('epsagon');
+epsagon.init({
+    token: '<epsagon-token>',
+    appName: '<app-name-stage>',
+    metadataOnly: false,
+});
+
+// Wrap your entry point
+module.exports.handler = epsagon.lambdaWrapper((event, context, callback) => {
+  // Your code is here
+});
+
+// Async functions example
+module.exports.handler = epsagon.lambdaWrapper(async (event) => {
+  // Your code is here
+});
+```
 
 ### Step Functions
 
+Tracing Step Functions is similar to regular Lambda functions, but the wrapper changes from `lambdaWrapper` to `stepLambdaWrapper`:
+
+```javascript
+const epsagon = require('epsagon');
+epsagon.init({
+    token: '<epsagon-token>',
+    appName: '<app-name-stage>',
+    metadataOnly: false,
+});
+
+// Wrap your entry point
+module.exports.handler = epsagon.stepLambdaWrapper((event, context, callback) => {
+  // Your code is here
+});
+
+// Async functions example
+module.exports.handler = epsagon.stepLambdaWrapper(async (event) => {
+  // Your code is here
+});
+```
+
 ### OpenWhisk Action
+
+You should pass the Epsagon token to your action as a default parameter, so that you don't have to expose important credentials in your code.
+The name of the parameter can be configured using `token_param`, in this example we use `epsagon-token`:
+
+```javascript
+const epsagon = require('epsagon');
+
+function main(params) {
+  // Your code is here
+}
+
+module.exports.main = epsagon.openWhiskWrapper(
+  main,
+  {
+    token_param: 'epsagon-token', // name of the action parameter to take the token from
+    appName: 'app-name-stage',
+    metadataOnly: false
+  }
+);
+```
 
 ### AWS Batch
 
+Tracing batch jobs running in AWS Batch can be done by wrapping the main handler/entrypoint of the code:
+
+```javascript
+const epsagon = require('epsagon');
+epsagon.init({
+    token: '<epsagon-token>',
+    appName: '<app-name-stage>',
+    metadataOnly: false,
+});
+
+
+function process(params) {
+  // Your code is here
+}
+
+const wrappedProcess = epsagon.wrapBatchJob(process);
+```
+
 ### Express
+
+Tracing Express application can be done in two methods:
+1. [Auto-tracing](#auto-tracing) using the environment variable.
+2. Calling the SDK.
+
+Calling the SDK is simple, and should be done in your main `js` file where the application is being initialized:
+
+```javascript
+const epsagon = require('epsagon-frameworks');
+
+epsagon.init({
+    token: 'epsagon-token',
+    appName: 'app-name-stage',
+    metadataOnly: false,
+});
+```
 
 ### Hapi
 
+Tracing Hapi application can be done in two methods:
+1. [Auto-tracing](#auto-tracing) using the environment variable.
+2. Calling the SDK.
+
+Calling the SDK is simple, and should be done in your main `js` file where the application is being initialized:
+
+```javascript
+const epsagon = require('epsagon-frameworks');
+
+epsagon.init({
+    token: 'epsagon-token',
+    appName: 'app-name-stage',
+    metadataOnly: false,
+});
+```
+
 ### Koa
+
+Tracing Koa application can be done in two methods:
+1. [Auto-tracing](#auto-tracing) using the environment variable.
+2. Calling the SDK.
+
+Calling the SDK is simple, and should be done in your main `js` file where the application is being initialized:
+
+```javascript
+const epsagon = require('epsagon-frameworks');
+
+epsagon.init({
+    token: 'epsagon-token',
+    appName: 'app-name-stage',
+    metadataOnly: false,
+});
+```
 
 ### KafkaJS
 
+Tracing `kafkajs` consumers can be done in two methods:
+1. [Auto-tracing](#auto-tracing) using the environment variable.
+2. Calling the SDK.
+
+Calling the SDK is simple, and should be done in your main `js` file where the consumer is being initialized:
+
+```javascript
+const epsagon = require('epsagon-frameworks');
+
+epsagon.init({
+    token: 'epsagon-token',
+    appName: 'app-name-stage',
+    metadataOnly: false,
+});
+```
+
 ### PubSub
+
+Tracing `@google-cloud/pubsub` consumers can be done in two methods:
+1. [Auto-tracing](#auto-tracing) using the environment variable.
+2. Calling the SDK.
+
+Calling the SDK is simple, and should be done in your main `js` file where the consumer is being initialized:
+
+```javascript
+const epsagon = require('epsagon-frameworks');
+
+epsagon.init({
+    token: 'epsagon-token',
+    appName: 'app-name-stage',
+    metadataOnly: false,
+});
+```
 
 ### SQS Consumer
 
+Tracing [`sqs-consumer`](https://github.com/bbc/sqs-consumer) consumers can be done in two methods:
+1. [Auto-tracing](#auto-tracing) using the environment variable.
+2. Calling the SDK.
+
+Calling the SDK is simple, and should be done in your main `js` file where the consumer is being initialized:
+
+```javascript
+const epsagon = require('epsagon-frameworks');
+
+epsagon.init({
+    token: 'epsagon-token',
+    appName: 'app-name-stage',
+    metadataOnly: false,
+});
+```
+
 ### NATS
 
+Tracing `nats` consumers can be done in two methods:
+1. [Auto-tracing](#auto-tracing) using the environment variable.
+2. Calling the SDK.
+
+Calling the SDK is simple, and should be done in your main `js` file where the consumer is being initialized:
+
+```javascript
+const epsagon = require('epsagon-frameworks');
+
+epsagon.init({
+    token: 'epsagon-token',
+    appName: 'app-name-stage',
+    metadataOnly: false,
+});
+```
+
+
 ### Generic
+
+For any tracing, you can simply use the generic Epsagon wrapper using the following example:
+
+```javascript
+const epsagon = require('epsagon');
+epsagon.init({
+    token: '<epsagon-token>',
+    appName: '<app-name-stage>',
+    metadataOnly: false,
+});
+
+
+function main(params) {
+  // Your code is here
+}
+
+const wrappedMain = epsagon.nodeWrapper(main);
+```
 
 ## Integrations
 
