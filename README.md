@@ -10,7 +10,7 @@
 [![semantic-release](https://img.shields.io/badge/%20%20%F0%9F%93%A6%F0%9F%9A%80-semantic--release-e10079.svg)](https://github.com/semantic-release/semantic-release)
 
 # Epsagon Tracing for Node.js
-This package provides tracing to Node.js applications for collection of distributed tracing and performance metrics in [Epsagon](https://dashboard.epsagon.com/?utm_source=github).
+This package provides tracing to Node.js applications for the collection of distributed tracing and performance metrics in [Epsagon](https://dashboard.epsagon.com/?utm_source=github).
 
 ## Contents
 
@@ -124,8 +124,8 @@ epsagon.init({
 });
 ```
 
-The `ignoredKeys` property can contain strings (will perform a lose match, so that `First Name` also matches `first_name`), regular expressions, and predicate functions.
-Also you can set `urlPatternsToIgnore` to ignore HTTP calls to specific domains.
+The `ignoredKeys` property can contain strings (will perform a loose match, so that `First Name` also matches `first_name`), regular expressions, and predicate functions.
+Also, you can set `urlPatternsToIgnore` to ignore HTTP calls to specific domains.
 
 
 ### Ignore Endpoints
@@ -138,7 +138,7 @@ epsagon.ignoreEndpoints(['/healthcheck'])
 
 ## Frameworks
 
-The following frameworks are supported with Epsagon.
+The following frameworks are supported by Epsagon.
 Some require installing also [`epsagon-frameworks`](https://github.com/epsagon/epsagon-node-frameworks)
 
 |Framework                               |Supported Version          |Epsagon Library                                    |Auto-tracing Supported                               |
