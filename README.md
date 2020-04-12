@@ -46,13 +46,19 @@ The simplest way to get started in some frameworks is to install `epsagon-framew
 npm install epsagon-frameworks
 ```
 
+[`epsagon-frameworks`](https://github.com/epsagon/epsagon-node-frameworks) extends the base `epsagon` support to more frameworks.
+
 And run your node command:
 ```sh
+export EPSAGON_TOKEN=<epsagon-token>
+export EPSAGON_APP_NAME=<app-name-stage>
 NODE_OPTIONS='-r epsagon-frameworks' <command>
 ```
 
 For example:
 ```sh
+export EPSAGON_TOKEN=<your-token>
+export EPSAGON_APP_NAME=express-prod
 NODE_OPTIONS='-r epsagon-frameworks' node app.js
 ```
 
@@ -84,7 +90,7 @@ epsagon.label('key', 'value');
 epsagon.label('userId', userId);
 ```
 
-In some [frameworks](#frameworks) tagging can be done in different ways.
+In some [frameworks](#frameworks) tagging can be declared in different ways.
 
 ### Custom Errors
 
@@ -102,7 +108,7 @@ try {
 epsagon.setError(Error('My custom error'));
 ```
 
-In some [frameworks](#frameworks) custom errors can be done in different ways.
+In some [frameworks](#frameworks) custom errors can be declared in different ways.
 
 ### Filter Sensitive Data
 
@@ -135,9 +141,9 @@ epsagon.ignoreEndpoints(['/healthcheck'])
 The following frameworks are supported with Epsagon.
 Some require installing also [`epsagon-frameworks`](https://github.com/epsagon/epsagon-node-frameworks)
 
-|Framework                               |Supported Version          |Epsagon Library                                    |Auto-tracing Supported                              |
-|----------------------------------------|---------------------------|---------------------------------------------------|----------------------------------------------------|
-|[AWS Lambda](#aws-lambda)               |All                        |`epsagon`                                          |<ul><li>- [x] (Through the dashboard only)</li></ul>|
+|Framework                               |Supported Version          |Epsagon Library                                    |Auto-tracing Supported                               |
+|----------------------------------------|---------------------------|---------------------------------------------------|-----------------------------------------------------|
+|[AWS Lambda](#aws-lambda)               |All                        |`epsagon`                                          |<ul><li>- [x] (Through the dashboard only)</li></ul> |
 |[Step Functions](#step-functions)       |All                        |`epsagon`                                          |<ul><li>- [ ] </li></ul>                             |
 |[OpenWhisk Action](#openwhisk-action)   |All                        |`epsagon`                                          |<ul><li>- [ ] </li></ul>                             |
 |[AWS Batch](#aws-batch)                 |All                        |`epsagon`                                          |<ul><li>- [ ] </li></ul>                             |
@@ -153,7 +159,7 @@ Some require installing also [`epsagon-frameworks`](https://github.com/epsagon/e
 
 ### AWS Lambda
 
-Tracing Lambda functions can be done in three methods:
+Tracing Lambda functions can be declared in three methods:
 1. Auto-tracing through the Epsagon dashboard.
 2. Using the [`serverless-plugin-epsagon`](https://github.com/epsagon/serverless-plugin-epsagon) if you're using The Serverless Framework.
 3. Calling the SDK.
@@ -228,7 +234,7 @@ module.exports.main = epsagon.openWhiskWrapper(
 
 ### AWS Batch
 
-Tracing batch jobs running in AWS Batch can be done by wrapping the main handler/entrypoint of the code:
+Tracing batch jobs running in AWS Batch can be declared by wrapping the main handler/entrypoint of the code:
 
 ```javascript
 const epsagon = require('epsagon');
@@ -248,7 +254,7 @@ const wrappedProcess = epsagon.wrapBatchJob(process);
 
 ### Express
 
-Tracing Express application can be done in two methods:
+Tracing Express application can be declared in two methods:
 1. [Auto-tracing](#auto-tracing) using the environment variable.
 2. Calling the SDK.
 
@@ -275,7 +281,7 @@ app.get('/', (req, res) => {
 
 ### Hapi
 
-Tracing Hapi application can be done in two methods:
+Tracing Hapi application can be declared in two methods:
 1. [Auto-tracing](#auto-tracing) using the environment variable.
 2. Calling the SDK.
 
@@ -306,7 +312,7 @@ server.route({
 
 ### Koa
 
-Tracing Koa application can be done in two methods:
+Tracing Koa application can be declared in two methods:
 1. [Auto-tracing](#auto-tracing) using the environment variable.
 2. Calling the SDK.
 
@@ -333,7 +339,7 @@ app.use(async ctx => {
 
 ### KafkaJS
 
-Tracing `kafkajs` consumers can be done in two methods:
+Tracing `kafkajs` consumers can be declared in two methods:
 1. [Auto-tracing](#auto-tracing) using the environment variable.
 2. Calling the SDK.
 
@@ -362,7 +368,7 @@ await consumer.run({
 
 ### PubSub
 
-Tracing `@google-cloud/pubsub` consumers can be done in two methods:
+Tracing `@google-cloud/pubsub` consumers can be declared in two methods:
 1. [Auto-tracing](#auto-tracing) using the environment variable.
 2. Calling the SDK.
 
@@ -391,7 +397,7 @@ await consumer.run({
 
 ### SQS Consumer
 
-Tracing [`sqs-consumer`](https://github.com/bbc/sqs-consumer) consumers can be done in two methods:
+Tracing [`sqs-consumer`](https://github.com/bbc/sqs-consumer) consumers can be declared in two methods:
 1. [Auto-tracing](#auto-tracing) using the environment variable.
 2. Calling the SDK.
 
@@ -418,7 +424,7 @@ const messageHandler = message => {
 
 ### NATS
 
-Tracing `nats` consumers can be done in two methods:
+Tracing `nats` consumers can be declared in two methods:
 1. [Auto-tracing](#auto-tracing) using the environment variable.
 2. Calling the SDK.
 
@@ -492,7 +498,7 @@ Advanced options can be configured as a parameter to the init() method or as env
 |useSSL             |EPSAGON_SSL                |Boolean|`true`       |Whether to send the traces over HTTPS SSL or not                                   |
 |traceCollectorURL  |-                          |String |-            |The address of the trace collector to send trace to                                |
 |isEpsagonDisabled  |DISABLE_EPSAGON            |Boolean|`false`      |A flag to completely disable Epsagon (can be used for tests or locally)            |
-|ignoredKeys        |EPSAGON_IGNORED_KEYS       |Array  |-            |Array of keys names (can be string or regex) to be removed from the trace
+|ignoredKeys        |EPSAGON_IGNORED_KEYS       |Array  |-            |Array of keys names (can be string or regex) to be removed from the trace          |
 |urlPatternsToIgnore|EPSAGON_URLS_TO_IGNORE     |Array  |`[]`         |Array of URL patterns to ignore the calls                                          |
 |sendTimeout        |EPSAGON_SEND_TIMEOUT_SEC   |Float  |`0.2`        |The timeout duration in seconds to send the traces to the trace collector          |
 |decodeHTTP         |EPSAGON_DECODE_HTTP        |Boolean|`true`       |Whether to decode and decompress HTTP responses into the payload                   |
