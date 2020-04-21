@@ -13,9 +13,9 @@ describe('nodeWrapper tests', () => {
             'restart'
         );
 
-        this.addEventStub = sinon.stub(
+        this.addRunnerStub = sinon.stub(
             tracer,
-            'addEvent'
+            'addRunner'
         );
 
         this.addExceptionStub = sinon.stub(
@@ -44,7 +44,7 @@ describe('nodeWrapper tests', () => {
     });
 
     afterEach(() => {
-        this.addEventStub.restore();
+        this.addRunnerStub.restore();
         this.addExceptionStub.restore();
         this.sendTraceStub.restore();
         this.sendTraceSyncStub.restore();
@@ -60,7 +60,7 @@ describe('nodeWrapper tests', () => {
         this.wrappedStub(1, 2, 3);
         setTimeout(() => {
             expect(this.restartStub.callCount).to.equal(1);
-            expect(this.addEventStub.callCount).to.equal(1);
+            expect(this.addRunnerStub.callCount).to.equal(1);
             expect(this.addExceptionStub.called).to.be.false;
             expect(this.sendTraceStub.callCount).to.equal(1);
             expect(this.stubFunction.callCount).to.equal(1);
@@ -73,8 +73,8 @@ describe('nodeWrapper tests', () => {
         const wrappedFunction = function name() {};
         this.wrappedStub = nodeWrapper.nodeWrapper(wrappedFunction);
         this.wrappedStub(1, 2, 3);
-        expect(this.addEventStub.callCount).to.equal(1);
-        const runnerEvent = this.addEventStub.getCall(0).args[0];
+        expect(this.addRunnerStub.callCount).to.equal(1);
+        const runnerEvent = this.addRunnerStub.getCall(0).args[0];
         expect(runnerEvent.getId()).to.be.a('string');
         expect(runnerEvent.getStartTime()).to.be.a('number');
         expect(runnerEvent.getDuration()).to.be.a('number');
@@ -92,7 +92,7 @@ describe('nodeWrapper tests', () => {
         this.stubFunction.throws();
         expect(() => this.wrappedStub(1, 2, 3)).to.throw();
         expect(this.restartStub.callCount).to.equal(1);
-        expect(this.addEventStub.callCount).to.equal(1);
+        expect(this.addRunnerStub.callCount).to.equal(1);
         expect(this.addExceptionStub.called).to.be.false;
         expect(this.sendTraceStub.called).to.be.false;
         expect(this.sendTraceSyncStub.callCount).to.equal(1);
