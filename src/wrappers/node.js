@@ -63,7 +63,7 @@ module.exports.nodeWrapper = function nodeWrapper(functionToWrap) {
             return functionToWrap(...args);
         }
 
-        tracer.addEvent(runner);
+        tracer.addRunner(runner);
 
         const startTime = Date.now();
         const runnerSendUpdateHandler = (() => {
