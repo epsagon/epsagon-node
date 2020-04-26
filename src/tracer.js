@@ -545,3 +545,14 @@ module.exports.enable = function enable() {
 };
 
 module.exports.stripOperations = stripOperations;
+
+/**
+ * @returns {string} the current runner's log uuid
+ */
+module.exports.getLogId = function getLogId() {
+    const tracer = module.exports.getTrace();
+    if (tracer.currRunner && tracer.currRunner.hasResource()) {
+        return tracer.currRunner.getResource().getMetadataMap().get('log_id');
+    }
+    return null;
+};
