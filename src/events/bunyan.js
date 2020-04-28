@@ -9,7 +9,6 @@ const moduleUtils = require('./module_utils.js');
  */
 function emitWrapper(wrappedFunction) {
     return function internalEmitWrapper(rec, ...args) {
-
         if (tracer.getLogId() === null) {
             return wrappedFunction.apply(this, [rec].concat(args));
         }
@@ -23,11 +22,12 @@ function emitWrapper(wrappedFunction) {
         if (!rec) {
             return wrappedFunction.apply(this, [rec].concat(args));
         }
-
+        /* eslint-disable guard-for-in, no-restricted-syntax */
         for (const key in rec) {
             newRec[key] = rec[key];
         }
 
+        /* eslint-disable no-restricted-syntax */
         for (const symbol of Object.getOwnPropertySymbols(rec)) {
             newRec[symbol] = rec[symbol];
         }
