@@ -90,6 +90,14 @@ epsagon.label('key', 'value');
 epsagon.label('userId', userId);
 ```
 
+You can also use it to ship custom metrics:
+```javascript
+epsagon.label('key', 'metric')
+epsagon.label('itemsInCart', itemsInCart)
+```
+
+Valid types are `string`, `boolean` and `number`.
+
 In some [frameworks](#frameworks) tagging can be done in different ways.
 
 ### Custom Errors

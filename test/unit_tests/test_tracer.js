@@ -268,6 +268,19 @@ describe('tracer module tests', () => {
         expect(labels.label1).to.equal('value1');
     });
 
+    it('addLabel: Add multiple types of labels to the trace', () => {
+        tracer.getTrace = tracerObj.get;
+        tracer.label('label1', 'value1');
+        tracer.label('label2', 1);
+        tracer.label('label3', 1.0);
+        tracer.label('label4', false);
+        const labels = JSON.parse(tracerObj.get().trace.getEventList()[0].getResource().getMetadataMap().get('labels'));
+        expect(labels.label1).to.equal('value1');
+        expect(labels.label2).to.equal(1);
+        expect(labels.label3).to.equal(1.0);
+        expect(labels.label4).to.equal(false);
+    });
+
     it('addLabel: Override existing label', () => {
         tracer.getTrace = tracerObj.get;
         tracer.label('label1', 'value1');
@@ -286,7 +299,7 @@ describe('tracer module tests', () => {
 
     it('addLabel: Labels too big - multiple labels', () => {
         tracer.getTrace = tracerObj.get;
-        const expectedLabel1 = 'x'.repeat(30 * 1024);
+        const expectedLabel1 = 'x'.repeat(5 * 1024);
 
         tracer.label('label1', expectedLabel1);
         tracer.label('label2', 'x'.repeat(40 * 1024));
