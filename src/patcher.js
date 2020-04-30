@@ -18,6 +18,7 @@ const dnsPatcher = require('./events/dns.js');
 const natsPatcher = require('./events/nats.js');
 const mqttPatcher = require('./events/mqtt.js');
 const kafkajsPatcher = require('./events/kafkajs.js');
+const bunyanPatcher = require('./events/bunyan.js');
 
 
 /**
@@ -51,5 +52,6 @@ if (!config.getConfig().isEpsagonPatchDisabled) {
         natsPatcher,
         mqttPatcher,
         kafkajsPatcher,
+        bunyanPatcher,
     ].forEach(patch);
 }

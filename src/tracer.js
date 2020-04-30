@@ -549,10 +549,33 @@ module.exports.stripOperations = stripOperations;
 /**
  * @returns {string} the current runner's log uuid
  */
-module.exports.getLogId = function getLogId() {
+module.exports.isLoggingTracingEnabled = function isLoggingTracingEnabled() {
+    return config.getConfig().loggingTracingEnabled;
+};
+
+/**
+ * @returns {string} the current runner's log uuid
+ */
+module.exports.getTraceId = function getTraceId() {
     const tracer = module.exports.getTrace();
-    if (tracer.currRunner && tracer.currRunner.hasResource()) {
-        return tracer.currRunner.getResource().getMetadataMap().get('log_id');
+    if (tracer && tracer.currRunner && tracer.currRunner.hasResource()) {
+        return tracer.currRunner.getResource().getMetadataMap().get('trace_id');
     }
     return null;
+};
+
+
+/**
+ * Adds `logging_tracing_enabled: true` to the current runner's Metadata iff it is enabled
+ * in the config
+ */
+module.exports.addLoggingTracingEnabledMetadata = function addLoggingTracingEnabledMetadata() {
+    if (config.getConfig().loggingTracingEnabled) {
+        const tracer = module.exports.getTrace();
+        if (tracer && tracer.currRunner) {
+            eventInterface.addToMetadata(tracer.currRunner, {
+                logging_tracing_enabled: true,
+            });
+        }
+    }
 };
