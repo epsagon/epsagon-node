@@ -191,6 +191,13 @@ const stripfuncs = [
         }
         return entry;
     },
+    (entry) => {
+        // drop the metadata for API Gateway requests
+        if (entry && entry.resource && entry.resource.type === 'api_gateway' && entry.resource.metadata) {
+            delete entry.resource.metadata.request_body; // eslint-disable-line no-param-reassign
+        }
+        return entry;
+    },
     () => {
         // last resort: drop the entire entry
         utils.debugLog('Too big operation filtered out');
