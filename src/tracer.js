@@ -549,10 +549,17 @@ module.exports.stripOperations = stripOperations;
 /**
  * @returns {string} the current runner's log uuid
  */
-module.exports.getLogId = function getLogId() {
+module.exports.isLoggingTracingEnabled = function isLoggingTracingEnabled() {
+    return config.getConfig().loggingTracingEnabled;
+};
+
+/**
+ * @returns {string} the current runner's log uuid
+ */
+module.exports.getTraceId = function getTraceId() {
     const tracer = module.exports.getTrace();
     if (tracer && tracer.currRunner && tracer.currRunner.hasResource()) {
-        return tracer.currRunner.getResource().getMetadataMap().get('log_id');
+        return tracer.currRunner.getResource().getMetadataMap().get('trace_id');
     }
     return null;
 };

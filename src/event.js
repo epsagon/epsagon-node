@@ -162,11 +162,24 @@ module.exports.finalizeEvent = function finalizeEvent(
 
 
 /**
- * Creates a UUID as a log identifier and adds it to a resource's Metadata
+ * Creates a UUID as a trace identifier and adds it to a resource's Metadata.
  * @param {proto.event_pb.Event} event The event to add the items to
  */
-module.exports.createLogIdMetadata = function createLogIdMetadata(event) {
+module.exports.createTraceIdMetadata = function createTraceIdMetadata(event) {
     module.exports.addToMetadata(event, {
-        log_id: uuid4(),
+        trace_id: uuid4(),
     });
+};
+
+
+/**
+ * Adds `logging_tracing_enabled: true` to a resource's Metadata iff it is enabled in the config
+ * @param {proto.event_pb.Event} event The event to add the items to
+ */
+module.exports.addLoggingTracingEnabledMetadata = function addLoggingTracingEnabledMetadata(event) {
+    if (config.getConfig().loggingTracingEnabled) {
+        module.exports.addToMetadata(event, {
+            logging_tracing_enabled: true,
+        });
+    }
 };

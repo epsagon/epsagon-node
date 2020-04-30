@@ -9,14 +9,17 @@ const moduleUtils = require('./module_utils.js');
  */
 function emitWrapper(wrappedFunction) {
     return function internalEmitWrapper(rec, ...args) {
-        const logId = tracer.getLogId();
+        if (!tracer.isLoggingTracingEnabled()) {
+            return wrappedFunction.apply(this, [rec].concat(args));
+        }
+        const logId = tracer.getTraceId();
         if (!logId) {
             return wrappedFunction.apply(this, [rec].concat(args));
         }
 
         const newRec = {
             epsagon: {
-                log_id: logId,
+                trace_id: logId,
             },
         };
 
