@@ -129,8 +129,8 @@ function flatten(target) {
                 return step(value, newKey, depthNumber + 1);
             }
 
-            if (value != null && typeof value.toString === 'function') {
-                output[newKey] = value.toString();
+            if (value != null && ['string', 'number', 'boolean'].includes(typeof value)) {
+                output[newKey] = value;
             }
 
             return null;

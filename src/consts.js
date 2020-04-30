@@ -21,7 +21,7 @@ module.exports.STEP_ID_NAME = 'Epsagon';
 
 module.exports.MAX_VALUE_CHARS = 3 * 1024;
 
-module.exports.MAX_LABEL_SIZE = 50 * 1024;
+module.exports.MAX_LABEL_SIZE = 10 * 1024;
 
 module.exports.MAX_HTTP_VALUE_SIZE = 10 * 1024;
 
