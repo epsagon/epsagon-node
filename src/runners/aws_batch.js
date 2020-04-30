@@ -41,7 +41,7 @@ function createRunner() {
         Path: process.env.PATH,
         Arguments: JSON.stringify(process.argv),
     });
-    eventInterface.createLogIdMetadata(runner);
+    eventInterface.createTraceIdMetadata(runner);
 
     // Getting region
     const runnerPromise = axios.get(
