@@ -230,6 +230,7 @@ function httpWrapper(wrappedFunction) {
                     request_headers: headers,
                 });
             if (body) {
+                utils.debugLog(`Set request body=${body}`);
                 eventInterface.addToMetadata(httpEvent, {}, {
                     request_body: body,
                 });
@@ -298,12 +299,18 @@ function httpWrapper(wrappedFunction) {
              */
             function WriteWrapper(wrappedWriteFunc) { // eslint-disable-line no-inner-declarations
                 return function internalWriteWrapper(...args) {
-                    if (
-                        (!body || body === '') && args[0] && (
-                            (args[0] instanceof String) || (args[0] instanceof Buffer)
-                        )
-                    ) {
-                        setJsonPayload(httpEvent, 'request_body', args[0]);
+                    utils.debugLog(`In WriteWrapper, body: ${body}, type: ${typeof body}`);
+                    utils.debugLog(`In WriteWrapper, args: ${args}, type: ${typeof args[0]}`);
+                    try {
+                        if (
+                            (!body || body === '') && args[0] && (
+                                (args[0] instanceof String) || (args[0] instanceof Buffer)
+                            )
+                        ) {
+                            setJsonPayload(httpEvent, 'request_body', args[0]);
+                        }
+                    } catch (err) {
+                        utils.debugLog('Could not parse request body in write wrapper');
                     }
                     return wrappedWriteFunc.apply(this, args);
                 };
@@ -316,6 +323,8 @@ function httpWrapper(wrappedFunction) {
              */
             function endWrapper(wrappedEndFunc) { // eslint-disable-line no-inner-declarations
                 return function internalEndWrapper(...args) {
+                    utils.debugLog(`In endWrapper, body: ${body}, type: ${typeof body}`);
+                    utils.debugLog(`In endWrapper, args: ${args}, type: ${typeof args[0]}`);
                     try {
                         if (
                             (!body || body === '') && args[0] && (
