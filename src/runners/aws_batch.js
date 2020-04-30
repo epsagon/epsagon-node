@@ -41,7 +41,6 @@ function createRunner() {
         Path: process.env.PATH,
         Arguments: JSON.stringify(process.argv),
     });
-    eventInterface.addLoggingTracingEnabledMetadata(runner);
     eventInterface.createTraceIdMetadata(runner);
 
     // Getting region

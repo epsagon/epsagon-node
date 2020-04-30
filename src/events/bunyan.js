@@ -12,14 +12,14 @@ function emitWrapper(wrappedFunction) {
         if (!tracer.isLoggingTracingEnabled()) {
             return wrappedFunction.apply(this, [rec].concat(args));
         }
-        const logId = tracer.getTraceId();
-        if (!logId) {
+        const traceId = tracer.getTraceId();
+        if (!traceId) {
             return wrappedFunction.apply(this, [rec].concat(args));
         }
 
         const newRec = {
             epsagon: {
-                trace_id: logId,
+                trace_id: traceId,
             },
         };
 
@@ -35,6 +35,8 @@ function emitWrapper(wrappedFunction) {
         for (const symbol of Object.getOwnPropertySymbols(rec)) {
             newRec[symbol] = rec[symbol];
         }
+
+        tracer.addLoggingTracingEnabledMetadata();
 
         return wrappedFunction.apply(this, [newRec].concat(args));
     };

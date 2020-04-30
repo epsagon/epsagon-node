@@ -563,3 +563,19 @@ module.exports.getTraceId = function getTraceId() {
     }
     return null;
 };
+
+
+/**
+ * Adds `logging_tracing_enabled: true` to the current runner's Metadata iff it is enabled
+ * in the config
+ */
+module.exports.addLoggingTracingEnabledMetadata = function addLoggingTracingEnabledMetadata() {
+    if (config.getConfig().loggingTracingEnabled) {
+        const tracer = module.exports.getTrace();
+        if (tracer && tracer.currRunner) {
+            eventInterface.addToMetadata(tracer.currRunner, {
+                logging_tracing_enabled: true,
+            });
+        }
+    }
+};
