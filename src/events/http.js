@@ -299,29 +299,25 @@ function httpWrapper(wrappedFunction) {
              */
             function WriteWrapper(wrappedWriteFunc) { // eslint-disable-line no-inner-declarations
                 return function internalWriteWrapper(...args) {
-                    let data = args[0];
                     try {
                         utils.debugLog('In writeWrapper');
-                        utils.debugLog(`w args: ${args}, args[0]: ${args[0]}`);
-                        utils.debugLog(`w type: ${typeof args}, type[0]: ${typeof args[0]}`);
-                        utils.debugLog(`w length: ${args.length}`);
-                        utils.debugLog(`w [0].length: ${typeof args[0].length}`);
-                        utils.debugLog(`w isArray: ${Array.isArray(args)}`);
-                        utils.debugLog(`w isArray[0]: ${Array.isArray(args[0])}`);
-                        // In some cases, the args already contains the data value
-                        if (!Array.isArray(args)) {
-                            data = args;
-                        }
+                        utils.debugLog(`w args: ${args[0]}`);
+                        utils.debugLog(`w type: ${typeof args[0]}`);
+                        utils.debugLog(`w constructor: ${args[0].constructor}`);
+                        utils.debugLog(`w constructor.name: ${args[0].constructor.name}`);
+                        utils.debugLog(`w proto: ${Object.prototype.toString.call(args[0])}`);
+                        utils.debugLog(`w protoOf: ${Object.getPrototypeOf(args[0])}`);
                     } catch (err) {
-                        utils.debugLog('Could not print debug in write wrapper');
+                        utils.debugLog('Could not print debug in end wrapper');
                     }
                     try {
                         if (
-                            (!body || body === '') && data && (
-                                (data instanceof String) || (data instanceof Buffer)
+                            (!body || body === '') && args[0] && (
+                                (typeof args[0] === 'string') || (args[0] instanceof Buffer)
                             )
                         ) {
-                            setJsonPayload(httpEvent, 'request_body', data);
+                            utils.debugLog('w Got in setJsonPayload');
+                            setJsonPayload(httpEvent, 'request_body', args[0]);
                         }
                     } catch (err) {
                         utils.debugLog('Could not parse request body in write wrapper');
@@ -337,29 +333,25 @@ function httpWrapper(wrappedFunction) {
              */
             function endWrapper(wrappedEndFunc) { // eslint-disable-line no-inner-declarations
                 return function internalEndWrapper(...args) {
-                    let data = args[0];
                     try {
                         utils.debugLog('In endWrapper');
-                        utils.debugLog(`e args: ${args}, args[0]: ${args[0]}`);
-                        utils.debugLog(`e type: ${typeof args}, type[0]: ${typeof args[0]}`);
-                        utils.debugLog(`e length: ${args.length}`);
-                        utils.debugLog(`e [0].length: ${typeof args[0].length}`);
-                        utils.debugLog(`e isArray: ${Array.isArray(args)}`);
-                        utils.debugLog(`e isArray[0]: ${Array.isArray(args[0])}`);
-                        // In some cases, the args already contains the data value
-                        if (!Array.isArray(args)) {
-                            data = args;
-                        }
+                        utils.debugLog(`e args: ${args[0]}`);
+                        utils.debugLog(`e type: ${typeof args[0]}`);
+                        utils.debugLog(`e constructor: ${args[0].constructor}`);
+                        utils.debugLog(`e constructor.name: ${args[0].constructor.name}`);
+                        utils.debugLog(`e proto: ${Object.prototype.toString.call(args[0])}`);
+                        utils.debugLog(`e protoOf: ${Object.getPrototypeOf(args[0])}`);
                     } catch (err) {
                         utils.debugLog('Could not print debug in end wrapper');
                     }
                     try {
                         if (
-                            (!body || body === '') && data && (
-                                (data instanceof String) || (data instanceof Buffer)
+                            (!body || body === '') && args[0] && (
+                                (typeof args[0] === 'string') || (args[0] instanceof Buffer)
                             )
                         ) {
-                            setJsonPayload(httpEvent, 'request_body', data);
+                            utils.debugLog('e Got in setJsonPayload');
+                            setJsonPayload(httpEvent, 'request_body', args[0]);
                         }
                     } catch (err) {
                         utils.debugLog('Could not parse request body in end wrapper');
