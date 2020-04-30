@@ -299,15 +299,29 @@ function httpWrapper(wrappedFunction) {
              */
             function WriteWrapper(wrappedWriteFunc) { // eslint-disable-line no-inner-declarations
                 return function internalWriteWrapper(...args) {
-                    utils.debugLog(`In WriteWrapper, body: ${body}, type: ${typeof body}`);
-                    utils.debugLog(`In WriteWrapper, args: ${args}, type: ${typeof args[0]}`);
+                    let data = args[0];
+                    try {
+                        utils.debugLog('In writeWrapper');
+                        utils.debugLog(`w args: ${args}, args[0]: ${args[0]}`);
+                        utils.debugLog(`w type: ${typeof args}, type[0]: ${typeof args[0]}`);
+                        utils.debugLog(`w length: ${args.length}`);
+                        utils.debugLog(`w [0].length: ${typeof args[0].length}`);
+                        utils.debugLog(`w isArray: ${Array.isArray(args)}`);
+                        utils.debugLog(`w isArray[0]: ${Array.isArray(args[0])}`);
+                        // In some cases, the args already contains the data value
+                        if (!Array.isArray(args)) {
+                            data = args;
+                        }
+                    } catch (err) {
+                        utils.debugLog('Could not print debug in write wrapper');
+                    }
                     try {
                         if (
-                            (!body || body === '') && args[0] && (
-                                (args[0] instanceof String) || (args[0] instanceof Buffer)
+                            (!body || body === '') && data && (
+                                (data instanceof String) || (data instanceof Buffer)
                             )
                         ) {
-                            setJsonPayload(httpEvent, 'request_body', args[0]);
+                            setJsonPayload(httpEvent, 'request_body', data);
                         }
                     } catch (err) {
                         utils.debugLog('Could not parse request body in write wrapper');
@@ -323,15 +337,29 @@ function httpWrapper(wrappedFunction) {
              */
             function endWrapper(wrappedEndFunc) { // eslint-disable-line no-inner-declarations
                 return function internalEndWrapper(...args) {
-                    utils.debugLog(`In endWrapper, body: ${body}, type: ${typeof body}`);
-                    utils.debugLog(`In endWrapper, args: ${args}, type: ${typeof args[0]}`);
+                    let data = args[0];
+                    try {
+                        utils.debugLog('In endWrapper');
+                        utils.debugLog(`e args: ${args}, args[0]: ${args[0]}`);
+                        utils.debugLog(`e type: ${typeof args}, type[0]: ${typeof args[0]}`);
+                        utils.debugLog(`e length: ${args.length}`);
+                        utils.debugLog(`e [0].length: ${typeof args[0].length}`);
+                        utils.debugLog(`e isArray: ${Array.isArray(args)}`);
+                        utils.debugLog(`e isArray[0]: ${Array.isArray(args[0])}`);
+                        // In some cases, the args already contains the data value
+                        if (!Array.isArray(args)) {
+                            data = args;
+                        }
+                    } catch (err) {
+                        utils.debugLog('Could not print debug in end wrapper');
+                    }
                     try {
                         if (
-                            (!body || body === '') && args[0] && (
-                                (args[0] instanceof String) || (args[0] instanceof Buffer)
+                            (!body || body === '') && data && (
+                                (data instanceof String) || (data instanceof Buffer)
                             )
                         ) {
-                            setJsonPayload(httpEvent, 'request_body', args[0]);
+                            setJsonPayload(httpEvent, 'request_body', data);
                         }
                     } catch (err) {
                         utils.debugLog('Could not parse request body in end wrapper');
