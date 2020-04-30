@@ -270,7 +270,7 @@ const lambdaEventCreator = {
         const name = (parameters.FunctionName.includes(':')) ?
             parameters.FunctionName.split(':').slice(-1)[0] : parameters.FunctionName;
         resource.setName(name);
-        eventInterface.addToMetadata(event, {
+        eventInterface.addToMetadata(event, {}, {
             payload: `${parameters.Payload}`,
         });
     },
