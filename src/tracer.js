@@ -15,7 +15,7 @@ const consts = require('./consts.js');
 const ecs = require('./containers/ecs.js');
 const k8s = require('./containers/k8s.js');
 
-const MAX_STEPS = 3;
+const MAX_STEPS = 4;
 
 /**
  * Returns a function to get the relevant tracer.
