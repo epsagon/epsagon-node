@@ -411,6 +411,7 @@ function httpWrapper(wrappedFunction) {
 
                 clientRequest.on('response', (res) => {
                     // Listening to data only if options.epsagonSkipResponseData!=true or no options
+                    utils.debugLog('pre-run response');
                     if (
                         (!options || (options && !options.epsagonSkipResponseData)) &&
                         !config.getConfig().disableHttpResponseBodyCapture
@@ -418,23 +419,29 @@ function httpWrapper(wrappedFunction) {
                         res.on('data', chunk => addChunk(chunk, chunks));
                     }
                     res.on('end', () => {
+                        utils.debugLog('pre-run response end');
                         setJsonPayload(httpEvent, 'response_body', Buffer.concat(chunks), res.headers['content-encoding']);
                         resolveHttpPromise(httpEvent, resolve, startTime);
+                        utils.debugLog('post-run response end');
                     });
                 }, 'skip'); // skip is for epsagonMarker
             }).catch((err) => {
                 tracer.addException(err);
             });
 
+            utils.debugLog('pre-run addEvent');
             tracer.addEvent(httpEvent, responsePromise);
+            utils.debugLog('post-run addEvent');
         } catch (error) {
             tracer.addException(error);
         }
 
         if (!clientRequest) {
+            utils.debugLog('pre-run clientRequest');
             clientRequest = wrappedFunction.apply(this, [a, b, c]);
+            utils.debugLog('post-run clientRequest');
         }
-
+        utils.debugLog('return clientRequest');
         return clientRequest;
     };
 }

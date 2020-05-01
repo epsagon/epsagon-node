@@ -54,7 +54,9 @@ module.exports.addToMetadata = function addToMetadata(event, map, fullDataMap = 
     });
     if (!config.getConfig().metadataOnly) {
         Object.keys(fullDataMap).forEach((key) => {
+            utils.debugLog(`setting key ${key} in metadata`);
             event.getResource().getMetadataMap().set(key, fullDataMap[key]);
+            utils.debugLog(`set key ${key} in metadata`);
         });
     }
 };

@@ -63,16 +63,33 @@ function setJsonPayload(httpEvent, key, data, encoding) {
     try {
         let jsonData = data;
         if (config.getConfig().decodeHTTP && ENCODING_FUNCTIONS[encoding]) {
+            utils.debugLog(`encoding in ${encoding}`);
             try {
                 jsonData = ENCODING_FUNCTIONS[encoding](data);
             } catch (err) {
                 utils.debugLog(`Could decode ${key} with ${encoding} in http`);
             }
         }
+        utils.debugLog('pre-run parsing');
         JSON.parse(jsonData);
+        utils.debugLog('post-run parsing');
+        utils.debugLog(`about to data to metadata ${jsonData.toString()}`);
+        try {
+            // eslint-disable-next-line no-underscore-dangle
+            utils.debugLog(`pre-metadata: ${JSON.stringify(httpEvent.getResource().getMetadataMap().map_)}`);
+        } catch (err) {
+            utils.debugLog('could not print http event');
+        }
         eventInterface.addToMetadata(httpEvent, {}, {
             [key]: jsonData.toString(),
         });
+        try {
+            // eslint-disable-next-line no-underscore-dangle
+            utils.debugLog(`post-metadata: ${JSON.stringify(httpEvent.getResource().getMetadataMap().map_)}`);
+        } catch (err) {
+            utils.debugLog('could not print http event');
+        }
+        utils.debugLog('post-run metadata');
     } catch (err) {
         utils.debugLog(`Could not parse JSON ${key} in http`);
     }
