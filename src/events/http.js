@@ -300,23 +300,11 @@ function httpWrapper(wrappedFunction) {
             function WriteWrapper(wrappedWriteFunc) { // eslint-disable-line no-inner-declarations
                 return function internalWriteWrapper(...args) {
                     try {
-                        utils.debugLog('In writeWrapper');
-                        utils.debugLog(`w args: ${args[0]}`);
-                        utils.debugLog(`w type: ${typeof args[0]}`);
-                        utils.debugLog(`w constructor: ${args[0].constructor}`);
-                        utils.debugLog(`w constructor.name: ${args[0].constructor.name}`);
-                        utils.debugLog(`w proto: ${Object.prototype.toString.call(args[0])}`);
-                        utils.debugLog(`w protoOf: ${Object.getPrototypeOf(args[0])}`);
-                    } catch (err) {
-                        utils.debugLog('Could not print debug in end wrapper');
-                    }
-                    try {
                         if (
                             (!body || body === '') && args[0] && (
                                 (typeof args[0] === 'string') || (args[0] instanceof Buffer)
                             )
                         ) {
-                            utils.debugLog('w Got in setJsonPayload');
                             setJsonPayload(httpEvent, 'request_body', args[0]);
                         }
                     } catch (err) {
@@ -334,23 +322,11 @@ function httpWrapper(wrappedFunction) {
             function endWrapper(wrappedEndFunc) { // eslint-disable-line no-inner-declarations
                 return function internalEndWrapper(...args) {
                     try {
-                        utils.debugLog('In endWrapper');
-                        utils.debugLog(`e args: ${args[0]}`);
-                        utils.debugLog(`e type: ${typeof args[0]}`);
-                        utils.debugLog(`e constructor: ${args[0].constructor}`);
-                        utils.debugLog(`e constructor.name: ${args[0].constructor.name}`);
-                        utils.debugLog(`e proto: ${Object.prototype.toString.call(args[0])}`);
-                        utils.debugLog(`e protoOf: ${Object.getPrototypeOf(args[0])}`);
-                    } catch (err) {
-                        utils.debugLog('Could not print debug in end wrapper');
-                    }
-                    try {
                         if (
                             (!body || body === '') && args[0] && (
                                 (typeof args[0] === 'string') || (args[0] instanceof Buffer)
                             )
                         ) {
-                            utils.debugLog('e Got in setJsonPayload');
                             setJsonPayload(httpEvent, 'request_body', args[0]);
                         }
                     } catch (err) {
@@ -360,25 +336,11 @@ function httpWrapper(wrappedFunction) {
                 };
             }
 
-            if (
-                Object.getPrototypeOf(clientRequest) &&
-                Object.getPrototypeOf(Object.getPrototypeOf(clientRequest) &&
-                !clientRequest.__epsagonPatched) // eslint-disable-line no-underscore-dangle
-            ) {
-                try {
-                    const reqPrototype = Object.getPrototypeOf(
-                        Object.getPrototypeOf(clientRequest)
-                    );
-                    // eslint-disable-next-line no-underscore-dangle
-                    if (reqPrototype && !reqPrototype.__epsagonPatched) {
-                        // eslint-disable-next-line no-underscore-dangle
-                        reqPrototype.__epsagonPatched = true;
-                        shimmer.wrap(reqPrototype, 'write', WriteWrapper);
-                        shimmer.wrap(reqPrototype, 'end', endWrapper);
-                    }
-                } catch (err) {
-                    // In some libs it might not be possible to hook on write
-                }
+            try {
+                shimmer.wrap(clientRequest, 'write', WriteWrapper);
+                shimmer.wrap(clientRequest, 'end', endWrapper);
+            } catch (err) {
+                // In some libs it might not be possible to hook on write
             }
 
 
