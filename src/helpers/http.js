@@ -70,9 +70,7 @@ function setJsonPayload(httpEvent, key, data, encoding) {
                 utils.debugLog(`Could decode ${key} with ${encoding} in http`);
             }
         }
-        utils.debugLog('pre-run parsing');
         JSON.parse(jsonData);
-        utils.debugLog('post-run parsing');
         utils.debugLog(`about to data to metadata ${jsonData.toString()}`);
         try {
             // eslint-disable-next-line no-underscore-dangle
@@ -80,9 +78,11 @@ function setJsonPayload(httpEvent, key, data, encoding) {
         } catch (err) {
             utils.debugLog('could not print http event');
         }
+        utils.debugLog(`pre-run add ${httpEvent.array[0]}`);
         eventInterface.addToMetadata(httpEvent, {}, {
             [key]: jsonData.toString(),
         });
+        utils.debugLog(`post-run add ${httpEvent.array[0]}`);
         try {
             // eslint-disable-next-line no-underscore-dangle
             utils.debugLog(`post-metadata: ${JSON.stringify(httpEvent.getResource().getMetadataMap().map_)}`);
