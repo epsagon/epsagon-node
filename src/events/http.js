@@ -337,7 +337,6 @@ function httpWrapper(wrappedFunction) {
             }
 
             try {
-                utils.debugLog(`Patching http event ${httpEvent.array[0]}`);
                 shimmer.wrap(clientRequest, 'write', WriteWrapper);
                 shimmer.wrap(clientRequest, 'end', endWrapper);
             } catch (err) {
