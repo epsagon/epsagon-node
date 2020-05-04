@@ -261,11 +261,9 @@ function httpWrapper(wrappedFunction) {
 
                 // Override request headers if they are present here. In some libs they are not
                 // available on `options.headers`
-                // eslint-disable-next-line no-underscore-dangle
-                if (res.req && res.req._headers) {
+                if (res.req && res.req.getHeaders()) {
                     eventInterface.addToMetadata(httpEvent, {}, {
-                        // eslint-disable-next-line no-underscore-dangle
-                        request_headers: res.req._headers,
+                        request_headers: res.req.getHeaders(),
                     });
                 }
 
