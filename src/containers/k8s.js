@@ -1,7 +1,10 @@
 const os = require('os');
+const fs = require('fs');
+const utils = require('../utils');
 const eventIterface = require('../event');
 
 let k8sHostname = null;
+let k8sContainerId = null;
 
 /**
  * @returns {boolean} true if the current process is running inside
@@ -18,6 +21,16 @@ module.exports.loadK8sMetadata = function loadK8sMetadata() {
     if (!k8sHostname) {
         k8sHostname = os.hostname();
     }
+
+    if (!k8sContainerId) {
+        try {
+            const data = fs.readFileSync('/proc/self/cgroup');
+            const firstLineParts = data.toString('utf-8').split('\n')[0].split('/');
+            k8sContainerId = firstLineParts[firstLineParts.length - 1];
+        } catch (err) {
+            utils.debugLog('Error reading cgroup file', err);
+        }
+    }
 };
 
 /**
@@ -29,5 +42,9 @@ module.exports.loadK8sMetadata = function loadK8sMetadata() {
  */
 module.exports.addK8sMetadata = function addK8sMetadata(runner) {
     if (!runner || !k8sHostname) return;
-    eventIterface.addToMetadata(runner, { k8s_pod_name: k8sHostname });
+    eventIterface.addToMetadata(runner, {
+        is_k8s: true,
+        k8s_pod_name: k8sHostname,
+        k8s_container_id: k8sContainerId,
+    });
 };
