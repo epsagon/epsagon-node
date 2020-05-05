@@ -197,18 +197,26 @@ const stripfuncs = [
     },
 ];
 
-/**
- * Deleting request_body from api_gateway event.
- * @param {Json} entry Tracer event.
- * @returns {Json} event without request_body.
- */
-const stripApiGateway = (entry) => {
-    // drop the metadata for API Gateway requests
-    if (entry && entry.resource && entry.resource.metadata) {
-        delete entry.resource.metadata.request_body; // eslint-disable-line no-param-reassign
-    }
-    return entry;
-};
+const stripApiGateway = [
+    (entry) => {
+        // drop the metadata.request_body for API Gateway requests
+        if (entry && entry.resource && entry.resource.metadata) {
+            delete entry.resource.metadata.request_body; // eslint-disable-line no-param-reassign
+        }
+        return entry;
+    },
+    (entry) => {
+        // drop the metadata.body for API Gateway requests
+        if (entry && entry.resource && entry.resource.metadata) {
+            delete entry.resource.metadata.body; // eslint-disable-line no-param-reassign
+        }
+        return entry;
+    },
+    () => {
+        // last resort: drop the entire entry
+        utils.debugLog('Too big operation filtered out');
+    },
+];
 
 /**
  * Removes all operations from a given trace. Only runner and trigger are kept.
@@ -219,8 +227,8 @@ const stripApiGateway = (entry) => {
 function stripOperations(traceJson, attempt) {
     const filteredEvents = [];
     traceJson.events.forEach((entry) => {
-        if (entry.resource.type === 'api_gateway') {
-            const filteredEntry = stripApiGateway(entry);
+        if (entry.resource.type === 'api_gateway' && attempt < stripApiGateway.length) {
+            const filteredEntry = stripApiGateway[attempt](entry);
             if (filteredEntry) {
                 filteredEvents.push(filteredEntry);
             }
