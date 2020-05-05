@@ -316,8 +316,14 @@ function sendCurrentTrace(traceSender) {
         platform: tracerObj.trace.getPlatform(),
     };
 
-
-    if (JSON.stringify(traceJson).length >= consts.MAX_TRACE_SIZE_BYTES) {
+    let stringifyTraceJson;
+    try {
+        stringifyTraceJson = JSON.stringify(traceJson);
+    } catch (err) {
+        utils.debugLog('Skip send traces.', err);
+        return Promise.resolve();
+    }
+    if (stringifyTraceJson.length >= consts.MAX_TRACE_SIZE_BYTES) {
         for (let attempt = 0; attempt <= MAX_STEPS; attempt += 1) {
             traceJson.events = stripOperations(traceJson, attempt);
             if (JSON.stringify(traceJson).length < consts.MAX_TRACE_SIZE_BYTES) {
