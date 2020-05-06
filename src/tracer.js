@@ -320,7 +320,7 @@ function sendCurrentTrace(traceSender) {
     try {
         stringifyTraceJson = JSON.stringify(traceJson);
     } catch (err) {
-        utils.debugLog('Skip send traces.', err);
+        utils.debugWarn('Skip send traces.', err);
         return Promise.resolve();
     }
     if (stringifyTraceJson.length >= consts.MAX_TRACE_SIZE_BYTES) {

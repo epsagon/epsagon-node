@@ -51,12 +51,32 @@ function reflectPromise(promise) {
 }
 
 /**
- * Prints a log if debugging is enabled
+ * Printing log if debugging is enabled
  * @param {list} args list of arguments as passed to console.log
  */
 function debugLog(...args) {
     if ((process.env.EPSAGON_DEBUG || '').toUpperCase() === 'TRUE') {
         console.log(...args); // eslint-disable-line no-console
+    }
+}
+
+/**
+ * Printing warn if debugging is enabled
+ * @param {list} args list of arguments as passed to console.log
+ */
+function debugWarn(...args) {
+    if ((process.env.EPSAGON_DEBUG || '').toUpperCase() === 'TRUE') {
+        console.warn(...args); // eslint-disable-line no-console
+    }
+}
+
+/**
+ * Printing error if debugging is enabled
+ * @param {list} args list of arguments as passed to console.log
+ */
+function debugError(...args) {
+    if ((process.env.EPSAGON_DEBUG || '').toUpperCase() === 'TRUE') {
+        console.error(...args); // eslint-disable-line no-console
     }
 }
 
@@ -152,11 +172,14 @@ const getLastSplittedItem = (string, seperator) => {
     return splittedArray[splittedArray.length - 1];
 };
 
+
 module.exports.createTimestampFromTime = createTimestampFromTime;
 module.exports.createTimestamp = createTimestamp;
 module.exports.createDurationTimestamp = createDurationTimestamp;
 module.exports.reflectPromise = reflectPromise;
 module.exports.debugLog = debugLog;
+module.exports.debugWarn = debugWarn;
+module.exports.debugError = debugError;
 module.exports.makeQueryablePromise = makeQueryablePromise;
 module.exports.flatten = flatten;
 module.exports.getLastSplittedItem = getLastSplittedItem;
