@@ -28,7 +28,7 @@ module.exports.loadK8sMetadata = function loadK8sMetadata() {
             const firstLineParts = data.toString('utf-8').split('\n')[0].split('/');
             k8sContainerId = firstLineParts[firstLineParts.length - 1];
         } catch (err) {
-            utils.debugLog('Error reading cgroup file', err);
+            utils.debugLog('Error loading k8s container id - cannot read cgroup file', err);
         }
     }
 };
@@ -42,9 +42,13 @@ module.exports.loadK8sMetadata = function loadK8sMetadata() {
  */
 module.exports.addK8sMetadata = function addK8sMetadata(runner) {
     if (!runner || !k8sHostname) return;
-    eventIterface.addToMetadata(runner, {
+    const payload = {
         is_k8s: true,
         k8s_pod_name: k8sHostname,
-        k8s_container_id: k8sContainerId,
-    });
+    };
+    if (k8sContainerId) {
+        payload.k8s_container_id = k8sContainerId;
+    }
+
+    eventIterface.addToMetadata(runner, payload);
 };
