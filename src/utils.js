@@ -61,6 +61,22 @@ function debugLog(...args) {
 }
 
 /**
+ * Prints a warning
+ * @param {list} args list of arguments as passed to console.warn
+ */
+function printWarning(...args) {
+    console.warn(...args); // eslint-disable-line no-console
+}
+
+/**
+ * Prints a error
+ * @param {list} args list of arguments as passed to console.error
+ */
+function printError(...args) {
+    console.error(...args); // eslint-disable-line no-console
+}
+
+/**
  * This function allow you to modify a JS Promise by adding some status properties.
  * Based on: http://stackoverflow.com/questions/21485545/is-there-a-way-to-tell-if-an-es6-promise-is-fulfilled-rejected-resolved
  * But modified according to the specs of promises : https://promisesaplus.com/
@@ -152,11 +168,14 @@ const getLastSplittedItem = (string, seperator) => {
     return splittedArray[splittedArray.length - 1];
 };
 
+
 module.exports.createTimestampFromTime = createTimestampFromTime;
 module.exports.createTimestamp = createTimestamp;
 module.exports.createDurationTimestamp = createDurationTimestamp;
 module.exports.reflectPromise = reflectPromise;
 module.exports.debugLog = debugLog;
+module.exports.printWarning = printWarning;
+module.exports.printError = printError;
 module.exports.makeQueryablePromise = makeQueryablePromise;
 module.exports.flatten = flatten;
 module.exports.getLastSplittedItem = getLastSplittedItem;
