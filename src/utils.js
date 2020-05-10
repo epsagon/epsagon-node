@@ -51,7 +51,7 @@ function reflectPromise(promise) {
 }
 
 /**
- * Printing log if debugging is enabled
+ * Prints a log if debugging is enabled
  * @param {list} args list of arguments as passed to console.log
  */
 function debugLog(...args) {
@@ -61,23 +61,19 @@ function debugLog(...args) {
 }
 
 /**
- * Printing warn if debugging is enabled
- * @param {list} args list of arguments as passed to console.log
+ * Prints a warning
+ * @param {list} args list of arguments as passed to console.warn
  */
-function debugWarn(...args) {
-    if ((process.env.EPSAGON_DEBUG || '').toUpperCase() === 'TRUE') {
-        console.warn(...args); // eslint-disable-line no-console
-    }
+function printWarning(...args) {
+    console.warn(...args); // eslint-disable-line no-console
 }
 
 /**
- * Printing error if debugging is enabled
- * @param {list} args list of arguments as passed to console.log
+ * Prints a error
+ * @param {list} args list of arguments as passed to console.error
  */
-function debugError(...args) {
-    if ((process.env.EPSAGON_DEBUG || '').toUpperCase() === 'TRUE') {
-        console.error(...args); // eslint-disable-line no-console
-    }
+function printError(...args) {
+    console.error(...args); // eslint-disable-line no-console
 }
 
 /**
@@ -178,8 +174,8 @@ module.exports.createTimestamp = createTimestamp;
 module.exports.createDurationTimestamp = createDurationTimestamp;
 module.exports.reflectPromise = reflectPromise;
 module.exports.debugLog = debugLog;
-module.exports.debugWarn = debugWarn;
-module.exports.debugError = debugError;
+module.exports.printWarning = printWarning;
+module.exports.printError = printError;
 module.exports.makeQueryablePromise = makeQueryablePromise;
 module.exports.flatten = flatten;
 module.exports.getLastSplittedItem = getLastSplittedItem;
