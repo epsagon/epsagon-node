@@ -60,5 +60,6 @@ function getUserHandler() {
         );
     }
 }
-module.exports.wrapper = config.getConfig().isEpsagonDisabled ? getUserHandler() :
-    lambda.lambdaWrapper(getUserHandler());
+const userHandler = getUserHandler();
+module.exports.wrapper = config.getConfig().isEpsagonDisabled ? userHandler :
+    lambda.lambdaWrapper(userHandler);
