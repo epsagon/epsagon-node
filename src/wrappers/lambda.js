@@ -111,7 +111,12 @@ function baseLambdaWrapper(
                         message: errorMessage,
                     };
                 }
-                eventInterface.setException(runner, reportedError, false);
+
+                // Setting this error only if there is no existing error already
+                if (!runner.getException()) {
+                    utils.debugLog('Setting exception from handleUserExecutionDone');
+                    eventInterface.setException(runner, reportedError, false);
+                }
             }
 
             const { statusCode } = result || {};
