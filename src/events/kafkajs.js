@@ -94,7 +94,7 @@ function kafkaSendMiddleware(messages, producer) {
     return response;
 }
 /**
- * Wrap kafka cluster connect function`
+ * Wrap kafka cluster connect function
  * @param {Function} originalConnectFunction connect function
  * @returns {Promise} The response promise
  */
@@ -128,7 +128,7 @@ function kafkaConnectWrapper(originalConnectFunction) {
             }
             throw err;
         }
-        response = response.then(res => res).catch((err) => {
+        response = response.catch((err) => {
             originalHandlerAsyncError = err;
             throw err;
         }).finally(() => {
