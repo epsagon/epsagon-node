@@ -1,5 +1,6 @@
 const tryRequire = require('../try_require.js');
 const lambda = require('./lambda.js');
+const config = require('../config.js');
 
 /**
  * @return {Function} the user's handler, or an error handler if an
@@ -59,5 +60,6 @@ function getUserHandler() {
         );
     }
 }
-
-module.exports.wrapper = lambda.lambdaWrapper(getUserHandler());
+const userHandler = getUserHandler();
+module.exports.wrapper = config.getConfig().isEpsagonDisabled ? userHandler :
+    lambda.lambdaWrapper(userHandler);
