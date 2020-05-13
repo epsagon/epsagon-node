@@ -8,6 +8,7 @@ const { MAX_HTTP_VALUE_SIZE } = require('../consts.js');
 
 const URL_BLACKLIST = {
     'tc.epsagon.com': 'endsWith',
+    'atc.epsagon.com': 'endsWith',
     'googleapis.com': 'endsWith',
     'amazonaws.com':
         (url, pattern) => url.endsWith(pattern) &&
@@ -15,6 +16,8 @@ const URL_BLACKLIST = {
             (url.indexOf('.es.') === -1) &&
             (url.indexOf('.elb.') === -1) &&
             (url.indexOf('.appsync-api.') === -1),
+    'blob.core.windows.net': 'endsWith',
+    'documents.azure.com': 'endsWith',
     '127.0.0.1': (url, pattern, path) => (url === pattern) && path.startsWith('/2018-06-01/runtime/invocation/'),
     '169.254.169.254': 'startsWith', // EC2 document ip. Have better filtering in the future
 };

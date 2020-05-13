@@ -19,6 +19,7 @@ const natsPatcher = require('./events/nats.js');
 const mqttPatcher = require('./events/mqtt.js');
 const kafkajsPatcher = require('./events/kafkajs.js');
 const bunyanPatcher = require('./events/bunyan.js');
+const azureSdkPatcher = require('./events/azure_sdk.js');
 
 
 /**
@@ -53,5 +54,6 @@ if (!config.getConfig().isEpsagonPatchDisabled) {
         mqttPatcher,
         kafkajsPatcher,
         bunyanPatcher,
+        azureSdkPatcher,
     ].forEach(patch);
 }
