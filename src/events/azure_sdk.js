@@ -8,13 +8,13 @@ const moduleUtils = require('./module_utils.js');
 
 /**
  * Wraps the BlockBlobClient upload method.
- * @param {Function} wrappedFunction
+ * @param {Function} wrappedFunction The function to wrap
  * @returns {Function} The wrapped function
  */
 function blobUploadWrapper(wrappedFunction) {
     return function internalUploadWrapper(content, size) {
-        const {accountName, containerName} = this
-        const {slsEvent: uploadEvent, startTime} = eventInterface.initializeEvent(
+        const { accountName, containerName } = this;
+        const { slsEvent: uploadEvent, startTime } = eventInterface.initializeEvent(
             'blob_storage',
             containerName,
             'upload',
@@ -23,12 +23,12 @@ function blobUploadWrapper(wrappedFunction) {
         eventInterface.addToMetadata(uploadEvent, {
             'azure.blob.account_name': accountName,
             'azure.blob.container_name': containerName,
-            'azure.blob.content_size': size
-        }, {'azure.blob.content': content,});
+            'azure.blob.content_size': size,
+        }, { 'azure.blob.content': content });
         const request = wrappedFunction.apply(this, [content, size]);
         const uploadPromise = new Promise((resolve) => {
             request.then((res) => {
-                eventInterface.addToMetadata(uploadEvent, {'azure.blob.error_code': res.errorCode})
+                eventInterface.addToMetadata(uploadEvent, { 'azure.blob.error_code': res.errorCode });
                 uploadEvent.setDuration(utils.createDurationTimestamp(startTime));
             }).catch((err) => {
                 eventInterface.setException(uploadEvent, err);
@@ -37,20 +37,20 @@ function blobUploadWrapper(wrappedFunction) {
             });
         });
 
-        tracer.addEvent(uploadEvent, uploadPromise)
-        return request
+        tracer.addEvent(uploadEvent, uploadPromise);
+        return request;
     };
 }
 
 /**
  * Wraps the BlockBlobClient download method.
- * @param {Function} wrappedFunction
+ * @param {Function} wrappedFunction The function to wrap
  * @returns {Function} The wrapped function
  */
 function blobDownloadWrapper(wrappedFunction) {
     return function internalDownloadWrapper(offset, count, options) {
-        const {accountName, containerName} = this
-        const {slsEvent: downloadEvent, startTime} = eventInterface.initializeEvent(
+        const { accountName, containerName } = this;
+        const { slsEvent: downloadEvent, startTime } = eventInterface.initializeEvent(
             'blob_storage',
             containerName,
             'download',
@@ -59,12 +59,12 @@ function blobDownloadWrapper(wrappedFunction) {
         eventInterface.addToMetadata(downloadEvent, {
             'azure.blob.account_name': accountName,
             'azure.blob.container_name': containerName,
-            'azure.blob.offset': offset
-        })
+            'azure.blob.offset': offset,
+        });
         const request = wrappedFunction.apply(this, [offset, count, options]);
         const downloadPromise = new Promise((resolve) => {
             request.then((res) => {
-                eventInterface.addToMetadata(downloadEvent, {'azure.blob.content_length': res.contentLength})
+                eventInterface.addToMetadata(downloadEvent, { 'azure.blob.content_length': res.contentLength });
                 downloadEvent.setDuration(utils.createDurationTimestamp(startTime));
             }).catch((err) => {
                 eventInterface.setException(downloadEvent, err);
@@ -72,40 +72,40 @@ function blobDownloadWrapper(wrappedFunction) {
                 resolve();
             });
         });
-        tracer.addEvent(downloadEvent, downloadPromise)
-        return request
+        tracer.addEvent(downloadEvent, downloadPromise);
+        return request;
     };
 }
 
 
 /**
  * Wraps the CosmosDB Item create method.
- * @param {Function} wrappedFunction
+ * @param {Function} wrappedFunction The function to wrap
  * @returns {Function} The wrapped function
  */
 function cosmosCreateItemWrapper(wrappedFunction) {
     return function internalCreateWrapper(body, options) {
-        const {id: itemId, content} = body
-        const {container, clientContext} = this
-        const {database} = container
-        const name = database.id + '/' + container.id
-        const {slsEvent: createEvent, startTime} = eventInterface.initializeEvent(
+        const { id: itemId, content } = body;
+        const { container, clientContext } = this;
+        const { database } = container;
+        const name = `${database.id}/${container.id}`;
+        const { slsEvent: createEvent, startTime } = eventInterface.initializeEvent(
             'cosmos_db',
             name,
             'create',
             'azure-sdk'
         );
         eventInterface.addToMetadata(createEvent, {
-                'azure.cosmos.endpoint': clientContext.cosmosClientOptions.endpoint,
-                'azure.cosmos.database_id': database.id,
-                'azure.cosmos.container_id': container.id,
-                'azure.cosmos.item_id': itemId,
-            },
-            {'azure.cosmos.item_content': content})
+            'azure.cosmos.endpoint': clientContext.cosmosClientOptions.endpoint,
+            'azure.cosmos.database_id': database.id,
+            'azure.cosmos.container_id': container.id,
+            'azure.cosmos.item_id': itemId,
+        },
+        { 'azure.cosmos.item_content': content });
         const request = wrappedFunction.apply(this, [body, options]);
         const createPromise = new Promise((resolve) => {
             request.then((res) => {
-                eventInterface.addToMetadata(createEvent, {'azure.cosmos.status_code': res.statusCode})
+                eventInterface.addToMetadata(createEvent, { 'azure.cosmos.status_code': res.statusCode });
                 createEvent.setDuration(utils.createDurationTimestamp(startTime));
             }).catch((err) => {
                 eventInterface.setException(createEvent, err);
@@ -113,8 +113,8 @@ function cosmosCreateItemWrapper(wrappedFunction) {
                 resolve();
             });
         });
-        tracer.addEvent(createEvent, createPromise)
-        return request
+        tracer.addEvent(createEvent, createPromise);
+        return request;
     };
 }
 
