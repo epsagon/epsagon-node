@@ -264,7 +264,7 @@ function sendCurrentTrace(traceSender) {
     if (sendOnlyErrors) {
         const errorEvents = tracerObj.trace.getEventList().filter(event => event.getErrorCode());
         if (errorEvents.length === 0) {
-            utils.debugLog('Skip send traces. No error events found.');
+            utils.debugLog('Epsagon - no trace was sent since no error events found.');
             tracerObj.pendingEvents.clear();
             return Promise.resolve();
         }
@@ -316,8 +316,14 @@ function sendCurrentTrace(traceSender) {
         platform: tracerObj.trace.getPlatform(),
     };
 
-
-    if (JSON.stringify(traceJson).length >= consts.MAX_TRACE_SIZE_BYTES) {
+    let stringifyTraceJson;
+    try {
+        stringifyTraceJson = JSON.stringify(traceJson);
+    } catch (err) {
+        utils.printWarning('Epsagon - no trace was sent since there was an error serializing the trace. Please contact support.', err);
+        return Promise.resolve();
+    }
+    if (stringifyTraceJson.length >= consts.MAX_TRACE_SIZE_BYTES) {
         for (let attempt = 0; attempt <= MAX_STEPS; attempt += 1) {
             traceJson.events = stripOperations(traceJson, attempt);
             if (JSON.stringify(traceJson).length < consts.MAX_TRACE_SIZE_BYTES) {
