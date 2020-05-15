@@ -32,6 +32,9 @@ function getUserHandler() {
         const lambdaTaskRoot = process.env.LAMBDA_TASK_ROOT;
         const moduleFullPath = `${lambdaTaskRoot}/${modulePath}`;
         const app = tryRequire(moduleFullPath);
+        if (!app) {
+            return createErrorHandler(tryRequire.lastError());
+        }
         const userHandler = app[handlerName];
 
         if (!userHandler) {
