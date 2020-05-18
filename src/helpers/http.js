@@ -8,7 +8,7 @@ const { MAX_HTTP_VALUE_SIZE } = require('../consts.js');
 
 const URL_BLACKLIST = {
     'tc.epsagon.com': 'endsWith',
-    'googleapis.com': 'endsWith',
+    'oauth2.googleapis.com': 'endsWith',
     'amazonaws.com':
         (url, pattern) => url.endsWith(pattern) &&
             (url.indexOf('.execute-api.') === -1) &&
