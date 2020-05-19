@@ -526,7 +526,7 @@ module.exports.sendTraceSync = function sendTraceSync() {
  */
 module.exports.label = function addLabel(key, value) {
     const tracerObj = module.exports.getTrace();
-    if (!tracerObj) {
+    if (!tracerObj || !tracerObj.currRunner) {
         utils.debugLog('Failed to label without an active tracer');
         return;
     }
