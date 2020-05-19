@@ -163,10 +163,15 @@ function kafkaConnectWrapper(originalConnectFunction) {
 function kafkaProducerWrapper(producerFunction) {
     return function internalKafkaProducerWrapper(options) {
         const producerResponse = producerFunction.apply(this, [options]);
-        try {
-            shimmer.wrap(producerResponse, 'send', () => wrapKafkaSendFunction(producerResponse.send));
-        } catch (err) {
-            tracer.addException(err);
+        // eslint-disable-next-line no-underscore-dangle
+        if (producerResponse && !producerResponse.__epsagonPatched) {
+            try {
+                // eslint-disable-next-line no-underscore-dangle
+                producerResponse.__epsagonPatched = true;
+                shimmer.wrap(producerResponse, 'send', () => wrapKafkaSendFunction(producerResponse.send));
+            } catch (err) {
+                tracer.addException(err);
+            }
         }
         return producerResponse;
     };
