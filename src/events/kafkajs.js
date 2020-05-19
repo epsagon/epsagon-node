@@ -2,6 +2,7 @@
  * @fileoverview Handlers for kafkajs instrumentation
  */
 
+const shimmer = require('shimmer');
 const tracer = require('../tracer.js');
 const eventInterface = require('../event.js');
 const utils = require('../utils.js');
@@ -11,88 +12,86 @@ const { generateEpsagonTraceId } = require('../helpers/http');
 
 
 /**
- * acts as a middleware for `producer.send()`
- * @param {object} messages the messages param to send
- * @param {Kafka} producer producer object
- * @returns {Promise} The response promise
+ * Wrap kafka producer send function
+ * @param {Function} sendFunction kafka producer send function.
+ * @returns {Promise} sendFunction response.
  */
-function kafkaSendMiddleware(messages, producer) {
-    let result;
-    let originalHandlerAsyncError;
-    const epsagonId = generateEpsagonTraceId();
-    let kafkaEvent;
-    let startTime;
-    let response;
-    try {
-        const { slsEvent, startTime: eventStartTime } = eventInterface.initializeEvent(
-            'kafka',
-            messages.topic,
-            'produce',
-            'kafkajs'
-        );
-        kafkaEvent = slsEvent;
-        startTime = eventStartTime;
-
-        // eslint-disable-next-line no-param-reassign
-        messages.messages = messages.messages.map((message) => {
-            if (!message.headers) {
-                // eslint-disable-next-line no-param-reassign
-                message.headers = {};
-            }
-            // eslint-disable-next-line no-param-reassign
-            message.headers[EPSAGON_HEADER] = epsagonId;
-            return message;
-        });
-    } catch (err) {
-        tracer.addException(err);
-    }
-
-    try {
-        response = producer.originalSend(messages);
-    } catch (err) {
-        if (kafkaEvent) {
-            eventInterface.setException(kafkaEvent, err);
-            tracer.addEvent(kafkaEvent);
-        }
-        throw err;
-    }
-
-    response = response.then((res) => {
-        result = res;
-        return res;
-    }).catch((err) => {
-        originalHandlerAsyncError = err;
-        throw err;
-    }).finally(() => {
+function wrapKafkaSendFunction(sendFunction) {
+    return function internalKafkaSendFunction(messages) {
+        let kafkaSendEvent;
+        let kafkaSendStartTime;
+        let kafkaSendResponse;
+        let originalHandlerAsyncError;
+        let result;
+        const epsagonId = generateEpsagonTraceId();
         try {
-            if (!kafkaEvent) {
-                utils.debugLog('Could not initialize kafkajs, skipping response.');
-                return;
-            }
-            eventInterface.finalizeEvent(
-                kafkaEvent,
-                startTime,
-                originalHandlerAsyncError,
-                {
-                    messages_count: messages.messages.length,
-                    [EPSAGON_HEADER]: epsagonId,
-                },
-                {
-                    messages,
-                    response: result,
-                }
+            const { slsEvent, startTime } = eventInterface.initializeEvent(
+                'kafka',
+                messages.topic,
+                'produce',
+                'kafkajs'
             );
+            kafkaSendEvent = slsEvent;
+            kafkaSendStartTime = startTime;
+            // eslint-disable-next-line no-param-reassign
+            messages.messages = messages.messages.map((message) => {
+                if (!message.headers) {
+                    // eslint-disable-next-line no-param-reassign
+                    message.headers = {};
+                }
+                // eslint-disable-next-line no-param-reassign
+                message.headers[EPSAGON_HEADER] = epsagonId;
+                return message;
+            });
         } catch (err) {
             tracer.addException(err);
         }
-    });
+        try {
+            kafkaSendResponse = sendFunction.apply(this, [messages]);
+        } catch (err) {
+            if (kafkaSendEvent) {
+                eventInterface.setException(kafkaSendEvent, err);
+                tracer.addEvent(kafkaSendEvent);
+            }
+            throw err;
+        }
 
-    if (kafkaEvent) {
-        tracer.addEvent(kafkaEvent, response);
-    }
-
-    return response;
+        kafkaSendResponse = kafkaSendResponse.then((res) => {
+            result = res;
+            return res;
+        }).catch((err) => {
+            originalHandlerAsyncError = err;
+            throw err;
+        }).finally(() => {
+            try {
+                if (!kafkaSendEvent) {
+                    utils.debugLog('Could not initialize kafkajs, skipping response.');
+                    return;
+                }
+                eventInterface.finalizeEvent(
+                    kafkaSendEvent,
+                    kafkaSendStartTime,
+                    originalHandlerAsyncError,
+                    {
+                        messages_count: messages.messages.length,
+                        [EPSAGON_HEADER]: epsagonId,
+                    },
+                    {
+                        messages,
+                        response: result,
+                    }
+                );
+            } catch (err) {
+                tracer.addException(err);
+            }
+        });
+        if (kafkaSendEvent) {
+            tracer.addEvent(kafkaSendEvent, kafkaSendResponse);
+        }
+        return kafkaSendResponse;
+    };
 }
+
 /**
  * Wrap kafka cluster connect function
  * @param {Function} originalConnectFunction connect function
@@ -157,18 +156,24 @@ function kafkaConnectWrapper(originalConnectFunction) {
 }
 
 /**
- * Wraps the kafkajs producer creation
- * @param {Function} wrappedFunction The kafkajs producer function
+ * Wraps the kafkajs producer creation and wrapping send function.
+ * @param {Function} producerFunction The kafkajs producer function
  * @returns {Function} The wrapped function
  */
-function kafkaProducerWrapper(wrappedFunction) {
+function kafkaProducerWrapper(producerFunction) {
     return function internalKafkaProducerWrapper(options) {
-        // patching send request.
-        const producer = wrappedFunction.apply(this, [options]);
-        const patchedSend = messages => kafkaSendMiddleware(messages, producer);
-        producer.originalSend = producer.send;
-        producer.send = patchedSend.bind(producer);
-        return producer;
+        const producerResponse = producerFunction.apply(this, [options]);
+        // eslint-disable-next-line no-underscore-dangle
+        if (producerResponse && !producerResponse.__epsagonPatched) {
+            try {
+                // eslint-disable-next-line no-underscore-dangle
+                producerResponse.__epsagonPatched = true;
+                shimmer.wrap(producerResponse, 'send', () => wrapKafkaSendFunction(producerResponse.send));
+            } catch (err) {
+                tracer.addException(err);
+            }
+        }
+        return producerResponse;
     };
 }
 
