@@ -544,7 +544,7 @@ module.exports.label = function addLabel(key, value) {
  */
 module.exports.setError = function setRunnerError(err) {
     const tracerObj = module.exports.getTrace();
-    if (!tracerObj) {
+    if (!tracerObj || !tracerObj.currRunner) {
         utils.debugLog('Failed to setError without an active tracer');
         return;
     }
