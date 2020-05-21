@@ -26,19 +26,16 @@ function blobUploadWrapper(wrappedFunction) {
             'azure.blob.content_size': size,
         }, { 'azure.blob.content': content });
         const request = wrappedFunction.apply(this, [content, size]);
-        const uploadPromise = new Promise((resolve) => {
-            request.then((res) => {
-                eventInterface.addToMetadata(uploadEvent, { 'azure.blob.error_code': res.errorCode });
-                uploadEvent.setDuration(utils.createDurationTimestamp(startTime));
-            }).catch((err) => {
-                eventInterface.setException(uploadEvent, err);
-            }).finally(() => {
-                resolve();
-            });
+        const requestPromise = request.then((res) => {
+            eventInterface.addToMetadata(uploadEvent, { 'azure.blob.error_code': res.errorCode });
+            uploadEvent.setDuration(utils.createDurationTimestamp(startTime));
+            return res;
+        }).catch((err) => {
+            eventInterface.setException(uploadEvent, err);
         });
 
-        tracer.addEvent(uploadEvent, uploadPromise);
-        return request;
+        tracer.addEvent(uploadEvent, requestPromise);
+        return requestPromise;
     };
 }
 
@@ -62,18 +59,16 @@ function blobDownloadWrapper(wrappedFunction) {
             'azure.blob.offset': offset,
         });
         const request = wrappedFunction.apply(this, [offset, count, options]);
-        const downloadPromise = new Promise((resolve) => {
-            request.then((res) => {
-                eventInterface.addToMetadata(downloadEvent, { 'azure.blob.content_length': res.contentLength });
-                downloadEvent.setDuration(utils.createDurationTimestamp(startTime));
-            }).catch((err) => {
-                eventInterface.setException(downloadEvent, err);
-            }).finally(() => {
-                resolve();
-            });
+        const requestPromise = request.then((res) => {
+            eventInterface.addToMetadata(downloadEvent, { 'azure.blob.content_length': res.contentLength });
+            downloadEvent.setDuration(utils.createDurationTimestamp(startTime));
+            return res;
+        }).catch((err) => {
+            eventInterface.setException(downloadEvent, err);
+            throw err;
         });
-        tracer.addEvent(downloadEvent, downloadPromise);
-        return request;
+        tracer.addEvent(downloadEvent, requestPromise);
+        return requestPromise;
     };
 }
 
@@ -103,18 +98,16 @@ function cosmosCreateItemWrapper(wrappedFunction) {
         },
         { 'azure.cosmos.item_content': content });
         const request = wrappedFunction.apply(this, [body, options]);
-        const createPromise = new Promise((resolve) => {
-            request.then((res) => {
-                eventInterface.addToMetadata(createEvent, { 'azure.cosmos.status_code': res.statusCode });
-                createEvent.setDuration(utils.createDurationTimestamp(startTime));
-            }).catch((err) => {
-                eventInterface.setException(createEvent, err);
-            }).finally(() => {
-                resolve();
-            });
+        const requestPromise = request.then((res) => {
+            eventInterface.addToMetadata(createEvent, { 'azure.cosmos.status_code': res.statusCode });
+            createEvent.setDuration(utils.createDurationTimestamp(startTime));
+            return res;
+        }).catch((err) => {
+            eventInterface.setException(createEvent, err);
+            throw err;
         });
-        tracer.addEvent(createEvent, createPromise);
-        return request;
+        tracer.addEvent(createEvent, requestPromise);
+        return requestPromise;
     };
 }
 
