@@ -32,6 +32,7 @@ function blobUploadWrapper(wrappedFunction) {
             return res;
         }).catch((err) => {
             eventInterface.setException(uploadEvent, err);
+            throw err;
         });
 
         tracer.addEvent(uploadEvent, requestPromise);
