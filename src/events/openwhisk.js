@@ -32,6 +32,9 @@ function openWhiskWrapper(wrappedFunction) {
 
         invokeEvent.setResource(resource);
         eventInterface.addToMetadata(invokeEvent, {
+            api_host: options.apihost || process.env['__OW_API_HOST'], // eslint-disable-line dot-notation
+            namespace: options.namespace || process.env['__OW_NAMESPACE'], // eslint-disable-line dot-notation
+        }, {
             params: options.params,
         });
         let request;
@@ -69,7 +72,6 @@ function openWhiskWrapper(wrappedFunction) {
                     invokeEvent,
                     brief,
                     {
-                        activation_id: res.activationId,
                         response: resp,
                     }
                 );
