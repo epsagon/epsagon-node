@@ -1,5 +1,5 @@
 /**
- * @fileoverview Handlers for the aws-sdk js library instrumantation.
+ * @fileoverview Handlers for the aws-sdk js library instrumentation.
  */
 const md5 = require('md5');
 const uuid4 = require('uuid4');
