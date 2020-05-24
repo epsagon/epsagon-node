@@ -197,8 +197,9 @@ function getTrimmedMetadata(eventMetadata) {
 function getTrimmedTrace(traceSize, jsTrace) {
     let currentTraceSize = traceSize;
     const trimmedTrace = Object.assign({}, jsTrace);
-    trimmedTrace.events = jsTrace.events.sort(event => (['runner', 'trigger'].includes(event.origin) ? 1 : -1));
-    for (let i = 0; i < jsTrace.events.length; i += 1) {
+    trimmedTrace.events = jsTrace.events.sort(event => (['runner', 'trigger'].includes(event.origin) ? -1 : 1));
+    // Trimming trace events metadata.
+    for (let i = jsTrace.events.length - 1; i >= 0; i -= 1) {
         let eventMetadata = trimmedTrace.events[i].resource.metadata;
         if (eventMetadata) {
             const originalEventMetadataSize = JSON.stringify(eventMetadata).length;
@@ -214,8 +215,18 @@ function getTrimmedTrace(traceSize, jsTrace) {
             }
         }
     }
+    // Trimming trace events.
     if (currentTraceSize >= consts.MAX_TRACE_SIZE_BYTES) {
-        return undefined;
+        for (let i = jsTrace.events.length - 1; i >= 0; i -= 1) {
+            const event = trimmedTrace.events[i];
+            if (!['runner', 'trigger'].includes(event.origin)) {
+                trimmedTrace.events.splice(i, 1);
+                currentTraceSize -= JSON.stringify(event).length;
+                if (currentTraceSize < consts.MAX_TRACE_SIZE_BYTES) {
+                    break;
+                }
+            }
+        }
     }
     return trimmedTrace;
 }
