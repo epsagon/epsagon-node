@@ -196,7 +196,7 @@ function getTrimmedMetadata(eventMetadata) {
  */
 function getTrimmedTrace(traceSize, jsTrace) {
     let currentTraceSize = traceSize;
-    const trimmedTrace = { ...jsTrace };
+    const trimmedTrace = Object.assign({}, jsTrace);
     trimmedTrace.events = jsTrace.events.sort(event => (['runner', 'trigger'].includes(event.origin) ? 1 : -1));
     for (let i = 0; i < jsTrace.events.length; i += 1) {
         let eventMetadata = trimmedTrace.events[i].resource.metadata;
