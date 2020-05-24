@@ -14,8 +14,7 @@ const eventInterface = require('./event.js');
 const consts = require('./consts.js');
 const ecs = require('./containers/ecs.js');
 const k8s = require('./containers/k8s.js');
-
-const MAX_STEPS = 3;
+const { isStrongId } = require('./helpers/events');
 
 /**
  * Returns a function to get the relevant tracer.
@@ -169,80 +168,56 @@ module.exports.restart = function restart() {
     tracerObj.trace.setToken(config.getConfig().token);
 };
 
-const stripfuncs = [
-    (entry) => {
-        // drop the response_body for HTTP requests
-        if (entry && entry.resource && entry.resource.type === 'http') {
-            delete entry.resource.metadata.response_body; // eslint-disable-line no-param-reassign
-        }
-        return entry;
-    },
-    (entry) => {
-        // drop the request_body for HTTP requests
-        if (entry && entry.resource && entry.resource.type === 'http') {
-            delete entry.resource.metadata.request_body; // eslint-disable-line no-param-reassign
-        }
-        return entry;
-    },
-    (entry) => {
-        // drop the exception for HTTP requests
-        if (entry && entry.resource && entry.resource.type === 'http' && entry.exception) {
-            delete entry.exception.traceback; // eslint-disable-line no-param-reassign
-        }
-        return entry;
-    },
-    () => {
-        // last resort: drop the entire entry
-        utils.debugLog('Too big operation filtered out');
-    },
-];
-
-const stripApiGateway = [
-    (entry) => {
-        // drop the metadata.request_body for API Gateway requests
-        if (entry && entry.resource && entry.resource.metadata) {
-            delete entry.resource.metadata.request_body; // eslint-disable-line no-param-reassign
-        }
-        return entry;
-    },
-    (entry) => {
-        // drop the metadata.body for API Gateway requests
-        if (entry && entry.resource && entry.resource.metadata) {
-            delete entry.resource.metadata.body; // eslint-disable-line no-param-reassign
-        }
-        return entry;
-    },
-    () => {
-        // last resort: drop the entire entry
-        utils.debugLog('Too big operation filtered out');
-    },
-];
 
 /**
- * Removes all operations from a given trace. Only runner and trigger are kept.
- * @param {Json} traceJson: Trace JSON to remove operations from.
- * @param {int} attempt: the filtering iteration number, filters get progressively more aggressive
- * @return {*} List of filtered operations
+ * Keeps only strong IDs in event metadata.
+ * @param {array} eventMetadata Event metadata.
+ * @returns {array} Trimmed event metadata.
  */
-function stripOperations(traceJson, attempt) {
-    const filteredEvents = [];
-    traceJson.events.forEach((entry) => {
-        if (entry.resource.type === 'api_gateway' && attempt < stripApiGateway.length) {
-            const filteredEntry = stripApiGateway[attempt](entry);
-            if (filteredEntry) {
-                filteredEvents.push(filteredEntry);
+function getTrimmedMetadata(eventMetadata) {
+    let trimmedEventMetadata;
+    Object.keys(eventMetadata).forEach((eventKey) => {
+        if (!isStrongId(eventKey)) {
+            if (!trimmedEventMetadata) {
+                trimmedEventMetadata = eventMetadata;
+                trimmedEventMetadata.is_trimmed = true;
             }
-        } else if ((entry.origin === 'runner' || entry.origin === 'trigger')) {
-            filteredEvents.push(entry);
-        } else {
-            const filteredEntry = stripfuncs[attempt](entry);
-            if (filteredEntry) {
-                filteredEvents.push(filteredEntry);
-            }
+            delete trimmedEventMetadata[eventKey];
         }
     });
+    return trimmedEventMetadata;
+}
 
-    return filteredEvents;
+/**
+ * Trimming trace to a size less than MAX_TRACE_SIZE_BYTES.
+ * @param {number} traceSize Trace size.
+ * @param {JSON} jsTrace Trace.
+ * @returns {JSON} Trace with trimmed events metadata.
+ */
+function getTrimmedTrace(traceSize, jsTrace) {
+    let currentTraceSize = traceSize;
+    const trimmedTrace = { ...jsTrace };
+    trimmedTrace.events = jsTrace.events.sort(event => (['runner', 'trigger'].includes(event.origin) ? 1 : -1));
+    for (let i = 0; i < jsTrace.events.length; i += 1) {
+        let eventMetadata = trimmedTrace.events[i].resource.metadata;
+        if (eventMetadata) {
+            const originalEventMetadataSize = JSON.stringify(eventMetadata).length;
+            const trimmedMetadata = getTrimmedMetadata(eventMetadata);
+            if (trimmedMetadata) {
+                eventMetadata = trimmedMetadata;
+                const trimmedSize =
+                    originalEventMetadataSize - JSON.stringify(trimmedMetadata).length;
+                currentTraceSize -= trimmedSize;
+                if (currentTraceSize < consts.MAX_TRACE_SIZE_BYTES) {
+                    break;
+                }
+            }
+        }
+    }
+    if (currentTraceSize >= consts.MAX_TRACE_SIZE_BYTES) {
+        return undefined;
+    }
+    return trimmedTrace;
 }
 
 /**
@@ -269,7 +244,7 @@ function sendCurrentTrace(traceSender) {
             return Promise.resolve();
         }
     }
-    const traceJson = {
+    let traceJson = {
         app_name: tracerObj.trace.getAppName(),
         token: tracerObj.trace.getToken(),
         events: tracerObj.trace.getEventList().map(entry => ({
@@ -323,15 +298,10 @@ function sendCurrentTrace(traceSender) {
         utils.printWarning('Epsagon - no trace was sent since there was an error serializing the trace. Please contact support.', err);
         return Promise.resolve();
     }
-    if (stringifyTraceJson.length >= consts.MAX_TRACE_SIZE_BYTES) {
-        for (let attempt = 0; attempt <= MAX_STEPS; attempt += 1) {
-            traceJson.events = stripOperations(traceJson, attempt);
-            if (JSON.stringify(traceJson).length < consts.MAX_TRACE_SIZE_BYTES) {
-                break;
-            }
-        }
+    const originalTraceLength = stringifyTraceJson.length;
+    if (originalTraceLength >= consts.MAX_TRACE_SIZE_BYTES) {
+        traceJson = getTrimmedTrace(originalTraceLength, traceJson);
     }
-
 
     const sendResult = traceSender(traceJson);
     tracerObj.pendingEvents.clear();
@@ -576,7 +546,7 @@ module.exports.enable = function enable() {
     tracerObj.disabled = false;
 };
 
-module.exports.stripOperations = stripOperations;
+module.exports.getTrimmedTrace = getTrimmedTrace;
 
 /**
  * @returns {string} the current runner's log uuid

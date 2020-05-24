@@ -29,3 +29,29 @@ module.exports.MAX_TRACE_SIZE_BYTES = 64 * 1024;
 
 // Key name to inject epsagon correlation ID
 module.exports.EPSAGON_HEADER = 'epsagon-trace-id';
+
+module.exports.STRONG_KEYS = [
+    'key',
+    'request_id',
+    'requestid',
+    'request-id',
+    'steps_dict',
+    'message_id',
+    'etag',
+    'item_hash',
+    'sequence_number',
+    'trace_id',
+    'job_id',
+    'activation_id',
+    'http_trace_id',
+    'id',
+    'aws.sqs.message_id',
+    'x-amz-request-id',
+    'object_key',
+    'object_etag',
+    'aws.requestId',
+    'aws.s3.key',
+    'aws.s3.etag',
+    'aws.kinesis.sequence_number',
+    'request_trace_id',
+];

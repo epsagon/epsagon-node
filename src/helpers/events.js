@@ -1,3 +1,4 @@
+const consts = require('../consts.js');
 
 /**
  * Checks if a URL is in the blacklist
@@ -26,6 +27,13 @@ const isBlacklistHeader = (headers, userAgentsBlacklist) => {
     return false;
 };
 
+/**
+ * Checks if a key is in the STRONG_KEYS array.
+ * @param {string} key Event key.
+ * @returns {boolean} True if is in the STRONG_KEYS array, False otherwise.
+ */
+const isStrongId = key => consts.STRONG_KEYS.includes(key.toLowerCase().replace(' ', '_'));
+
 module.exports = {
-    isBlacklistURL, isBlacklistHeader,
+    isBlacklistURL, isBlacklistHeader, isStrongId,
 };
