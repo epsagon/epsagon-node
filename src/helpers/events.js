@@ -28,11 +28,11 @@ const isBlacklistHeader = (headers, userAgentsBlacklist) => {
 };
 
 /**
- * Checks if a key is in the STRONG_KEYS array.
+ * Checks if a key is in the STRONG_ID_KEYS array.
  * @param {string} key Event key.
- * @returns {boolean} True if is in the STRONG_KEYS array, False otherwise.
+ * @returns {boolean} True if is in the STRONG_ID_KEYS array, False otherwise.
  */
-const isStrongId = key => consts.STRONG_KEYS.includes(key.toLowerCase().replace(' ', '_'));
+const isStrongId = key => consts.STRONG_ID_KEYS.includes(key.toLowerCase().replace(' ', '_'));
 
 module.exports = {
     isBlacklistURL, isBlacklistHeader, isStrongId,

@@ -217,9 +217,11 @@ function getTrimmedTrace(traceSize, jsTrace) {
     }
     // Trimming trace events.
     if (currentTraceSize >= consts.MAX_TRACE_SIZE_BYTES) {
+        let totalTrimmedEvents = 0;
         for (let i = jsTrace.events.length - 1; i >= 0; i -= 1) {
             const event = trimmedTrace.events[i];
             if (!['runner', 'trigger'].includes(event.origin)) {
+                totalTrimmedEvents += 1;
                 trimmedTrace.events.splice(i, 1);
                 currentTraceSize -= JSON.stringify(event).length;
                 if (currentTraceSize < consts.MAX_TRACE_SIZE_BYTES) {
@@ -227,6 +229,7 @@ function getTrimmedTrace(traceSize, jsTrace) {
                 }
             }
         }
+        utils.printWarning(`Epsagon - Trace size is larger than maximum size, ${totalTrimmedEvents} events was trimmed.`);
     }
     return trimmedTrace;
 }
