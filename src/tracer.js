@@ -229,7 +229,9 @@ function getTrimmedTrace(traceSize, jsTrace) {
                 }
             }
         }
-        utils.printWarning(`Epsagon - Trace size is larger than maximum size, ${totalTrimmedEvents} events was trimmed.`);
+        if (totalTrimmedEvents) {
+            utils.debugLog(`Epsagon - Trace size is larger than maximum size, ${totalTrimmedEvents} events was trimmed.`);
+        }
     }
     return trimmedTrace;
 }
