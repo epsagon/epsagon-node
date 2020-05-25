@@ -747,29 +747,13 @@ describe('sendTraceSync function tests', () => {
         shouldPromiseEnd2 = true;
     });
 
-    it('stripOperations: decreases trace size', () => {
-        let smallertrace = tracer.stripOperations(bigtrace, 0);
-
-        let big = JSON.stringify(bigtrace).length;
-        let small = JSON.stringify(smallertrace).length;
-
-        expect(big).to.be.greaterThan(small);
-        expect(smallertrace).to.be.a('array');
-
-        // second iteration
-        smallertrace = tracer.stripOperations({ events: smallertrace }, 1);
-        big = JSON.stringify(bigtrace).length;
-        small = JSON.stringify(smallertrace).length;
-        expect(big).to.be.greaterThan(small);
-
-        // third iteration
-        smallertrace = tracer.stripOperations({ events: smallertrace }, 2);
-        big = JSON.stringify(bigtrace).length;
-        small = JSON.stringify(smallertrace).length;
-        expect(big).to.be.greaterThan(small);
-
-
-        expect(small).to.be.lessThan(maxtrace);
+    it('getTrimmedTrace: decreases trace size', () => {
+        const originalTraceSize = JSON.stringify(bigtrace).length;
+        expect(originalTraceSize).to.be.greaterThan(maxtrace);
+        const trimmedTrace = tracer.getTrimmedTrace(originalTraceSize, bigtrace);
+        const trimmedTraceSize = JSON.stringify(trimmedTrace).length;
+        expect(originalTraceSize).to.be.greaterThan(trimmedTraceSize);
+        expect(trimmedTraceSize).to.be.lessThan(maxtrace);
     });
 
     it('sendCurrentTrace: send only on error flag', () => {
