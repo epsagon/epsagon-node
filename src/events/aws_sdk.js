@@ -90,11 +90,13 @@ const kinesisEventCreator = {
         const resource = event.getResource();
 
         resource.setName(`${parameters.StreamName}`);
-        eventInterface.addToMetadata(event, {
-            partition_key: `${parameters.PartitionKey}`,
-        }, {
-            data: `${parameters.Data}`,
-        });
+        if (request.operation !== 'putRecords') {
+            eventInterface.addToMetadata(event, {
+                partition_key: `${parameters.PartitionKey}`,
+            }, {
+                data: `${parameters.Data}`,
+            });
+        }
     },
 
     /**
@@ -108,6 +110,13 @@ const kinesisEventCreator = {
             eventInterface.addToMetadata(event, {
                 shard_id: `${response.data.ShardId}`,
                 sequence_number: `${response.data.SequenceNumber}`,
+            });
+            break;
+        case 'putRecords':
+            eventInterface.addToMetadata(event, {
+                failed_record_count: `${response.data.FailedRecordCount}`,
+                shard_id: `${response.data.Records[0].ShardId}`,
+                sequence_number: `${response.data.Records[0].SequenceNumber}`,
             });
             break;
         default:
