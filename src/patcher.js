@@ -20,6 +20,7 @@ const mqttPatcher = require('./events/mqtt.js');
 const kafkajsPatcher = require('./events/kafkajs.js');
 const bunyanPatcher = require('./events/bunyan.js');
 const azureSdkPatcher = require('./events/azure_sdk.js');
+const winstonCloudwatchPatcher = require('./events/winston_cloudwatch.js');
 
 
 /**
@@ -55,5 +56,6 @@ if (!config.getConfig().isEpsagonPatchDisabled) {
         kafkajsPatcher,
         bunyanPatcher,
         azureSdkPatcher,
+        winstonCloudwatchPatcher,
     ].forEach(patch);
 }
