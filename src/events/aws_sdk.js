@@ -16,6 +16,13 @@ const tryRequire = require('../try_require');
 
 const AWS = tryRequire('aws-sdk');
 
+const AWS_TYPES = {
+    kinesis: {
+        putRecord: 'putRecord',
+        putRecords: 'putRecords',
+    },
+};
+
 const s3EventCreator = {
     /**
      * Updates an event with the appropriate fields from a S3 request
@@ -90,7 +97,7 @@ const kinesisEventCreator = {
         const resource = event.getResource();
 
         resource.setName(`${parameters.StreamName}`);
-        if (request.operation !== 'putRecords') {
+        if (request.operation !== AWS_TYPES.kinesis.putRecords) {
             eventInterface.addToMetadata(event, {
                 partition_key: `${parameters.PartitionKey}`,
             }, {
@@ -106,13 +113,13 @@ const kinesisEventCreator = {
      */
     responseHandler(response, event) {
         switch (response.request.operation) {
-        case 'putRecord':
+        case AWS_TYPES.kinesis.putRecord:
             eventInterface.addToMetadata(event, {
                 shard_id: `${response.data.ShardId}`,
                 sequence_number: `${response.data.SequenceNumber}`,
             });
             break;
-        case 'putRecords':
+        case AWS_TYPES.kinesis.putRecords:
             eventInterface.addToMetadata(event, {
                 failed_record_count: `${response.data.FailedRecordCount}`,
                 shard_id: `${response.data.Records[0].ShardId}`,
