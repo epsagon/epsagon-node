@@ -57,8 +57,6 @@ module.exports = {
      * @return {Object} additional tags set by winston-cloudwatch
      */
     getAdditionalTags() {
-        return {
-            ...additionalTags,
-        };
+        return Object.assign({}, additionalTags);
     },
 };
