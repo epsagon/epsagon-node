@@ -11,11 +11,11 @@ epsagon.init({
 
 // Calling event before tracer initialized
 http.get('http://dummy.restapiexample.com/api/v1/employees', (resp) => {
-  resp.on('end', () => {
-    console.log('end');
-  });
-}).on("error", (err) => {
-  console.log("Error: " + err.message);
+    resp.on('end', () => {
+        console.log('end');
+    });
+}).on('error', (err) => {
+    console.log(`Error: ${err.message}`);
 });
 
 module.exports.failsafe_no_tracer_init = epsagon.lambdaWrapper((event, context, callback) => {

@@ -1,5 +1,6 @@
 const shimmer = require('shimmer');
 const tryRequire = require('../try_require');
+const utils = require('../utils');
 
 /**
  * finds all the instances of a module in the NODE_PATH
@@ -43,7 +44,9 @@ module.exports.patchModule = function patchModule(
     wrapper,
     memberExtractor = (mod => mod)
 ) {
+    utils.debugLog('patching module:', id);
     const modules = module.exports.getModules(id);
+    utils.debugLog('found module copies:', modules.length);
     modules.forEach((module) => {
         shimmer.wrap(
             memberExtractor(module),
@@ -51,4 +54,5 @@ module.exports.patchModule = function patchModule(
             wrapper
         );
     });
+    utils.debugLog('done patching module:', id);
 };

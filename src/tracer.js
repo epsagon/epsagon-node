@@ -14,6 +14,7 @@ const eventInterface = require('./event.js');
 const consts = require('./consts.js');
 const ecs = require('./containers/ecs.js');
 const k8s = require('./containers/k8s.js');
+const winstonCloudwatch = require('./events/winston_cloudwatch');
 const { isStrongId } = require('./helpers/events');
 
 /**
@@ -150,6 +151,10 @@ module.exports.addRunner = function addRunner(runner, runnerPromise) {
     tracerObj.currRunner = runner;
     ecs.addECSMetadata(tracerObj.currRunner);
     k8s.addK8sMetadata(tracerObj.currRunner);
+    eventInterface.addToMetadata(
+        tracerObj.currRunner,
+        winstonCloudwatch.getAdditionalTags()
+    );
 };
 
 /**
