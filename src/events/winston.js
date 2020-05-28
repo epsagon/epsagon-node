@@ -2,21 +2,27 @@ const tracer = require('../tracer.js');
 const moduleUtils = require('./module_utils.js');
 
 /**
+ * returns the trace id if message should be traced, or null if not.
+ * @param {Object} chunk the chunk to add id to
+ * @return {string|null} The trace id, or null if the message shouldn't
+ * be traced
+ */
+function getTraceIdIfShouldTrace(chunk) {
+    if (!chunk || typeof chunk !== 'object' || !tracer.isLoggingTracingEnabled()) {
+        return null;
+    }
+
+    return tracer.getTraceId();
+}
+/**
  * Wrap bunyan logs
  * @param {Function} wrappedFunction The function to wrap from bunyan
  * @returns {function} emit wrapper function
  */
 function writeWrapper(wrappedFunction) {
     return function internalWriteWrapper(chunk, encoding, callback) {
-        if (!tracer.isLoggingTracingEnabled()) {
-            return wrappedFunction.apply(this, [chunk, encoding, callback]);
-        }
-        const traceId = tracer.getTraceId();
+        const traceId = getTraceIdIfShouldTrace(chunk);
         if (!traceId) {
-            return wrappedFunction.apply(this, [chunk, encoding, callback]);
-        }
-
-        if (!chunk || typeof chunk !== 'object') {
             return wrappedFunction.apply(this, [chunk, encoding, callback]);
         }
 

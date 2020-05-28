@@ -151,7 +151,6 @@ module.exports.addRunner = function addRunner(runner, runnerPromise) {
     tracerObj.currRunner = runner;
     ecs.addECSMetadata(tracerObj.currRunner);
     k8s.addK8sMetadata(tracerObj.currRunner);
-    utils.debugLog('winston logs add tags', winstonCloudwatch.getAdditionalTags());
     eventInterface.addToMetadata(
         tracerObj.currRunner,
         winstonCloudwatch.getAdditionalTags()
