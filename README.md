@@ -217,6 +217,7 @@ module.exports.handler = epsagon.stepLambdaWrapper(async (event) => {
   // Your code is here
 });
 ```
+ECS Step - You should pass Epsagon step_dict parameters from the ECS state input into```EPSAGON_STEPS_ID``` and ```EPSAGON_STEPS_NUM``` environment variables, check the [configuration](https://github.com/epsagon/epsagon-node/tree/feature/add-stepfunctions-to-node-wrapper/EP-3356#configuration) section.
 
 ### OpenWhisk Action
 
@@ -517,6 +518,8 @@ Advanced options can be configured as a parameter to the init() method or as env
 |-                  |EPSAGON_ADD_NODE_PATH      |String |-            |List of folders to looks for node_modules when patching libraries. Separated by `:`|
 |-                  |EPSAGON_DNS_INSTRUMENTATION|Boolean|`false`      |Whether to capture `dns` calls into the trace                                      |
 |-                  |EPSAGON_LOGGING_TRACING_ENABLED|Boolean|`true`      |whether to add an Epsagon ID to the logs in order to correlate traces to logs in the dashboard|
+|-                  |EPSAGON_STEPS_ID           |String|-             |The Epsagon step id from the ECS step functions state input     |
+|-                  |EPSAGON_STEPS_NUM          |String|-             |The Epsagon step number from the ECS step functions state input     |
 
 
 ## Getting Help
