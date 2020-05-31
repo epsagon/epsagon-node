@@ -73,6 +73,16 @@ module.exports.nodeWrapper = function nodeWrapper(functionToWrap) {
         try {
             runner.setStartTime(utils.createTimestampFromTime(startTime));
             const result = functionToWrap(...args);
+            // Add epsagon step functions arguments to event metadata,
+            // if they exists as environment variables.
+            if (process.env.EPSAGON_STEPS_ID && process.env.EPSAGON_STEPS_NUM) {
+                eventInterface.addToMetadata(runner, {
+                    steps_dict: {
+                        id: process.env.EPSAGON_STEPS_ID,
+                        step_num: process.env.EPSAGON_STEPS_NUM,
+                    },
+                });
+            }
             const promiseResult = Promise.resolve(result).then((resolvedResult) => {
                 if (!getConfig().metadataOnly) {
                     let jsonResult;
