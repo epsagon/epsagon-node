@@ -52,8 +52,6 @@ function createRunner(functionToWrap, args) {
  * @param {*} runner Runner event.
  */
 function handleEcsStepOfStepFunctions(runner) {
-    // eslint-disable-next-line no-debugger
-    debugger;
     if (process.env.EPSAGON_STEPS_ID && process.env.EPSAGON_STEPS_NUM) {
         eventInterface.addToMetadata(runner, {
             steps_dict: {
