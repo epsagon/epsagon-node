@@ -46,6 +46,23 @@ function createRunner(functionToWrap, args) {
 }
 
 /**
+ * Handle ECS step of AWS Step Functions.
+ * Getting epsagon steps dict id and number from environment variables,
+ * If exists - adding steps_dict object to event metadata.
+ * @param {*} runner Runner event.
+ */
+function handleEcsStepOfStepFunctions(runner) {
+    if (process.env.EPSAGON_STEPS_ID && process.env.EPSAGON_STEPS_NUM) {
+        eventInterface.addToMetadata(runner, {
+            steps_dict: {
+                id: process.env.EPSAGON_STEPS_ID,
+                step_num: process.env.EPSAGON_STEPS_NUM,
+            },
+        });
+    }
+}
+
+/**
  * Epsagon's node function wrapper, wrap a lambda function with it to trace it
  * @param {function} functionToWrap The function to wrap and trace
  * @return {function} The original function, wrapped by our tracer
@@ -73,6 +90,7 @@ module.exports.nodeWrapper = function nodeWrapper(functionToWrap) {
         try {
             runner.setStartTime(utils.createTimestampFromTime(startTime));
             const result = functionToWrap(...args);
+            handleEcsStepOfStepFunctions(runner);
             const promiseResult = Promise.resolve(result).then((resolvedResult) => {
                 if (!getConfig().metadataOnly) {
                     let jsonResult;
