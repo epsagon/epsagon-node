@@ -505,7 +505,7 @@ Advanced options can be configured as a parameter to the init() method or as env
 |appName            |EPSAGON_APP_NAME           |String |`Application`|Application name that will be set for traces                                       |
 |metadataOnly       |EPSAGON_METADATA           |Boolean|`true`       |Whether to send only the metadata (`true`) or also the payloads (`false`)          |
 |useSSL             |EPSAGON_SSL                |Boolean|`true`       |Whether to send the traces over HTTPS SSL or not                                   |
-|traceCollectorURL  |-                          |String |-            |The address of the trace collector to send trace to                                |
+|traceCollectorURL  |EPSAGON_COLLECTOR_URL      |String |-            |The address of the trace collector to send trace to                                |
 |isEpsagonDisabled  |DISABLE_EPSAGON            |Boolean|`false`      |A flag to completely disable Epsagon (can be used for tests or locally)            |
 |ignoredKeys        |EPSAGON_IGNORED_KEYS       |Array  |-            |Array of keys names (can be string or regex) to be removed from the trace          |
 |urlPatternsToIgnore|EPSAGON_URLS_TO_IGNORE     |Array  |`[]`         |Array of URL patterns to ignore the calls                                          |
