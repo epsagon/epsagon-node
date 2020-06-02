@@ -33,7 +33,7 @@ const config = {
     appName: process.env.EPSAGON_APP_NAME || 'Application',
     metadataOnly: (process.env.EPSAGON_METADATA || '').toUpperCase() === 'TRUE',
     useSSL: (process.env.EPSAGON_SSL || 'TRUE').toUpperCase() === 'TRUE',
-    traceCollectorURL: consts.TRACE_COLLECTOR_URL,
+    traceCollectorURL: process.env.EPSAGON_COLLECTOR_URL || consts.TRACE_COLLECTOR_URL,
     isEpsagonDisabled: (process.env.DISABLE_EPSAGON || '').toUpperCase() === 'TRUE',
     urlPatternsToIgnore: [],
     internalSampleRate: 1,
