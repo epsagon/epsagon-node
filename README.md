@@ -217,7 +217,7 @@ module.exports.handler = epsagon.stepLambdaWrapper(async (event) => {
   // Your code is here
 });
 ```
-ECS Step - You should pass Epsagon step_dict id from the ECS state input into```EPSAGON_STEPS_ID``` environment variables of the container, ```EPSAGON_STEPS_NUM``` is the step number of the ECS (default: 0). check the [configuration](https://github.com/epsagon/epsagon-node/#configuration) section.
+ECS Step - You should pass Epsagon step_dict id from ECS state input into ```EPSAGON_STEPS_ID``` environment variables of the container, ```EPSAGON_STEPS_NUM``` is the step number of the ECS (default: 0). check the [configuration](https://github.com/epsagon/epsagon-node/#configuration) section.
 
 ### OpenWhisk Action
 
