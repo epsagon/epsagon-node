@@ -270,8 +270,7 @@ function httpWrapper(wrappedFunction) {
                 }
 
                 updateAPIGateway(res.headers, httpEvent);
-
-                if (callback) {
+                if (callback && typeof callback === 'function') {
                     callback(res);
                 }
             };
