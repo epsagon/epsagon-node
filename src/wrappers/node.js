@@ -47,16 +47,17 @@ function createRunner(functionToWrap, args) {
 
 /**
  * Handle ECS step of AWS Step Functions.
- * Getting epsagon steps dict id and number from environment variables,
- * If exists - adding steps_dict object to event metadata.
+ * Getting step id from epsagon steps dict environment variable.
+ * If exists - Adding steps_dict object to event metadata.
+ * optional - Step number can be set by the user, default is 0.
  * @param {*} runner Runner event.
  */
 function handleEcsStepOfStepFunctions(runner) {
-    if (process.env.EPSAGON_STEPS_ID && process.env.EPSAGON_STEPS_NUM) {
+    if (process.env.EPSAGON_STEPS_ID) {
         eventInterface.addToMetadata(runner, {
             steps_dict: {
                 id: process.env.EPSAGON_STEPS_ID,
-                step_num: process.env.EPSAGON_STEPS_NUM,
+                step_num: process.env.EPSAGON_STEPS_NUM || 0,
             },
         });
     }
