@@ -217,7 +217,7 @@ module.exports.handler = epsagon.stepLambdaWrapper(async (event) => {
   // Your code is here
 });
 ```
-ECS Step - You should pass Epsagon step_dict parameters from the ECS state input into```EPSAGON_STEPS_ID``` and ```EPSAGON_STEPS_NUM``` environment variables, check the [configuration](https://github.com/epsagon/epsagon-node/#configuration) section.
+ECS Step - You should pass Epsagon step_dict id from ECS state input into ```EPSAGON_STEPS_ID``` environment variables of the container, ```EPSAGON_STEPS_NUM``` is the step number of the ECS (default: 0). check the [configuration](https://github.com/epsagon/epsagon-node/#configuration) section.
 
 ### OpenWhisk Action
 
@@ -519,8 +519,7 @@ Advanced options can be configured as a parameter to the init() method or as env
 |-                  |EPSAGON_DNS_INSTRUMENTATION|Boolean|`false`      |Whether to capture `dns` calls into the trace                                      |
 |-                  |EPSAGON_LOGGING_TRACING_ENABLED|Boolean|`true`      |whether to add an Epsagon ID to the logs in order to correlate traces to logs in the dashboard|
 |-                  |EPSAGON_STEPS_ID           |String|-             |The Epsagon step id from the ECS step functions state input     |
-|-                  |EPSAGON_STEPS_NUM          |String|-             |The Epsagon step number from the ECS step functions state input     |
-|-                  |EPSAGON_DISABLE_HTTP_TRACE_ID|Boolean|`false`             |Whether to disable the trace ID propagation over HTTP calls     |
+|-                  |EPSAGON_STEPS_NUM          |String|`0`         |The step number of the ECS step functions state     |
 
 
 ## Getting Help
