@@ -520,6 +520,7 @@ Advanced options can be configured as a parameter to the init() method or as env
 |-                  |EPSAGON_LOGGING_TRACING_ENABLED|Boolean|`true`      |whether to add an Epsagon ID to the logs in order to correlate traces to logs in the dashboard|
 |-                  |EPSAGON_STEPS_ID           |String|-             |The Epsagon step id from the ECS step functions state input     |
 |-                  |EPSAGON_STEPS_NUM          |String|-             |The Epsagon step number from the ECS step functions state input     |
+|-                  |EPSAGON_DISABLE_HTTP_TRACE_ID|Boolean|`false`             |Whether to disable the trace ID propagation over HTTP calls     |
 
 
 ## Getting Help

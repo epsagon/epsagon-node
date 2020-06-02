@@ -173,9 +173,11 @@ function httpWrapper(wrappedFunction) {
                 return wrappedFunction.apply(this, [a, b, c]);
             }
 
-            // Inject header to support tracing over HTTP requests to opentracing monitored code
             const epsagonTraceId = generateEpsagonTraceId();
-            headers['epsagon-trace-id'] = epsagonTraceId;
+            // Inject header to support tracing over HTTP requests to opentracing monitored code
+            if ((process.env.EPSAGON_DISABLE_HTTP_TRACE_ID || '').toUpperCase() !== 'TRUE') {
+                headers['epsagon-trace-id'] = epsagonTraceId;
+            }
 
             const agent = (
                 // eslint-disable-next-line no-underscore-dangle
