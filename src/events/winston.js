@@ -1,5 +1,6 @@
 const tracer = require('../tracer.js');
 const moduleUtils = require('./module_utils.js');
+const utils = require('../utils');
 
 /**
  * returns the trace id if message should be traced, or null if not.
@@ -21,7 +22,9 @@ function getTraceIdIfShouldTrace(chunk) {
  */
 function writeWrapper(wrappedFunction) {
     return function internalWriteWrapper(chunk, encoding, callback) {
+        utils.debugLog('in internal winston write');
         const traceId = getTraceIdIfShouldTrace(chunk);
+        utils.debugLog(`winston traceId=${traceId}`);
         if (!traceId) {
             return wrappedFunction.apply(this, [chunk, encoding, callback]);
         }
@@ -42,7 +45,7 @@ function writeWrapper(wrappedFunction) {
         }
 
         tracer.addLoggingTracingEnabledMetadata();
-
+        utils.debugLog('finish internal winston write');
         return wrappedFunction.apply(this, [newChunk, encoding, callback]);
     };
 }
