@@ -596,6 +596,7 @@ module.exports.addLoggingTracingEnabledMetadata = function addLoggingTracingEnab
     if (config.getConfig().loggingTracingEnabled) {
         const tracer = module.exports.getTrace();
         if (tracer && tracer.currRunner) {
+            utils.debugLog('Setting logging_tracing_enabled');
             eventInterface.addToMetadata(tracer.currRunner, {
                 logging_tracing_enabled: true,
             });

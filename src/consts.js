@@ -54,4 +54,7 @@ module.exports.STRONG_ID_KEYS = [
     'aws.s3.etag',
     'aws.kinesis.sequence_number',
     'request_trace_id',
+    'logging_tracing_enabled',
+    'CLOUDWATCH_LOG_GROUP_NAME',
+    'CLOUDWATCH_LOG_STREAM_NAME',
 ];
