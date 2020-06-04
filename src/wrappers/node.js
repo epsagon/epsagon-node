@@ -40,6 +40,7 @@ function createRunner(functionToWrap, args) {
     eventInterface.addToMetadata(runner, {
         args_length: args.length,
     });
+    eventInterface.createTraceIdMetadata(runner);
 
     consts.COLD_START = false;
     return runner;
