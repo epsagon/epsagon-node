@@ -25,20 +25,48 @@ function stringifyData(obj) {
 }
 
 /**
+ * Extracts connection details from a conenction
+ * @param {Object} connId The connectionId object of the instrumented event
+ * @return {{port: *, host: *}} extracted connection details
+ */
+function getConnectionDetails(connId) {
+    let host;
+    let port;
+    utils.debugLog('Epsagon - MongoDB - inspecting connectionId', connId);
+    if (connId) {
+        if (typeof connId === 'string') {
+            const parts = connId.split(':');
+            if (parts.length && parts[0][0] === '/') {
+                host = 'localhost';
+                [port] = parts;
+            } else {
+                [host, port] = parts;
+            }
+        } else if (connId.domainSocket) {
+            [host, port] = ['localhost', connId.host]; // host for domainSocket is the identifier
+        } else {
+            // eslint-disable-next-line prefer-destructuring
+            host = connId.host;
+            // eslint-disable-next-line prefer-destructuring
+            port = connId.port;
+        }
+    }
+    return { host, port };
+}
+
+/**
  * Hook for mongodb requests starting
  * @param {Object} event The request event
  */
 function onStartHook(event) {
     try {
         const startTime = Date.now();
+        utils.debugLog('Epsagon - MongoDB - handling event', event);
 
-        let { host, port } = event.connectionId;
-        if (!host) {
-            [host, port] = event.connectionId.split(':');
-        }
+        const { host, port } = getConnectionDetails(event ? event.connectionId : null);
 
         const resource = new serverlessEvent.Resource([
-            host,
+            host || 'mongodb',
             'mongodb',
             event.commandName,
         ]);
@@ -57,12 +85,14 @@ function onStartHook(event) {
             collection = '';
         }
         eventInterface.addToMetadata(dbapiEvent, {
-            port,
             namespace: `${event.databaseName}.${collection}`,
         }, {
             filter: stringifyData(event.command.filter),
             query: stringifyData(event.command.query),
         });
+        if (port) {
+            eventInterface.addToMetadata(dbapiEvent, { port });
+        }
 
         const responsePromise = new Promise((resolve) => {
             requestsResolvers[event.requestId] = { resolve, dbapiEvent };
