@@ -123,14 +123,17 @@ module.exports = {
      * Initializes mongodb instrumentation
      */
     init() {
+        utils.debugLog('Epsagon mongodb - starting');
         const modules = moduleUtils.getModules('mongodb');
+        utils.debugLog('Epsagon mongodb - found', modules.length, 'modules');
         modules.forEach((mongodb) => {
             const listener = mongodb.instrument({}, (error) => {
-                if (error) { utils.debugLog(error); }
+                if (error) { utils.debugLog('Epsagon mongodb instrumentation failed', error); }
             });
             listener.on('started', onStartHook);
             listener.on('succeeded', onSuccessHook);
             listener.on('failed', onFailureHook);
         });
+        utils.debugLog('Epsagon mongodb - done');
     },
 };

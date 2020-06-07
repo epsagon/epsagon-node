@@ -177,12 +177,13 @@ module.exports.restart = function restart() {
 /**
  * Keeps only strong IDs in event metadata.
  * @param {array} eventMetadata Event metadata.
+ * @param {boolean} isRunner is evnet origin is runner.
  * @returns {array} Trimmed event metadata.
  */
-function getTrimmedMetadata(eventMetadata) {
+function getTrimmedMetadata(eventMetadata, isRunner) {
     let trimmedEventMetadata;
     Object.keys(eventMetadata).forEach((eventKey) => {
-        if (!isStrongId(eventKey)) {
+        if (!isStrongId(eventKey) && (isRunner && eventKey !== 'labels')) {
             if (!trimmedEventMetadata) {
                 trimmedEventMetadata = eventMetadata;
                 trimmedEventMetadata.is_trimmed = true;
@@ -205,10 +206,12 @@ function getTrimmedTrace(traceSize, jsTrace) {
     trimmedTrace.events = jsTrace.events.sort(event => (['runner', 'trigger'].includes(event.origin) ? -1 : 1));
     // Trimming trace events metadata.
     for (let i = jsTrace.events.length - 1; i >= 0; i -= 1) {
-        let eventMetadata = trimmedTrace.events[i].resource.metadata;
+        const currentEvent = trimmedTrace.events[i];
+        const isRunner = currentEvent.origin === 'runner';
+        let eventMetadata = currentEvent.resource.metadata;
         if (eventMetadata) {
             const originalEventMetadataSize = JSON.stringify(eventMetadata).length;
-            const trimmedMetadata = getTrimmedMetadata(eventMetadata);
+            const trimmedMetadata = getTrimmedMetadata(eventMetadata, isRunner);
             if (trimmedMetadata) {
                 eventMetadata = trimmedMetadata;
                 const trimmedSize =
