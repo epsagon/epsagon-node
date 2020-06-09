@@ -1,7 +1,41 @@
 const Hook = require('require-in-the-middle');
 const utils = require('../utils');
+const tracer = require('../tracer');
+const tryRequire = require('../try_require');
+
+const AWS = tryRequire('aws-sdk');
 
 const additionalTags = {};
+
+
+/**
+ * loads data from aws metadata to additional tags
+ * @param {Object} options options cloudwatch winston was initialized with
+ * @returns {Promise} resolves when metadata was loaded
+ */
+function loadAWSMetadata(options) {
+    if (!AWS) {
+        return Promise.resolve();
+    }
+
+    const sts = new AWS.STS();
+    const cwConfig = (options.cloudWatchLogs && options.cloudWatchLogs.config) || {};
+    additionalTags['aws.cloudwatch.region'] = (
+        options.awsRegion ||
+        cwConfig.region ||
+        AWS.config.region ||
+        process.env.AWS_REGION
+    );
+    return sts.getAccessKeyInfo({
+        AccessKeyId: (
+            options.awsAccessKeyId ||
+            cwConfig.accessKeyId ||
+            AWS.config.credentials.accessKeyId
+        ),
+    }).promise().then((data) => {
+        additionalTags['aws.cloudwatch.account_id'] = data.Account;
+    });
+}
 
 
 /**
@@ -26,10 +60,12 @@ function onWinstonCloudwatchRequire(exports) {
         const [options] = args;
         try {
             utils.debugLog('winston-cloudwatch instance created');
-            additionalTags.CLOUDWATCH_LOG_GROUP_NAME = options.logGroupName;
-            additionalTags.CLOUDWATCH_LOG_STREAM_NAME = options.logStreamName;
+            additionalTags['aws.cloudwatch.log_group_name'] = options.logGroupName;
+            additionalTags['aws.cloudwatch.log_stream_name'] = options.logStreamName;
+            loadAWSMetadata(options).catch(err => tracer.addException(err));
         } catch (e) {
             utils.debugLog('failed to set cloudwatch-winston log parameters', e);
+            tracer.addException(e);
         }
         return exports.apply(this, args);
     }
