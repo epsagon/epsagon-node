@@ -26,13 +26,7 @@ function loadAWSMetadata(options) {
         AWS.config.region ||
         process.env.AWS_REGION
     );
-    return sts.getAccessKeyInfo({
-        AccessKeyId: (
-            options.awsAccessKeyId ||
-            cwConfig.accessKeyId ||
-            AWS.config.credentials.accessKeyId
-        ),
-    }).promise().then((data) => {
+    return sts.getCallerIdentity().promise().then((data) => {
         additionalTags['aws.cloudwatch.account_id'] = data.Account;
     });
 }
