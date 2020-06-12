@@ -78,7 +78,6 @@ function httpWrapper(wrappedFunction, authority) {
             );
             httpEvent = slsEvent;
             startTime = eventStartTime;
-            utils.debugLog('[EPSAGON] Adding an HTTP2 event');
 
             eventInterface.addToMetadata(httpEvent,
                 {

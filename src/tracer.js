@@ -250,7 +250,7 @@ function getTrimmedTrace(traceSize, jsTrace) {
  */
 function sendCurrentTrace(traceSender) {
     const tracerObj = module.exports.getTrace();
-    const { sendOnlyErrors } = config.getConfig();
+    const { sendOnlyErrors, ignoredKeys } = config.getConfig();
     if (!tracerObj) {
         return Promise.resolve();
     }
@@ -316,6 +316,11 @@ function sendCurrentTrace(traceSender) {
         version: tracerObj.trace.getVersion(),
         platform: tracerObj.trace.getPlatform(),
     };
+
+    traceJson = ignoredKeys &&
+        Array.isArray(ignoredKeys) &&
+        ignoredKeys.length > 0 ?
+        module.exports.filterTrace(traceJson, ignoredKeys) : traceJson;
 
     let stringifyTraceJson;
     try {
@@ -434,16 +439,10 @@ module.exports.filterTrace = function filterTrace(traceObject, ignoredKeys) {
 module.exports.postTrace = function postTrace(traceObject) {
     utils.debugLog(`Posting trace to ${config.getConfig().traceCollectorURL}`);
 
-    const { ignoredKeys } = config.getConfig();
-    const filteredTrace = ignoredKeys &&
-        Array.isArray(ignoredKeys) &&
-        ignoredKeys.length > 0 ?
-        module.exports.filterTrace(traceObject, ignoredKeys) : traceObject;
-
     utils.debugLog(`trace: ${JSON.stringify(traceObject, null, 2)}`);
     return session.post(
         config.getConfig().traceCollectorURL,
-        filteredTrace,
+        traceObject,
         {
             headers: { Authorization: `Bearer ${config.getConfig().token}` },
             timeout: config.getConfig().sendTimeout,
