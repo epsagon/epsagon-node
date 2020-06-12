@@ -50,6 +50,7 @@ module.exports.markAsTimeout = function setTimeout(event) {
  */
 module.exports.addToMetadata = function addToMetadata(event, map, fullDataMap = {}) {
     Object.keys(map).forEach((key) => {
+        utils.debugLog(`[EPSAGON] adding the following metadata: ${key} - ${map[key]}`);
         event.getResource().getMetadataMap().set(key, map[key]);
     });
     if (!config.getConfig().metadataOnly) {

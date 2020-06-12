@@ -219,6 +219,7 @@ function httpWrapper(wrappedFunction) {
                 0,
                 errorCode.ErrorCode.OK,
             ]);
+            utils.debugLog('[EPSAGON] Adding an HTTP1 event');
 
             const requestUrl = `${protocol}://${hostname}${pathname}`;
             httpEvent.setResource(resource);
