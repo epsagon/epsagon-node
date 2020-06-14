@@ -258,7 +258,7 @@ function sendCurrentTrace(traceSender) {
     // adding winston log path here since it might be initialized within the function
     eventInterface.addToMetadata(
         tracerObj.currRunner,
-        winstonCloudwatch.getAdditionalTags()
+        winstonCloudwatch.additionalMetadata()
     );
 
     // Check if got error events
