@@ -5,29 +5,33 @@ const tryRequire = require('../try_require');
 
 const AWS = tryRequire('aws-sdk');
 
-const additionalTags = {};
+const logDestinations = [];
 
 
 /**
  * loads data from aws metadata to additional tags
  * @param {Object} options options cloudwatch winston was initialized with
- * @returns {Promise} resolves when metadata was loaded
+ * @returns {Promise} resolves when metadata was loaded with the destination
  */
-function loadAWSMetadata(options) {
+function loadAWSLogDestination(options) {
     if (!AWS) {
         return Promise.resolve();
     }
 
+    const destination = {};
+    destination.log_group_name = options.logGroupName;
+    destination.log_stream_name = options.logStreamName;
     const sts = new AWS.STS();
     const cwConfig = (options.cloudWatchLogs && options.cloudWatchLogs.config) || {};
-    additionalTags['aws.cloudwatch.region'] = (
+    destination.region = (
         options.awsRegion ||
         cwConfig.region ||
         AWS.config.region ||
         process.env.AWS_REGION
     );
     return sts.getCallerIdentity().promise().then((data) => {
-        additionalTags['aws.cloudwatch.account_id'] = data.Account;
+        destination.account_id = data.Account;
+        return destination;
     });
 }
 
@@ -54,9 +58,9 @@ function onWinstonCloudwatchRequire(exports) {
         const [options] = args;
         try {
             utils.debugLog('winston-cloudwatch instance created');
-            additionalTags['aws.cloudwatch.log_group_name'] = options.logGroupName;
-            additionalTags['aws.cloudwatch.log_stream_name'] = options.logStreamName;
-            loadAWSMetadata(options).catch(err => tracer.addException(err));
+            loadAWSLogDestination(options)
+                .then(dest => logDestinations.push(dest))
+                .catch(err => tracer.addException(err));
         } catch (e) {
             utils.debugLog('failed to set cloudwatch-winston log parameters', e);
             tracer.addException(e);
@@ -84,9 +88,11 @@ module.exports = {
     },
 
     /**
-     * @return {Object} additional tags set by winston-cloudwatch
+     * @return {Array} log destinations for winston-cloudwatch
      */
-    getAdditionalTags() {
-        return Object.assign({}, additionalTags);
+    additionalMetadata() {
+        return logDestinations.length ? {
+            'aws.cloudwatch.log_destinations': logDestinations,
+        } : {};
     },
 };
