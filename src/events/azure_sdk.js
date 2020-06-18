@@ -84,7 +84,7 @@ function cosmosCreateItemWrapper(wrappedFunction) {
         const { id: itemId, content } = body;
         const { container, clientContext } = this;
         const { database } = container;
-        const name = `${database.id}/${container.id}`;
+        const name = container.id;
         const { slsEvent: createEvent, startTime } = eventInterface.initializeEvent(
             'cosmos_db',
             name,
