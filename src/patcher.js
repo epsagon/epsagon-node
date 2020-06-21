@@ -22,6 +22,7 @@ const bunyanPatcher = require('./events/bunyan.js');
 const azureSdkPatcher = require('./events/azure_sdk.js');
 const winstonCloudwatchPatcher = require('./events/winston_cloudwatch.js');
 const winstonPatcher = require('./events/winston.js');
+const amqplibPatcher = require('./events/amqplib.js');
 
 
 /**
@@ -59,5 +60,6 @@ if (!config.getConfig().isEpsagonPatchDisabled) {
         azureSdkPatcher,
         winstonCloudwatchPatcher,
         winstonPatcher,
+        amqplibPatcher,
     ].forEach(patch);
 }
