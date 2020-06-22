@@ -162,6 +162,7 @@ Some require installing also [`epsagon-frameworks`](https://github.com/epsagon/e
 |[KafkaJS](#kafkajs)                     |`>=1.2.0`                  |`epsagon-frameworks`                               |<ul><li>- [x] </li></ul>                             |
 |[PubSub](#pubsub)                       |`>=1.1.0`                  |`epsagon-frameworks`                               |<ul><li>- [x] </li></ul>                             |
 |[SQS Consumer](#sqs-consumer)           |`>=4.0.0`                  |`epsagon-frameworks`                               |<ul><li>- [x] </li></ul>                             |
+|[amqplib](#amqplib)           |`>=0.5.0`                  |`epsagon-frameworks`                               |<ul><li>- [x] </li></ul>                             |
 |[NATS](#nats)                           |`>=1.4.0`                  |`epsagon-frameworks`                               |<ul><li>- [x] </li></ul>                             |
 
 
@@ -431,6 +432,37 @@ const messageHandler = message => {
 };
 ```
 
+
+### amqplib
+
+Tracing amqplib consumers can be done in two methods:
+1. [Auto-tracing](#auto-tracing) using the environment variable.
+2. Calling the SDK.
+
+Calling the SDK is simple, and should be done in your main `js` file where the consumer is being initialized:
+
+```javascript
+const epsagon = require('epsagon-frameworks');
+
+epsagon.init({
+  token: 'epsagon-token',
+  appName: 'app-name-stage',
+  metadataOnly: false,
+});
+```
+
+Tagging traces or setting custom errors can be by:
+
+```javascript
+ch.consume(q, function cons(msg) {
+  if (msg !== null) {
+    msg.epsagon.label('key', 'value');
+    msg.epsagon.setError(Error('My custom error'));
+    ch.ack(msg);
+  }
+});
+```
+
 ### NATS
 
 Tracing `nats` consumers can be done in two methods:
@@ -489,6 +521,7 @@ Epsagon provides out-of-the-box instrumentation (tracing) for many popular frame
 |pg                  |`>=4`                      |
 |mongodb             |`>=3.0.0`                  |
 |kafkajs             |`>=1.2.0`                  |
+|amqplib             |`>=0.5.0`                  |
 |redis               |`>=0.12.1`                 |
 |mqtt                |`>=2.13.1`                 |
 |nats                |`>=1.4.0`                  |

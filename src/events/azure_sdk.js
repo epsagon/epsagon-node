@@ -22,7 +22,6 @@ function blobUploadWrapper(wrappedFunction) {
         );
         eventInterface.addToMetadata(uploadEvent, {
             'azure.blob.account_name': accountName,
-            'azure.blob.container_name': containerName,
             'azure.blob.content_size': size,
         }, { 'azure.blob.content': content });
         const request = wrappedFunction.apply(this, [content, size]);
@@ -94,7 +93,6 @@ function cosmosCreateItemWrapper(wrappedFunction) {
         eventInterface.addToMetadata(createEvent, {
             'azure.cosmos.endpoint': clientContext.cosmosClientOptions.endpoint,
             'azure.cosmos.database_id': database.id,
-            'azure.cosmos.container_id': container.id,
             'azure.cosmos.item_id': itemId,
         },
         { 'azure.cosmos.item_content': content });
