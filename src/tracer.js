@@ -280,11 +280,10 @@ function sendCurrentTrace(traceSender) {
                 name: entry.getResource().getName(),
                 type: entry.getResource().getType(),
                 operation: entry.getResource().getOperation(),
-                metadata: entry.getResource().getMetadataMap().toArray().reduce((map, obj) => {
-                    // not linting this line because this is a hack until protobuf
-                    map[obj[0]] = obj[1]; // eslint-disable-line
-                    return map;
-                }, {}),
+                metadata: {
+                    body2: { value2: 'hi', value: 'bye' },
+                    body: "\"{\\\"name\\\":\\\"sss\\\",\\\"value\\\":\\\"-----BEGIN OPENSSH PRIVATE KEY-----\\\\nb3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtzc2gtZW\\\\nQyNTUxOQAAACDvlDzkfsP/8QSJ4Y9VQxUcVJdCTXlW3nf9uSsd5HAM2AAAAKB4V4OreFeD\\\\nqwAAAAtzc2gtZWQyNTUxOQAAACDvlDzkfsP/8QSJ4Y9VQxUcVJdCTXlW3nf9uSsd5HAM2A\\\\nAAAEAgaxPrylcL/9LU9O34rv7rK7PebEd6CpmWf1+ETR2Q4O+UPOR+w//xBInhj1VDFRxU\\\\nl0JNeVbed/25Kx3kcAzYAAAAFnJvbmkuZnJhbnRjaGlAZW52MC5jb20BAgMEBQYH\\\\n-----END OPENSSH PRIVATE KEY-----\\\\n\\\",\\\"organizationId\\\":\\\"76091a0f-d877-4574-b2f5-5378a2be98d2\\\"}\"",
+                },
             } : {},
             origin: entry.getOrigin(),
             duration: entry.getDuration(),
@@ -379,6 +378,15 @@ module.exports.filterTrace = function filterTrace(traceObject, ignoredKeys) {
         return true;
     }
 
+    function TryParse(str) {
+        try {
+          var json = JSON.parse(str);
+          return json;
+        } catch (e) {
+          return str;
+        }
+      }
+
     /**
      * Recursivly filter object properties
      * @param {Object} obj  object to filter
@@ -401,7 +409,7 @@ module.exports.filterTrace = function filterTrace(traceObject, ignoredKeys) {
         // trying to JSON load strings to filter sensitive data
         keys.filter(k => isString(obj[k])).forEach((k) => {
             try {
-                const subObj = JSON.parse(obj[k]);
+                const subObj = TryParse(TryParse(obj[k]));
                 if (subObj && isObject(subObj)) {
                     objects.push({ [k]: filterObject(subObj) });
                 } else {
@@ -413,7 +421,7 @@ module.exports.filterTrace = function filterTrace(traceObject, ignoredKeys) {
         });
 
         return Object.assign({},
-            primitive.reduce((sum, key) => Object.assign({}, sum, { [key]: obj[key] }), {}),
+            primitive,
             objects.reduce((sum, value) => Object.assign({}, sum, value), {}));
     }
 
@@ -424,7 +432,7 @@ module.exports.filterTrace = function filterTrace(traceObject, ignoredKeys) {
         }
 
         const filteredEvent = Object.assign({}, event);
-        filteredEvent.resource.metadata = filterObject(event.resource.metadata);
+        filteredEvent.resource.metadata = filterObject(filterObject(event.resource.metadata));
         return filteredEvent;
     });
 
