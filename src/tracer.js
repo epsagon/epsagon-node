@@ -355,8 +355,11 @@ module.exports.filterTrace = function filterTrace(traceObject, ignoredKeys) {
         return (typeof x === 'object') && x !== null;
     }
 
+<<<<<<< HEAD
     const isString = x => typeof x === 'string';
 
+=======
+>>>>>>> 68d6a8a... [EP-3515] Parse payload for allowing keys to be ignored
     /**
      * Tests if a key is to be ignored or not.
      * @param {string} key a key in an object or hash map
