@@ -280,10 +280,11 @@ function sendCurrentTrace(traceSender) {
                 name: entry.getResource().getName(),
                 type: entry.getResource().getType(),
                 operation: entry.getResource().getOperation(),
-                metadata: {
-                    body2: { value2: 'hi', value: 'bye' },
-                    body: "\"{\\\"name\\\":\\\"sss\\\",\\\"value\\\":\\\"-----BEGIN OPENSSH PRIVATE KEY-----\\\\nb3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtzc2gtZW\\\\nQyNTUxOQAAACDvlDzkfsP/8QSJ4Y9VQxUcVJdCTXlW3nf9uSsd5HAM2AAAAKB4V4OreFeD\\\\nqwAAAAtzc2gtZWQyNTUxOQAAACDvlDzkfsP/8QSJ4Y9VQxUcVJdCTXlW3nf9uSsd5HAM2A\\\\nAAAEAgaxPrylcL/9LU9O34rv7rK7PebEd6CpmWf1+ETR2Q4O+UPOR+w//xBInhj1VDFRxU\\\\nl0JNeVbed/25Kx3kcAzYAAAAFnJvbmkuZnJhbnRjaGlAZW52MC5jb20BAgMEBQYH\\\\n-----END OPENSSH PRIVATE KEY-----\\\\n\\\",\\\"organizationId\\\":\\\"76091a0f-d877-4574-b2f5-5378a2be98d2\\\"}\"",
-                },
+                metadata: entry.getResource().getMetadataMap().toArray().reduce((map, obj) => {
+                    // not linting this line because this is a hack until protobuf
+                    map[obj[0]] = obj[1]; // eslint-disable-line
+                    return map;
+                }, {}),
             } : {},
             origin: entry.getOrigin(),
             duration: entry.getDuration(),
