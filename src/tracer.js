@@ -379,14 +379,18 @@ module.exports.filterTrace = function filterTrace(traceObject, ignoredKeys) {
         return true;
     }
 
+    /**
+     * Try and parse given string to JSON
+     * @param {*} str 
+     */
     function TryParse(str) {
         try {
-          var json = JSON.parse(str);
-          return json;
+            let json = JSON.parse(str);
+            return json;
         } catch (e) {
-          return str;
+            return str;
         }
-      }
+    }
 
     /**
      * Recursivly filter object properties
@@ -422,7 +426,7 @@ module.exports.filterTrace = function filterTrace(traceObject, ignoredKeys) {
         });
 
         return Object.assign({},
-            primitive,
+            primitive.reduce((sum, key) => Object.assign({}, sum, { [key]: obj[key] }), {}),
             objects.reduce((sum, value) => Object.assign({}, sum, value), {}));
     }
 
@@ -433,7 +437,7 @@ module.exports.filterTrace = function filterTrace(traceObject, ignoredKeys) {
         }
 
         const filteredEvent = Object.assign({}, event);
-        filteredEvent.resource.metadata = filterObject(filterObject(filterObject(event.resource.metadata)));
+        filteredEvent.resource.metadata = filterObject(event.resource.metadata);
         return filteredEvent;
     });
 
