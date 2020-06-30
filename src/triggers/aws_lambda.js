@@ -38,7 +38,7 @@ function createJSONTrigger(event, trigger, context) {
     resource.setName(`trigger-${context.functionName}`);
     resource.setOperation('Event');
     eventInterface.addToMetadata(trigger, {}, {
-        data: JSON.stringify(event),
+        data: event,
     });
 }
 
