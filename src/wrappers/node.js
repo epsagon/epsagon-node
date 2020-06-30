@@ -39,7 +39,8 @@ function createRunner(functionToWrap, args) {
     runner.setResource(runnerResource);
     eventInterface.addToMetadata(runner, {
         args_length: args.length,
-        args: args,
+    }, {
+        arguments: args,
     });
     eventInterface.createTraceIdMetadata(runner);
 
