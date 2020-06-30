@@ -1,6 +1,6 @@
 const zlib = require('zlib');
 const uuid4 = require('uuid4');
-const uuidToHex = require('uuid-to-hex');
+const uuidParse = require('uuid-parse');
 const config = require('../config.js');
 const eventInterface = require('../event.js');
 const utils = require('../utils.js');
@@ -82,14 +82,25 @@ function setJsonPayload(httpEvent, key, data, encoding) {
 
 
 /**
+ * Return UUID in hex string.
+ * @param {string} uuid uuid object.
+ * @returns {string} UUID in hex.
+ */
+function UUIDToHex(uuid) {
+    const uuidBuffer = Buffer.alloc(16);
+    uuidParse.parse(uuid, uuidBuffer);
+    return uuidBuffer.toString('hex');
+}
+
+
+/**
  * Return an Epsagon trace ID to put in the request headers.
  * @returns {string} Epsagon trace id.
  */
 function generateEpsagonTraceId() {
-    const traceId = uuid4();
-    const hexTraceId = uuidToHex(traceId);
-    const spanId = uuidToHex(uuid4()).slice(16);
-    const parentSpanId = uuidToHex(uuid4()).slice(16);
+    const hexTraceId = UUIDToHex(uuid4());
+    const spanId = UUIDToHex(uuid4()).slice(16);
+    const parentSpanId = UUIDToHex(uuid4()).slice(16);
 
     return `${hexTraceId}:${spanId}:${parentSpanId}:1`;
 }
