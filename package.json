@@ -61,7 +61,7 @@
     "eslint-plugin-react": "^7.11.0",
     "husky": "^1.1.0",
     "lolex": "^3.0.0",
-    "mocha": "^5.0.4",
+    "mocha": "^8.0.1",
     "mongodb": "^3.1.13",
     "mysql": "^2.16.0",
     "mysql2": "^1.6.4",
@@ -89,7 +89,7 @@
     "md5": "^2.2.1",
     "require-in-the-middle": "^5.0.3",
     "shimmer": "^1.2.1",
-    "uuid-to-hex": "^1.0.3",
+    "uuid-parse": "^1.1.0",
     "uuid4": "^1.0.0"
   }
 }
