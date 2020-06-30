@@ -89,7 +89,7 @@
     "md5": "^2.2.1",
     "require-in-the-middle": "^5.0.3",
     "shimmer": "^1.2.1",
-    "uuid-to-hex": "^1.0.3",
+    "uuid-parse": "^1.1.0",
     "uuid4": "^1.0.0"
   }
 }
