@@ -142,13 +142,13 @@ function createAPIGatewayTrigger(event, trigger) {
     resource.setOperation(event.httpMethod);
     eventInterface.addToMetadata(trigger, {
         stage: event.requestContext.stage,
-        query_string_parameters: JSON.stringify(event.queryStringParameters),
-        path_parameters: JSON.stringify(event.pathParameters),
+        query_string_parameters: event.queryStringParameters,
+        path_parameters: event.pathParameters,
         path: event.resource,
     }, {
-        body: JSON.stringify(event.body),
-        headers: JSON.stringify(event.headers),
-        requestContext: JSON.stringify(event.requestContext),
+        body: event.body,
+        headers: event.headers,
+        requestContext: event.requestContext,
     });
 }
 
@@ -164,12 +164,12 @@ function createNoProxyAPIGatewayTrigger(event, trigger) {
     resource.setOperation(event.context['http-method']);
     eventInterface.addToMetadata(trigger, {
         stage: event.context.stage,
-        query_string_parameters: JSON.stringify(event.params.querystring),
-        path_parameters: JSON.stringify(event.params.path),
+        query_string_parameters: event.params.querystring,
+        path_parameters: event.params.path,
         path: event.context['resource-path'],
     }, {
-        body: JSON.stringify(event['body-json']),
-        headers: JSON.stringify(event.params.header),
+        body: event['body-json'],
+        headers: event.params.header,
     });
 }
 
