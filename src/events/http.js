@@ -126,6 +126,14 @@ function httpWrapper(wrappedFunction) {
             options = null;
         }
 
+        // handling case of got.post(url, options)
+        if (a.constructor && a.constructor.name === 'URL' && typeof b === 'object' && !c) {
+            url = a;
+            url.path = url.pathname;
+            options = b;
+            callback = undefined;
+        }
+
         if (callback && callback.__epsagonCallback) { // eslint-disable-line no-underscore-dangle
             // we are already tracing this request. can happen in
             // https->http cases
