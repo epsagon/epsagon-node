@@ -49,6 +49,42 @@ function buildParams(url, options, callback) {
 
 
 /**
+ * Parses arguments for http wrapper
+ * @param {object} a First http wrapper param
+ * @param {object} b Second http wrapper param
+ * @param {object} c Third http wrapper param
+ * @returns {object} The params object { url, options, callback }
+ */
+function parseArgs(a, b, c) {
+    let url = a;
+    let options = b;
+    let callback = c;
+    // handling case of request(options, callback)
+    if (!(['string', 'URL'].includes(typeof url)) && !callback) {
+        callback = b;
+        options = a;
+        url = undefined;
+    }
+
+    // handling case of request(url, callback)
+    if ((typeof options === 'function') && (!callback)) {
+        callback = options;
+        options = null;
+    }
+
+    // handling case of got.post(url, options)
+    if (a.constructor && a.constructor.name === 'URL' && typeof b === 'object' && !c) {
+        url = a;
+        url.path = url.pathname;
+        options = b;
+        callback = undefined;
+    }
+
+    return { url, options, callback };
+}
+
+
+/**
  * Wraps 'on' method in a response to capture data event.
  * @param {Function} wrappedResFunction The wrapped end function
  * @param {Array} chunks array of chunks
@@ -109,22 +145,8 @@ function requestOnWrapper(wrappedReqFunction, chunks) {
  */
 function httpWrapper(wrappedFunction) {
     return function internalHttpWrapper(a, b, c) {
-        let url = a;
-        let options = b;
-        let callback = c;
+        const { url, options, callback } = parseArgs(a, b, c);
         const chunks = [];
-        // handling case of request(options, callback)
-        if (!(['string', 'URL'].includes(typeof url)) && !callback) {
-            callback = b;
-            options = a;
-            url = undefined;
-        }
-
-        // handling case of request(url, callback)
-        if ((typeof options === 'function') && (!callback)) {
-            callback = options;
-            options = null;
-        }
 
         if (callback && callback.__epsagonCallback) { // eslint-disable-line no-underscore-dangle
             // we are already tracing this request. can happen in
