@@ -52,7 +52,7 @@ function buildParams(url, options, callback) {
  * Parses arguments for http wrapper
  * @param {object} a First http wrapper param
  * @param {object} b Second http wrapper param
- * @param {object} c This http wrapper param
+ * @param {object} c Third http wrapper param
  * @returns {object} The params object { url, options, callback }
  */
 function parseArgs(a, b, c) {
