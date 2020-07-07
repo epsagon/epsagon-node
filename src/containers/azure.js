@@ -61,5 +61,5 @@ module.exports.loadAzureMetadata = function loadAzureMetadata(cb) {
  */
 module.exports.addAzureMetadata = function addAzureMetadata(runner) {
     if (!runner || !currentAzureLabels) return;
-    eventIterface.addToMetadata(runner, Object.assign({}, azurentAzureLabels));
+    eventIterface.addToMetadata(runner, Object.assign({}, currentAzureLabels));
 };
