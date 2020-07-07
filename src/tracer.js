@@ -14,6 +14,7 @@ const eventInterface = require('./event.js');
 const consts = require('./consts.js');
 const ecs = require('./containers/ecs.js');
 const k8s = require('./containers/k8s.js');
+const azure = require('./containers/azure.js');
 const winstonCloudwatch = require('./events/winston_cloudwatch');
 const { isStrongId } = require('./helpers/events');
 
@@ -128,10 +129,15 @@ module.exports.initTrace = function initTrace(
         if (k8s.hasK8sMetadata()) {
             k8s.loadK8sMetadata();
         }
+        azure.loadAzureMetadata((azureAdditionalConfig) => {
+            config.setConfig({
+                ...azureAdditionalConfig,
+                ...configData,
+            });
+        });
     } catch (err) {
         utils.debugLog('Could not extract container env data');
     }
-
     config.setConfig(configData);
 };
 
@@ -151,6 +157,7 @@ module.exports.addRunner = function addRunner(runner, runnerPromise) {
     tracerObj.currRunner = runner;
     ecs.addECSMetadata(tracerObj.currRunner);
     k8s.addK8sMetadata(tracerObj.currRunner);
+    azure.addAzureMetadata(tracerObj.currRunner);
 };
 
 /**
