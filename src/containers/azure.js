@@ -6,7 +6,7 @@ let currentAzureLabels = null;
 
 const AZURE_CHECK_HOST = process.env.AZURE_HOST || 'http://169.254.169.254';
 const PATH = process.env.AZURE_PATH || '/metadata/instance?api-version=2019-06-01';
-const url = `${AZURE_CHECK_HOST}${PATH}`;
+const URL = `${AZURE_CHECK_HOST}${PATH}`;
 
 /**
  * Load Azure metadata and store it
@@ -16,14 +16,14 @@ const url = `${AZURE_CHECK_HOST}${PATH}`;
 module.exports.loadAzureMetadata = function loadAzureMetadata(cb) {
     if (currentAzureLabels) return Promise.resolve(currentAzureLabels);
 
-    utils.debugLog(`loading azure metadata, url: (${url})`);
+    utils.debugLog(`loading azure metadata, url: (${URL})`);
     const options = {
         headers: {
             Metadata: 'True',
         },
     };
 
-    return axios.get(url, options).then((response) => {
+    return axios.get(URL, options).then((response) => {
         utils.debugLog(`Received response: ${response}`);
         if (response.status === 200) {
             const {
