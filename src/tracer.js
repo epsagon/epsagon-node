@@ -130,10 +130,7 @@ module.exports.initTrace = function initTrace(
             k8s.loadK8sMetadata();
         }
         azure.loadAzureMetadata((azureAdditionalConfig) => {
-            config.setConfig({
-                ...azureAdditionalConfig,
-                ...configData,
-            });
+            config.setConfig(Object.assign(azureAdditionalConfig, configData));
         });
     } catch (err) {
         utils.debugLog('Could not extract container env data');
