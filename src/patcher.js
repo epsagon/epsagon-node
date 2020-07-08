@@ -13,6 +13,7 @@ const mysqlPatcher = require('./events/mysql.js');
 const openWhiskPatcher = require('./events/openwhisk.js');
 const googlePatcher = require('./events/google_cloud.js');
 const redisPatcher = require('./events/redis.js');
+const ioredisPatcher = require('./events/ioredis.js');
 const mongoPatcher = require('./events/mongodb.js');
 const dnsPatcher = require('./events/dns.js');
 const natsPatcher = require('./events/nats.js');
@@ -48,6 +49,7 @@ if (!config.getConfig().isEpsagonPatchDisabled) {
         pgPatcher,
         mysqlPatcher,
         redisPatcher,
+        ioredisPatcher,
         mongoPatcher,
         daxPatcher,
         openWhiskPatcher,
