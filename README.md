@@ -485,8 +485,8 @@ Tagging traces or setting custom errors can be by:
 
 ```javascript
 handler: async (msg, meta, ack, rej, epsagon) => {
-    msg.epsagon.label('key', 'value');
-    msg.epsagon.setError(Error('My custom error'));
+    epsagon.label('key', 'value');
+    epsagon.setError(Error('My custom error'));
     await ack();
 }
 ```
