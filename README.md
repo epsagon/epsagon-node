@@ -162,7 +162,7 @@ Some require installing also [`epsagon-frameworks`](https://github.com/epsagon/e
 |[PubSub](#pubsub)                       |`>=1.1.0`                  |`epsagon-frameworks`                               |<ul><li>- [x] </li></ul>                             |
 |[SQS Consumer](#sqs-consumer)           |`>=4.0.0`                  |`epsagon-frameworks`                               |<ul><li>- [x] </li></ul>                             |
 |[amqplib](#amqplib)           |`>=0.5.0`                  |`epsagon-frameworks`                               |<ul><li>- [x] </li></ul>                             |
-|[bunnybus](#bunnybus)           |`>=6.7.0`                  |`epsagon-frameworks`                               |<ul><li>- [x] </li></ul>                             |
+|[bunnybus](#bunnybus)           |`>=7.0.0`                  |`epsagon-frameworks`                               |<ul><li>- [x] </li></ul>                             |
 |[NATS](#nats)                           |`>=1.4.0`                  |`epsagon-frameworks`                               |<ul><li>- [x] </li></ul>                             |
 
 
