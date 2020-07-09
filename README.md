@@ -484,7 +484,8 @@ epsagon.init({
 Tagging traces or setting custom errors can be by:
 
 ```javascript
-handler: async (msg, meta, ack, rej, epsagon) => {
+// epsagon is added as an argument to the handler
+handler: async ({message, metaData, ack, rej, requeue, epsagon}) => {
     epsagon.label('key', 'value');
     epsagon.setError(Error('My custom error'));
     await ack();
