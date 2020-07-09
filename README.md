@@ -162,6 +162,7 @@ Some require installing also [`epsagon-frameworks`](https://github.com/epsagon/e
 |[PubSub](#pubsub)                       |`>=1.1.0`                  |`epsagon-frameworks`                               |<ul><li>- [x] </li></ul>                             |
 |[SQS Consumer](#sqs-consumer)           |`>=4.0.0`                  |`epsagon-frameworks`                               |<ul><li>- [x] </li></ul>                             |
 |[amqplib](#amqplib)           |`>=0.5.0`                  |`epsagon-frameworks`                               |<ul><li>- [x] </li></ul>                             |
+|[bunnybus](#bunnybus)           |`>=7.0.0`                  |`epsagon-frameworks`                               |<ul><li>- [x] </li></ul>                             |
 |[NATS](#nats)                           |`>=1.4.0`                  |`epsagon-frameworks`                               |<ul><li>- [x] </li></ul>                             |
 
 
@@ -462,6 +463,35 @@ ch.consume(q, function cons(msg) {
 });
 ```
 
+### bunnybus
+
+Tracing bunnybus consumers can be done in two methods:
+1. [Auto-tracing](#auto-tracing) using the environment variable.
+2. Calling the SDK.
+
+Calling the SDK is simple, and should be done in your main `js` file where the consumer is being initialized:
+
+```javascript
+const epsagon = require('epsagon-frameworks');
+
+epsagon.init({
+  token: 'epsagon-token',
+  appName: 'app-name-stage',
+  metadataOnly: false,
+});
+```
+
+Tagging traces or setting custom errors can be by:
+
+```javascript
+// epsagon is added as an argument to the handler
+handler: async ({message, metaData, ack, rej, requeue, epsagon}) => {
+    epsagon.label('key', 'value');
+    epsagon.setError(Error('My custom error'));
+    await ack();
+}
+```
+
 ### NATS
 
 Tracing `nats` consumers can be done in two methods:
@@ -522,6 +552,7 @@ Epsagon provides out-of-the-box instrumentation (tracing) for many popular frame
 |kafkajs             |`>=1.2.0`                  |
 |amqplib             |`>=0.5.0`                  |
 |redis               |`>=0.12.1`                 |
+|ioredis             |`>=4.0.0`                  |
 |mqtt                |`>=2.13.1`                 |
 |nats                |`>=1.4.0`                  |
 |openwhisk           |`>=3.0.0`                  |
