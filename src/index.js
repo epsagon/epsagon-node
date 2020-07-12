@@ -8,6 +8,7 @@ const config = require('./config.js');
 const utils = require('./utils.js');
 const eventInterface = require('./event.js');
 const event = require('./proto/event_pb.js');
+const httpHelpers = require('./helpers/http.js');
 const tryRequire = require('./try_require.js');
 const errorCode = require('./proto/error_code_pb.js');
 const moduleUtils = require('./events/module_utils.js');
@@ -30,6 +31,7 @@ module.exports = {
     event,
     tryRequire,
     errorCode,
+    httpHelpers,
 };
 
 if (!config.getConfig().isEpsagonDisabled) {
