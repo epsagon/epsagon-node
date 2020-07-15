@@ -1,8 +1,9 @@
 const axios = require('axios');
 const utils = require('../utils');
-const eventIterface = require('../event');
+const eventInterface = require('../event');
 
 let currentECSLabels = null;
+let currentECSAccount = null;
 
 
 /**
@@ -23,11 +24,22 @@ module.exports.loadECSMetadata = function loadECSMetadata(uri) {
     if (currentECSLabels) return Promise.resolve(currentECSLabels);
 
     utils.debugLog(`loading ecs meta, url: (${uri})`);
-    return axios.get(uri).then(res => res.data).then((metadata) => {
+    const promises = [];
+    const labelsPromise = axios.get(uri).then(res => res.data).then((metadata) => {
         utils.debugLog(`Received metadata: ${JSON.stringify(metadata)}`);
         currentECSLabels = metadata && metadata.Labels;
+        const cluster = currentECSLabels && currentECSLabels['com.amazonaws.ecs.cluster'];
+        if (cluster) {
+            // eslint-disable-next-line prefer-destructuring
+            currentECSAccount = cluster.split(':')[4];
+        }
         return currentECSLabels;
+    }).catch((e) => {
+        utils.debugLog('error fetching ecs metadata: ', e);
     });
+    promises.push(labelsPromise);
+
+    return Promise.all(promises);
 };
 
 /**
@@ -39,5 +51,6 @@ module.exports.loadECSMetadata = function loadECSMetadata(uri) {
  */
 module.exports.addECSMetadata = function addECSMetadata(runner) {
     if (!runner || !currentECSLabels) return;
-    eventIterface.addToMetadata(runner, { ECS: currentECSLabels });
+    eventInterface.addToMetadata(runner, { ECS: currentECSLabels });
+    eventInterface.addToMetadata(runner, { 'aws.account_id': currentECSAccount });
 };

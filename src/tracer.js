@@ -152,9 +152,6 @@ module.exports.addRunner = function addRunner(runner, runnerPromise) {
     }
     tracerObj.trace.addEvent(runner, runnerPromise);
     tracerObj.currRunner = runner;
-    ecs.addECSMetadata(tracerObj.currRunner);
-    k8s.addK8sMetadata(tracerObj.currRunner);
-    azure.addAzureMetadata(tracerObj.currRunner);
 };
 
 /**
@@ -259,11 +256,14 @@ function sendCurrentTrace(traceSender) {
         return Promise.resolve();
     }
 
-    // adding winston log path here since it might be initialized within the function
+    // adding metadata here since it has a better chance of completing in time
     eventInterface.addToMetadata(
         tracerObj.currRunner,
         winstonCloudwatch.additionalMetadata()
     );
+    ecs.addECSMetadata(tracerObj.currRunner);
+    k8s.addK8sMetadata(tracerObj.currRunner);
+    azure.addAzureMetadata(tracerObj.currRunner);
 
     // Check if got error events
     if (sendOnlyErrors) {
