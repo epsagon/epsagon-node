@@ -116,12 +116,16 @@ function createSQSTrigger(event, trigger) {
     }, {
         'Message Body': sqsMessageBody,
     });
-    const messageBody = JSON.parse(sqsMessageBody);
-    // Extracting sqs data in case of is a part of a step functions flow.
-    if (messageBody.input && messageBody.input.Epsagon) {
-        eventInterface.addToMetadata(trigger, {
-            steps_dict: messageBody.input.Epsagon,
-        });
+    try {
+        const messageBody = JSON.parse(sqsMessageBody);
+        // Extracting sqs data in case of is a part of a step functions flow.
+        if (messageBody.input && messageBody.input.Epsagon) {
+            eventInterface.addToMetadata(trigger, {
+                steps_dict: messageBody.input.Epsagon,
+            });
+        }
+    } catch (err) {
+        utils.debugLog(`Could not parse SQS message body: ${sqsMessageBody}`);
     }
 
     const snsData = resourceUtils.getSNSTrigger(event.Records);
