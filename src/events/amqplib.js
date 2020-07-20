@@ -52,6 +52,7 @@ function amqplibProducerWrapper(sendFunction) {
                 exchange: fields.exchange,
                 host: this.connection.stream._host, // eslint-disable-line no-underscore-dangle
                 [EPSAGON_HEADER]: epsagonId,
+                'messaging.message_payload_size_bytes': content.toString().length,
             },
             {
                 headers: fields.headers,
