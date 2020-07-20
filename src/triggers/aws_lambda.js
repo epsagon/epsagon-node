@@ -178,6 +178,28 @@ function createNoProxyAPIGatewayTrigger(event, trigger) {
 }
 
 /**
+ * Initializes an event representing a trigger to the lambda caused by Web Socket API Trigger
+ * @param {object} event The event the lambda was triggered with
+ * @param {proto.event_pb.Event} trigger An Event to initialize as the trigger
+ */
+function createWebSocketTrigger(event, trigger) {
+    const resource = trigger.getResource();
+    trigger.setId(event.requestContext.requestId);
+    resource.setName(event.requestContext.domainName);
+    resource.setOperation(event.requestContext.eventType);
+    eventInterface.addToMetadata(trigger, {
+        stage: event.requestContext.stage,
+        route_key: event.requestContext.routeKey,
+        message_id: event.requestContext.messageId,
+        connection_id: event.requestContext.connectionId,
+        request_id: event.requestContext.requestId,
+        message_direction: event.requestContext.messageDirection,
+    }, {
+        body: event.body,
+    });
+}
+
+/**
  * Initializes an event representing a trigger to the lambda caused by Events
  * @param {object} event The event the lambda was triggered with
  * @param {proto.event_pb.Event} trigger An Event to initialize as the trigger
@@ -272,6 +294,7 @@ const resourceTypeToFactoryMap = {
     sqs: createSQSTrigger,
     api_gateway: createAPIGatewayTrigger,
     api_gateway_no_proxy: createNoProxyAPIGatewayTrigger,
+    api_gateway_websocket: createWebSocketTrigger,
     dynamodb: createDynamoDBTrigger,
     elastic_load_balancer: createElbTrigger,
     cognito: createCognitoTrigger,
@@ -307,6 +330,8 @@ module.exports.createFromEvent = function createFromEvent(event, context) {
             triggerService = 'dynamodb';
         } else if ('userPoolId' in event) {
             triggerService = 'cognito';
+        } else if (('requestContext' in event) && ('apiId' in event.requestContext)) {
+            triggerService = 'api_gateway_websocket';
         }
     }
 
