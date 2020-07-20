@@ -492,7 +492,7 @@ module.exports.postTrace = function postTrace(traceObject) {
         {
             headers: { Authorization: `Bearer ${config.getConfig().token}` },
             timeout: config.getConfig().sendTimeout,
-            cancelToken: cancelTokenSource.token
+            cancelToken: cancelTokenSource.token,
         }
     ).then((res) => {
         utils.debugLog('Trace posted!');
