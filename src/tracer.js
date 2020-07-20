@@ -477,14 +477,22 @@ module.exports.filterTrace = function filterTrace(traceObject, ignoredKeys) {
  *  */
 module.exports.postTrace = function postTrace(traceObject) {
     utils.debugLog(`Posting trace to ${config.getConfig().traceCollectorURL}`);
-
     utils.debugLog(`trace: ${JSON.stringify(traceObject, null, 2)}`);
+
+    // based on https://github.com/axios/axios/issues/647#issuecomment-322209906
+    // axios timeout is only after the connection is made, not the address resolution itself
+    const cancelTokenSource = axios.CancelToken.source();
+    setTimeout(() => {
+        cancelTokenSource.cancel('timeout sending trace');
+    }, config.getConfig().sendTimeout);
+
     return session.post(
         config.getConfig().traceCollectorURL,
         traceObject,
         {
             headers: { Authorization: `Bearer ${config.getConfig().token}` },
             timeout: config.getConfig().sendTimeout,
+            cancelToken: cancelTokenSource.token
         }
     ).then((res) => {
         utils.debugLog('Trace posted!');
