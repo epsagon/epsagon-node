@@ -95,6 +95,15 @@ epsagon.label('key', 'metric')
 epsagon.label('itemsInCart', itemsInCart)
 ```
 
+You can also use it iniside init function:
+```javascript
+epsagon.init({
+  token: 'epsagon-token',
+  appName: 'app-name-stage',
+  labels: [{'key', 'value'}, {'userId', userId}],
+});
+```
+
 Valid types are `string`, `boolean` and `number`.
 
 In some [frameworks](#frameworks) tagging can be done in different ways.

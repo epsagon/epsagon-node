@@ -241,6 +241,13 @@ function getTrimmedTrace(traceSize, jsTrace) {
     return trimmedTrace;
 }
 
+function setLabelsToEvent(tracerObj) {
+    config.getConfig().labels.forEach((label) => {
+        const key = Object.keys(label)[0]
+        eventInterface.addLabelToMetadata(tracerObj.currRunner, key, label[key]);
+    });
+}
+
 /**
  * Builds and sends current collected trace
  * Sends the trace to the epsagon infrastructure now, assuming all required event's promises was
@@ -251,6 +258,7 @@ function getTrimmedTrace(traceSize, jsTrace) {
  */
 function sendCurrentTrace(traceSender) {
     const tracerObj = module.exports.getTrace();
+    setLabelsToEvent(tracerObj)
     const { sendOnlyErrors, ignoredKeys } = config.getConfig();
     if (!tracerObj) {
         return Promise.resolve();
@@ -472,6 +480,7 @@ module.exports.postTrace = function postTrace(traceObject) {
  */
 module.exports.sendTrace = function sendTrace(runnerUpdateFunc) {
     const tracerObj = module.exports.getTrace();
+    setLabelsToEvent(tracerObj)
     if (!tracerObj || (tracerObj && tracerObj.disabled)) {
         return Promise.resolve();
     }
@@ -524,17 +533,7 @@ module.exports.sendTraceSync = function sendTraceSync() {
  * @param {string} value value for the added label
  */
 module.exports.label = function addLabel(key, value) {
-    const tracerObj = module.exports.getTrace();
-    if (!tracerObj || !tracerObj.currRunner) {
-        utils.debugLog('Failed to label without an active tracer');
-        return;
-    }
-    let labels = {};
-    labels[key] = value;
-    labels = utils.flatten(labels);
-    Object.keys(labels).forEach((k) => {
-        eventInterface.addLabelToMetadata(tracerObj.currRunner, k, labels[k]);
-    });
+    config.setConfig({...config.getConfig(), labels: [...config.getConfig().labels, {[key]: value}]})
 };
 
 /**
