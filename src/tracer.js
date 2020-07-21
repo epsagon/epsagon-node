@@ -241,9 +241,13 @@ function getTrimmedTrace(traceSize, jsTrace) {
     return trimmedTrace;
 }
 
+/**
+ * Sets labels to event metadata
+ * @param {object} tracerObj: Tracer object
+ */
 function setLabelsToEvent(tracerObj) {
     config.getConfig().labels.forEach((label) => {
-        const key = Object.keys(label)[0]
+        const key = Object.keys(label)[0];
         eventInterface.addLabelToMetadata(tracerObj.currRunner, key, label[key]);
     });
 }
@@ -258,7 +262,7 @@ function setLabelsToEvent(tracerObj) {
  */
 function sendCurrentTrace(traceSender) {
     const tracerObj = module.exports.getTrace();
-    setLabelsToEvent(tracerObj)
+    setLabelsToEvent(tracerObj);
     const { sendOnlyErrors, ignoredKeys } = config.getConfig();
     if (!tracerObj) {
         return Promise.resolve();
@@ -480,7 +484,7 @@ module.exports.postTrace = function postTrace(traceObject) {
  */
 module.exports.sendTrace = function sendTrace(runnerUpdateFunc) {
     const tracerObj = module.exports.getTrace();
-    setLabelsToEvent(tracerObj)
+    setLabelsToEvent(tracerObj);
     if (!tracerObj || (tracerObj && tracerObj.disabled)) {
         return Promise.resolve();
     }
@@ -533,7 +537,12 @@ module.exports.sendTraceSync = function sendTraceSync() {
  * @param {string} value value for the added label
  */
 module.exports.label = function addLabel(key, value) {
-    config.setConfig({...config.getConfig(), labels: [...config.getConfig().labels, {[key]: value}]})
+    config.setConfig({
+        ...config.getConfig(),
+        labels: [...config.getConfig().labels, {
+            [key]: value,
+        }],
+    });
 };
 
 /**
