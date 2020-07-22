@@ -199,7 +199,7 @@ function httpWrapper(wrappedFunction) {
             // Inject header to support tracing over HTTP requests to opentracing monitored code
             if ((process.env.EPSAGON_DISABLE_HTTP_TRACE_ID || '').toUpperCase() !== 'TRUE') {
                 headers['epsagon-trace-id'] = epsagonTraceId;
-                // In case not headers defined in the options, we add them.
+                // In case no headers defined in the options, we add them.
                 if (!options.headers) {
                     options.headers = headers;
                 }
