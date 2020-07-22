@@ -554,8 +554,10 @@ module.exports.label = function addLabel(key, value) {
         utils.debugLog('Failed to label without an active tracer');
         return;
     }
-    const labels = {[key]: value};
-    const flatLabels = utils.flatten(labels)
+    const labels = {
+        [key]: value,
+    };
+    const flatLabels = utils.flatten(labels);
     Object.keys(flatLabels).forEach((k) => {
         eventInterface.addLabelToMetadata(tracerObj.currRunner, k, flatLabels[k]);
     });
