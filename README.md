@@ -100,7 +100,7 @@ You can also use it iniside init function:
 epsagon.init({
   token: 'epsagon-token',
   appName: 'app-name-stage',
-  labels: [{'key', 'value'}, {'userId', userId}],
+  labels: [['key', 'value'], ['userId', userId]],
 });
 ```
 
