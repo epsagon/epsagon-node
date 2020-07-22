@@ -242,13 +242,24 @@ function getTrimmedTrace(traceSize, jsTrace) {
 }
 
 /**
- * Sets labels to event metadata
+ * Sets labels to trace metadata
  * @param {object} tracerObj: Tracer object
  */
-function setLabelsToEvent(tracerObj) {
-    config.getConfig().labels.forEach((label) => {
-        const key = Object.keys(label)[0];
-        eventInterface.addLabelToMetadata(tracerObj.currRunner, key, label[key]);
+function addLabelsToTrace() {
+    const tracerObj = module.exports.getTrace();
+    Object.keys(config.getConfig().labels).forEach((key) => {
+        const currLabels = tracerObj.currRunner.getResource().getMetadataMap().get('labels');
+        if (!currLabels) {
+            eventInterface.addLabelToMetadata(tracerObj.currRunner,
+                key,
+                config.getConfig().labels[key]);
+        } else if (!JSON.parse(currLabels)[key]) {
+            eventInterface.addLabelToMetadata(
+                tracerObj.currRunner,
+                key,
+                config.getConfig().labels[key]
+            );
+        }
     });
 }
 
@@ -262,11 +273,12 @@ function setLabelsToEvent(tracerObj) {
  */
 function sendCurrentTrace(traceSender) {
     const tracerObj = module.exports.getTrace();
-    setLabelsToEvent(tracerObj);
+
     const { sendOnlyErrors, ignoredKeys } = config.getConfig();
     if (!tracerObj) {
         return Promise.resolve();
     }
+    addLabelsToTrace();
 
     // adding metadata here since it has a better chance of completing in time
     eventInterface.addToMetadata(
@@ -484,11 +496,11 @@ module.exports.postTrace = function postTrace(traceObject) {
  */
 module.exports.sendTrace = function sendTrace(runnerUpdateFunc) {
     const tracerObj = module.exports.getTrace();
-    setLabelsToEvent(tracerObj);
     if (!tracerObj || (tracerObj && tracerObj.disabled)) {
         return Promise.resolve();
     }
 
+    addLabelsToTrace();
     utils.debugLog('Sending trace async');
     return Promise.all(tracerObj.pendingEvents.values()).then(() => {
         // Setting runner's duration.
@@ -537,11 +549,15 @@ module.exports.sendTraceSync = function sendTraceSync() {
  * @param {string} value value for the added label
  */
 module.exports.label = function addLabel(key, value) {
-    config.setConfig({
-        ...config.getConfig(),
-        labels: [...config.getConfig().labels, {
-            [key]: value,
-        }],
+    const tracerObj = module.exports.getTrace();
+    if (!tracerObj || !tracerObj.currRunner) {
+        utils.debugLog('Failed to label without an active tracer');
+        return;
+    }
+    const labels = {[key]: value};
+    const flatLabels = utils.flatten(labels)
+    Object.keys(flatLabels).forEach((k) => {
+        eventInterface.addLabelToMetadata(tracerObj.currRunner, k, flatLabels[k]);
     });
 };
 

@@ -2,6 +2,7 @@
  * @fileoverview configurations for Epsagon library
  */
 const consts = require('./consts.js');
+const utils = require('./utils.js');
 
 // User-defined HTTP minimum status code to be treated as an error.
 module.exports.HTTP_ERR_CODE = parseInt(process.env.EPSAGON_HTTP_ERR_CODE, 10) || 400;
@@ -169,6 +170,12 @@ module.exports.setConfig = function setConfig(configData) {
     }
 
     if (configData.labels) {
-        config.labels = [...configData.labels];
+        config.labels = utils.flatten([...configData.labels].reduce((labels, label) => {
+            const [key, value] = label;
+            return {
+                ...labels,
+                [key]: value,
+            };
+        }, {}));
     }
 };
