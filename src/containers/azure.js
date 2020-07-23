@@ -8,6 +8,22 @@ const AZURE_CHECK_HOST = process.env.AZURE_HOST || 'http://169.254.169.254';
 const PATH = process.env.AZURE_PATH || '/metadata/instance?api-version=2019-06-01';
 const URL = `${AZURE_CHECK_HOST}${PATH}`;
 
+const parseAzureTags = (tags) => {
+    const splittedTags = tags.split(';');
+    const parsedTags = splittedTags.reduce((result, currentTag) => {
+        const [key, value] = currentTag.split(':');
+        if (key) {
+            return {
+                ...result,
+                [key]: value,
+            };
+        }
+        return result;
+    }, {});
+
+    return parsedTags;
+};
+
 /**
  * Load Azure metadata and store it
  * @param {Object} cb callback that fired when load is finished.
@@ -36,7 +52,7 @@ module.exports.loadAzureMetadata = function loadAzureMetadata(cb) {
             currentAzureLabels = {
                 'azure.location': location,
                 'azure.subscription_id': subscriptionId,
-                'azure.tags': tags,
+                'azure.tags': parseAzureTags(tags),
                 'azure.publisher': publisher,
             };
 
