@@ -12,13 +12,11 @@ const parseAzureTags = (tags) => {
     const splittedTags = tags.split(';');
     const parsedTags = splittedTags.reduce((result, currentTag) => {
         const [key, value] = currentTag.split(':');
-        if (key) {
-            return {
+        return (key) ?
+            {
                 ...result,
                 [key]: value,
-            };
-        }
-        return result;
+            } : result;
     }, {});
 
     return parsedTags;
