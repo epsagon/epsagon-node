@@ -2,6 +2,7 @@
  * @fileoverview configurations for Epsagon library
  */
 const consts = require('./consts.js');
+const utils = require('./utils.js');
 
 // User-defined HTTP minimum status code to be treated as an error.
 module.exports.HTTP_ERR_CODE = parseInt(process.env.EPSAGON_HTTP_ERR_CODE, 10) || 400;
@@ -37,6 +38,7 @@ const config = {
     isEpsagonDisabled: (process.env.DISABLE_EPSAGON || '').toUpperCase() === 'TRUE',
     urlPatternsToIgnore: [],
     internalSampleRate: 1,
+    labels: {},
     sendOnlyErrors: (process.env.EPSAGON_SEND_TRACE_ON_ERROR || '').toUpperCase() === 'TRUE',
     sendTimeout: (Number(process.env.EPSAGON_SEND_TIMEOUT_SEC) || DEFAULT_TIMEOUT_SEC) * 1000.0,
     decodeHTTP: (process.env.EPSAGON_DECODE_HTTP || 'TRUE').toUpperCase() === 'TRUE',
@@ -165,5 +167,15 @@ module.exports.setConfig = function setConfig(configData) {
 
     if (Number(configData.sendTimeout)) { // we do not allow 0 as a timeout
         config.sendTimeout = Number(configData.sendTimeout);
+    }
+
+    if (configData.labels) {
+        config.labels = utils.flatten([...configData.labels].reduce((labels, label) => {
+            const [key, value] = label;
+            return {
+                ...labels,
+                [key]: value,
+            };
+        }, {}));
     }
 };

@@ -242,6 +242,28 @@ function getTrimmedTrace(traceSize, jsTrace) {
 }
 
 /**
+ * Sets labels to trace metadata
+ * @param {object} tracerObj: Tracer object
+ */
+function addLabelsToTrace() {
+    const tracerObj = module.exports.getTrace();
+    Object.keys(config.getConfig().labels).forEach((key) => {
+        const currLabels = tracerObj.currRunner.getResource().getMetadataMap().get('labels');
+        if (!currLabels) {
+            eventInterface.addLabelToMetadata(tracerObj.currRunner,
+                key,
+                config.getConfig().labels[key]);
+        } else if (!JSON.parse(currLabels)[key]) {
+            eventInterface.addLabelToMetadata(
+                tracerObj.currRunner,
+                key,
+                config.getConfig().labels[key]
+            );
+        }
+    });
+}
+
+/**
  * Builds and sends current collected trace
  * Sends the trace to the epsagon infrastructure now, assuming all required event's promises was
  * handled
@@ -251,10 +273,12 @@ function getTrimmedTrace(traceSize, jsTrace) {
  */
 function sendCurrentTrace(traceSender) {
     const tracerObj = module.exports.getTrace();
+
     const { sendOnlyErrors, ignoredKeys } = config.getConfig();
     if (!tracerObj) {
         return Promise.resolve();
     }
+    addLabelsToTrace();
 
     // adding metadata here since it has a better chance of completing in time
     eventInterface.addToMetadata(
@@ -476,6 +500,7 @@ module.exports.sendTrace = function sendTrace(runnerUpdateFunc) {
         return Promise.resolve();
     }
 
+    addLabelsToTrace();
     utils.debugLog('Sending trace async');
     return Promise.all(tracerObj.pendingEvents.values()).then(() => {
         // Setting runner's duration.
@@ -529,11 +554,12 @@ module.exports.label = function addLabel(key, value) {
         utils.debugLog('Failed to label without an active tracer');
         return;
     }
-    let labels = {};
-    labels[key] = value;
-    labels = utils.flatten(labels);
-    Object.keys(labels).forEach((k) => {
-        eventInterface.addLabelToMetadata(tracerObj.currRunner, k, labels[k]);
+    const labels = {
+        [key]: value,
+    };
+    const flatLabels = utils.flatten(labels);
+    Object.keys(flatLabels).forEach((k) => {
+        eventInterface.addLabelToMetadata(tracerObj.currRunner, k, flatLabels[k]);
     });
 };
 
