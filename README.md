@@ -51,15 +51,19 @@ And run your node command:
 ```sh
 export EPSAGON_TOKEN=<epsagon-token>
 export EPSAGON_APP_NAME=<app-name-stage>
-NODE_OPTIONS='-r epsagon-frameworks' <command>
+export NODE_OPTIONS='-r epsagon-frameworks'
+<node command>
 ```
 
 For example:
 ```sh
 export EPSAGON_TOKEN=<your-token>
 export EPSAGON_APP_NAME=express-prod
-NODE_OPTIONS='-r epsagon-frameworks' node app.js
+export NODE_OPTIONS='-r epsagon-frameworks'
+node app.js
 ```
+
+When using inside a `Dockerfile`, you can use `ENV` instead of `export`.
 
 You can see the list of auto-tracing [supported frameworks](#frameworks)
 
