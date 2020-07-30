@@ -49,7 +49,6 @@ module.exports.createTracer = function createTracer() {
         trace: tracerObj,
         currRunner: null,
         pendingEvents: new Map(),
-        sampleRate: config.getConfig().sampleRate,
     };
 };
 
@@ -371,7 +370,7 @@ function sendCurrentTrace(traceSender) {
     const sendResult = traceSender(traceJson);
     tracerObj.pendingEvents.clear();
 
-    if (tracerObj.sampleRate !== consts.DEFAULT_SAMPLE_RATE) {
+    if (config.getConfig.sampleRate !== consts.DEFAULT_SAMPLE_RATE) {
         tracerObj.deleted = true;
     }
     return sendResult;
