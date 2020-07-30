@@ -49,6 +49,7 @@ module.exports.createTracer = function createTracer() {
         trace: tracerObj,
         currRunner: null,
         pendingEvents: new Map(),
+        config.getConfig().sampleRate,
     };
 };
 
