@@ -280,11 +280,6 @@ function sendCurrentTrace(traceSender) {
     }
     addLabelsToTrace();
 
-    if (!tracerObj.currRunner) {
-        utils.debugLog('Epsagon - no trace was sent since runner was not found.');
-        return Promise.resolve();
-    }
-
     // adding metadata here since it has a better chance of completing in time
     eventInterface.addToMetadata(
         tracerObj.currRunner,
@@ -370,7 +365,7 @@ function sendCurrentTrace(traceSender) {
     const sendResult = traceSender(traceJson);
     tracerObj.pendingEvents.clear();
 
-    if (config.getConfig.sampleRate !== consts.DEFAULT_SAMPLE_RATE) {
+    if (config.getConfig().sampleRate !== consts.DEFAULT_SAMPLE_RATE) {
         tracerObj.deleted = true;
     }
     return sendResult;
