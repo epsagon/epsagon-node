@@ -31,11 +31,6 @@ describe('openwhiskWrapper tracer tests', () => {
             'restart'
         );
 
-        this.addRunnerStub = sinon.stub(
-            tracer,
-            'addRunner'
-        );
-
         this.addEventStub = sinon.stub(
             tracer,
             'addEvent'
@@ -80,7 +75,6 @@ describe('openwhiskWrapper tracer tests', () => {
         this.addExceptionStub.restore();
         this.postTraceStub.restore();
         this.restartStub.restore();
-        this.addRunnerStub.restore();
         this.setExceptionStub.restore();
         this.markAsTimeoutStub.restore();
     });
@@ -88,7 +82,6 @@ describe('openwhiskWrapper tracer tests', () => {
     it('openwhiskWrapper: sanity', async () => {
         await this.wrappedStub({});
         expect(this.restartStub.callCount).to.equal(1);
-        expect(this.addRunnerStub.callCount).to.equal(1);
         expect(this.addExceptionStub.called).to.be.false;
         expect(this.postTraceStub.callCount).to.equal(1);
         expect(this.setExceptionStub.called).to.be.false;
@@ -106,7 +99,6 @@ describe('openwhiskWrapper tracer tests', () => {
         setupProcessEnv();
         await this.wrappedStub({});
         expect(this.stubFunction.callCount).to.equal(1);
-
         expect(this.restartStub.callCount).to.equal(2);
         expect(this.addExceptionStub.called).to.be.false;
         expect(this.postTraceStub.callCount).to.equal(2);
