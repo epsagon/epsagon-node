@@ -364,7 +364,7 @@ function sendCurrentTrace(traceSender) {
 
     const sendResult = traceSender(traceJson);
     tracerObj.pendingEvents.clear();
-    
+
     if (tracerObj.sampleRate !== consts.DEFAULT_SAMPLE_RATE) {
         tracerObj.deleted = true;
     }
