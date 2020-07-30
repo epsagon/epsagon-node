@@ -49,7 +49,7 @@ module.exports.createTracer = function createTracer() {
         trace: tracerObj,
         currRunner: null,
         pendingEvents: new Map(),
-        config.getConfig().sampleRate,
+        sampleRate: config.getConfig().sampleRate,
     };
 };
 
@@ -281,6 +281,11 @@ function sendCurrentTrace(traceSender) {
     }
     addLabelsToTrace();
 
+    if (!tracerObj.currRunner) {
+        utils.debugLog('Epsagon - no trace was sent since runner was not found.');
+        return Promise.resolve();
+    }
+
     // adding metadata here since it has a better chance of completing in time
     eventInterface.addToMetadata(
         tracerObj.currRunner,
@@ -399,7 +404,7 @@ module.exports.filterTrace = function filterTrace(traceObject, ignoredKeys) {
         for (let i = 0; i < ignoredKeys.length; i += 1) {
             const predicate = ignoredKeys[i];
             if (typeof predicate === 'string' &&
-            config.processIgnoredKey(predicate) === config.processIgnoredKey(key)) {
+                config.processIgnoredKey(predicate) === config.processIgnoredKey(key)) {
                 return false;
             }
             if (predicate instanceof RegExp && predicate.test(key)) {
