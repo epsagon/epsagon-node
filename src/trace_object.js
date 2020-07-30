@@ -16,7 +16,7 @@ let tracer = null;
  * @returns {Object} tracer object
  */
 module.exports.get = () => {
-    if (!tracer) {
+    if (!tracer || tracer.deleted) {
         tracer = tracerModule.createTracer();
     }
     return tracer;
