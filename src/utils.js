@@ -168,6 +168,8 @@ const getLastSplittedItem = (string, seperator) => {
     return splittedArray[splittedArray.length - 1];
 };
 
+const isLambdaEnv = !!process.env.AWS_LAMBDA_FUNCTION_NAME;
+
 
 module.exports.createTimestampFromTime = createTimestampFromTime;
 module.exports.createTimestamp = createTimestamp;
@@ -180,3 +182,4 @@ module.exports.makeQueryablePromise = makeQueryablePromise;
 module.exports.flatten = flatten;
 module.exports.getLastSplittedItem = getLastSplittedItem;
 module.exports.isPromise = isPromise;
+module.exports.isLambdaEnv = isLambdaEnv;

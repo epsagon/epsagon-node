@@ -122,16 +122,18 @@ module.exports.initTrace = function initTrace(
     configData
 ) {
     try {
-        const ecsMetaUri = ecs.hasECSMetadata();
-        if (ecsMetaUri) {
-            ecs.loadECSMetadata(ecsMetaUri).catch(err => utils.debugLog(err));
+        if (!utils.isLambdaEnv) {
+            const ecsMetaUri = ecs.hasECSMetadata();
+            if (ecsMetaUri) {
+                ecs.loadECSMetadata(ecsMetaUri).catch(err => utils.debugLog(err));
+            }
+            if (k8s.hasK8sMetadata()) {
+                k8s.loadK8sMetadata();
+            }
+            azure.loadAzureMetadata((azureAdditionalConfig) => {
+                config.setConfig(Object.assign(azureAdditionalConfig, configData));
+            });
         }
-        if (k8s.hasK8sMetadata()) {
-            k8s.loadK8sMetadata();
-        }
-        azure.loadAzureMetadata((azureAdditionalConfig) => {
-            config.setConfig(Object.assign(azureAdditionalConfig, configData));
-        });
     } catch (err) {
         utils.debugLog('Could not extract container env data');
     }
