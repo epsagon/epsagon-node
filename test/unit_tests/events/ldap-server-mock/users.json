@@ -1,0 +1,8 @@
+[
+    {
+      "dn": "ou=users,dc=myorg,dc=com",
+      "cn": "user",
+      "attribute1": "value1",
+      "attribute2": "value2"
+    }
+]

@@ -3,3 +3,5 @@ node_modules/
 dist/
 src/resource_utils/sql_utils.js
 **/.DS_Store
+.vscode
+.env

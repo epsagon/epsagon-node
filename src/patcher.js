@@ -24,6 +24,7 @@ const azureSdkPatcher = require('./events/azure_sdk.js');
 const winstonCloudwatchPatcher = require('./events/winston_cloudwatch.js');
 const winstonPatcher = require('./events/winston.js');
 const amqplibPatcher = require('./events/amqplib.js');
+const ldapPatcher = require('./events/ldap.js');
 
 
 /**
@@ -63,5 +64,6 @@ if (!config.getConfig().isEpsagonPatchDisabled) {
         winstonCloudwatchPatcher,
         winstonPatcher,
         amqplibPatcher,
+        ldapPatcher
     ].forEach(patch);
 }
