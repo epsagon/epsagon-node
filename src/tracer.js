@@ -482,7 +482,7 @@ module.exports.postTrace = function postTrace(traceObject) {
     // based on https://github.com/axios/axios/issues/647#issuecomment-322209906
     // axios timeout is only after the connection is made, not the address resolution itself
     const cancelTokenSource = axios.CancelToken.source();
-    setTimeout(() => {
+    const handle = setTimeout(() => {
         cancelTokenSource.cancel('timeout sending trace');
     }, config.getConfig().sendTimeout);
 
@@ -505,6 +505,8 @@ module.exports.postTrace = function postTrace(traceObject) {
         }
         utils.debugLog(`${err ? err.stack : err}`);
         return err;
+    }).finally(() => {
+        clearTimeout(handle);
     }); // Always resolve.
 };
 
