@@ -24,7 +24,7 @@ function createClientWrapper(createClientFunction) {
 
 module.exports = {
     /**
-   * Initializes the Redis tracer
+   * Initializes the ldap.js tracer
    */
     init() {
         moduleUtils.patchModule(
