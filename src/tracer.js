@@ -495,9 +495,11 @@ module.exports.postTrace = function postTrace(traceObject) {
             cancelToken: cancelTokenSource.token,
         }
     ).then((res) => {
+        clearTimeout(handle);
         utils.debugLog('Trace posted!');
         return res;
     }).catch((err) => {
+        clearTimeout(handle);
         if (err.config && err.config.data) {
             utils.debugLog(`Error sending trace. Trace size: ${err.config.data.length}`);
         } else {
@@ -505,8 +507,6 @@ module.exports.postTrace = function postTrace(traceObject) {
         }
         utils.debugLog(`${err ? err.stack : err}`);
         return err;
-    }).finally(() => {
-        clearTimeout(handle);
     }); // Always resolve.
 };
 
