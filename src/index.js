@@ -12,6 +12,7 @@ const httpHelpers = require('./helpers/http.js');
 const tryRequire = require('./try_require.js');
 const errorCode = require('./proto/error_code_pb.js');
 const moduleUtils = require('./events/module_utils.js');
+const consts = require('./consts.js');
 
 // Requiring patcher to instrument modules
 const patcher = require('./patcher.js'); // eslint-disable-line no-unused-vars
@@ -32,6 +33,7 @@ module.exports = {
     tryRequire,
     errorCode,
     httpHelpers,
+    consts,
 };
 
 if (!config.getConfig().isEpsagonDisabled) {
