@@ -7,12 +7,12 @@ const tracer = require('../tracer.js');
 const moduleUtils = require('./module_utils.js');
 
 /**
- * Wraps the ldap.js bind command function with tracing
- * @param {Function} bundFunction The wrapped bind function from ldap.js module
+ * Wraps the ldap.js createClient command function with tracing
+ * @param {Function} createClientFunction The wrapped createClient function from ldap.js module
  * @returns {Function} The wrapped function
  */
 function createClientWrapper(createClientFunction) {
-    return function internalcreateClientWrapper(url, socketPath, log, timeout, connectTimeout, tlsOptions, idleTimeout, strictDN) {
+    return function internalCreateClientWrapper(url, socketPath, log, timeout, connectTimeout, tlsOptions, idleTimeout, strictDN) {
         try {
             utils.debugLog(`LDAP.js function wrapper: url=${url}`);
         } catch (error) {
