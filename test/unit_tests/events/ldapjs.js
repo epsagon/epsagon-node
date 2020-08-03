@@ -32,7 +32,7 @@ describe('ldap.js client events tests', () => {
     });
 
     describe('tests without cache', () => {
-        it('bind', (done) => {
+        it('bind', async (done) => {
             function testFunction() {
                 const client = ldap.createClient({
                     url: 'ldap://localhost:4389',
@@ -43,13 +43,13 @@ describe('ldap.js client events tests', () => {
             const wrappedTestFunction = epsagon.nodeWrapper(testFunction);
             const client = wrappedTestFunction();
 
-            client.bind('ou=users,dc=myorg,dc=com', 'secret', (err) => {
-                if (err) {
-                    done();
-                } else {
-                    done();
-                }
-            });
+            try {
+                await client.bind('ou=users,dc=myorg,dc=com', 'secret');
+                done();
+            } catch (e) {
+                console.log('Bind failed');
+                done();
+            }
         });
     });
 });
