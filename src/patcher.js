@@ -64,6 +64,6 @@ if (!config.getConfig().isEpsagonPatchDisabled) {
         winstonCloudwatchPatcher,
         winstonPatcher,
         amqplibPatcher,
-        ldapPatcher
+        ldapPatcher,
     ].forEach(patch);
 }

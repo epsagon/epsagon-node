@@ -22,6 +22,7 @@ describe('ldap.js client events tests', () => {
                 const client = ldap.createClient({
                     url: 'ldap://localhost:4389',
                 });
+
                 return client;
             }
 

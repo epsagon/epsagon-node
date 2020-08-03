@@ -43,7 +43,6 @@ function bindWrapper(bindFunction) {
                     Controls: controls || '',
                     DN: dn || '',
                 },
-
             });
             const responsePromise = new Promise((resolve) => {
                 callback = (err, res) => { // eslint-disable-line no-param-reassign
@@ -57,7 +56,6 @@ function bindWrapper(bindFunction) {
 
                     // Resolving to mark this event as complete
                     resolve();
-
                     if (callback) {
                         callback(err, res);
                     }
