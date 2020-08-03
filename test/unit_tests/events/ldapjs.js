@@ -1,21 +1,23 @@
 require('dotenv').config();
 const ldap = require('ldapjs');
-const { spawn } = require('child_process');
+// const { spawn } = require('child_process');
 const epsagon = require('../../../src/index');
 
 
 describe('ldap.js client events tests', () => {
-    let server;
+    // let server;
 
     before((done) => {
-        server = spawn('node', ['node_modules/ldap-server-mock/server.js', '--conf=./test/unit_tests/events/ldap-server-mock/ldap-server-mock-conf.json', '--database=./test/unit_tests/events/ldap-server-mock/users.json'], {
-            stdio: ['ipc'],
-        });
-        server.on('message', (message) => {
-            if (message.status === 'started') {
-                done();
-            }
-        });
+        // server = spawn('node', ['node_modules/ldap-server-mock/server.js',
+        //  '--conf=./test/unit_tests/events/ldap-server-mock/ldap-server-mock-conf.json',
+        //   '--database=./test/unit_tests/events/ldap-server-mock/users.json'], {
+        //     stdio: ['ipc'],
+        // });
+        // server.on('message', (message) => {
+        //     if (message.status === 'started') {
+        //         done();
+        //     }
+        // });
         epsagon.init({
             token: 'my-secret-token',
             appName: 'my-app-name',
