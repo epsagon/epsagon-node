@@ -1,4 +1,3 @@
-require('dotenv').config();
 const ldap = require('ldapjs');
 // const { spawn } = require('child_process');
 const epsagon = require('../../../src/index');
@@ -47,7 +46,7 @@ describe('ldap.js client events tests', () => {
                 await client.bind('ou=users,dc=myorg,dc=com', 'secret');
                 done();
             } catch (e) {
-                console.log('Bind failed');
+                // console.log('Bind failed');
                 done();
             }
         });

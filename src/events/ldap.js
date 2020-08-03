@@ -16,16 +16,8 @@ function bindWrapper(bindFunction) {
         try {
             utils.debugLog(`LDAP.js bind() wrapper - dn: ${dn}`);
 
-            const url = '';
-            const socketPath = '';
-            const timeout = '';
-            const connectTimeout = '';
-            const tlsOptions = '';
-            const idleTimeout = '';
-            const strictDN = '';
-
             const resource = new serverlessEvent.Resource([
-                url,
+                this.url,
                 'ldap',
                 'bind',
             ]);
@@ -41,13 +33,13 @@ function bindWrapper(bindFunction) {
             bindEvent.setResource(resource);
             eventInterface.addToMetadata(bindEvent, {
                 'LDAP Client': {
-                    URL: url || '',
-                    socketPath: socketPath || '',
-                    timeout: timeout || '',
-                    connectTimeout: connectTimeout || '',
-                    tlsOptions: tlsOptions || '',
-                    idleTimeout: idleTimeout || '',
-                    strictDN: strictDN || '',
+                    URL: this.url || '',
+                    socketPath: this.socketPath || '',
+                    timeout: this.timeout || '',
+                    connectTimeout: this.connectTimeout || '',
+                    tlsOptions: this.tlsOptions || '',
+                    idleTimeout: this.idleTimeout || '',
+                    strictDN: this.strictDN || '',
                     Controls: controls || '',
                     DN: dn || '',
                 },
