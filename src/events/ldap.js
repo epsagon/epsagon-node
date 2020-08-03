@@ -1,26 +1,84 @@
-// const uuid4 = require('uuid4');
-// const serverlessEvent = require('../proto/event_pb.js');
+const uuid4 = require('uuid4');
+const serverlessEvent = require('../proto/event_pb.js');
 const utils = require('../utils.js');
 const tracer = require('../tracer.js');
-// const errorCode = require('../proto/error_code_pb.js');
-// const eventInterface = require('../event.js');
+const errorCode = require('../proto/error_code_pb.js');
+const eventInterface = require('../event.js');
 const moduleUtils = require('./module_utils.js');
 
 /**
- * Wraps the ldap.js createClient command function with tracing
- * @param {Function} createClientFunction The wrapped createClient function from ldap.js module
+ * Wraps the ldap.js bind command function with tracing
+ * @param {Function} bindFunction The wrapped bind function from ldap.js module
  * @returns {Function} The wrapped function
  */
-function createClientWrapper(createClientFunction) {
-    return function internalCreateClientWrapper(url, socketPath, log, timeout, connectTimeout, tlsOptions, idleTimeout, strictDN) {
+function bindWrapper(bindFunction) {
+    return function internalBindWrapper(dn, password, controls, callback) {
         try {
-            utils.debugLog(`LDAP.js function wrapper: url=${url}`);
+            utils.debugLog(`LDAP.js bind() wrapper - dn: ${dn}`);
+
+            const url = '';
+            const socketPath = '';
+            const timeout = '';
+            const connectTimeout = '';
+            const tlsOptions = '';
+            const idleTimeout = '';
+            const strictDN = '';
+
+            const resource = new serverlessEvent.Resource([
+                url,
+                'ldap',
+                'bind',
+            ]);
+            const startTime = Date.now();
+            const bindEvent = new serverlessEvent.Event([
+                `ldap-${uuid4()}`,
+                utils.createTimestampFromTime(startTime),
+                null,
+                'ldap',
+                0,
+                errorCode.ErrorCode.OK,
+            ]);
+            bindEvent.setResource(resource);
+            eventInterface.addToMetadata(bindEvent, {
+                'LDAP Client': {
+                    URL: url || '',
+                    socketPath: socketPath || '',
+                    timeout: timeout || '',
+                    connectTimeout: connectTimeout || '',
+                    tlsOptions: tlsOptions || '',
+                    idleTimeout: idleTimeout || '',
+                    strictDN: strictDN || '',
+                    Controls: controls || '',
+                    DN: dn || '',
+                },
+
+            });
+            const responsePromise = new Promise((resolve) => {
+                callback = (err, res) => { // eslint-disable-line no-param-reassign
+                    // The callback is run when the response for the command is received
+                    bindEvent.setDuration(utils.createDurationTimestamp(startTime));
+
+                    // Note: currently not saving the response
+                    if (err) {
+                        eventInterface.setException(bindEvent, err);
+                    }
+
+                    // Resolving to mark this event as complete
+                    resolve();
+
+                    if (callback) {
+                        callback(err, res);
+                    }
+                };
+            });
+            tracer.addEvent(bindEvent, responsePromise);
         } catch (error) {
             tracer.addException(error);
         }
-        return createClientFunction.apply(this, [url, socketPath, log, timeout, connectTimeout, tlsOptions, idleTimeout, strictDN]);
+        return bindFunction.apply(this, [dn, password, controls, callback]);
     };
 }
+
 
 module.exports = {
     /**
@@ -29,10 +87,9 @@ module.exports = {
     init() {
         moduleUtils.patchModule(
             'ldapjs',
-            'createClient',
-            createClientWrapper,
+            'bind',
+            bindWrapper,
+            ldapjs => ldapjs.Client.prototype
         );
     },
 };
-
-
