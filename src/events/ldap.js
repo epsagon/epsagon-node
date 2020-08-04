@@ -12,10 +12,10 @@ const moduleUtils = require('./module_utils.js');
  * @returns {Function} The wrapped function
  */
 function bindWrapper(bindFunction) {
-    return function internalBindWrapper(dn, password, controls, callback) {
+    return function internalBindWrapper(dn, password, callback) {
         try {
             utils.debugLog(`LDAP.js bind() wrapper - dn: ${dn}`);
-
+            const cb = callback;
             const resource = new serverlessEvent.Resource([
                 this.url,
                 'ldap',
@@ -40,7 +40,6 @@ function bindWrapper(bindFunction) {
                     tlsOptions: this.tlsOptions || '',
                     idleTimeout: this.idleTimeout || '',
                     strictDN: this.strictDN || '',
-                    Controls: controls || '',
                     DN: dn || '',
                 },
             });
@@ -56,7 +55,7 @@ function bindWrapper(bindFunction) {
 
                     // Resolving to mark this event as complete
                     resolve();
-                    if (callback) {
+                    if (cb) {
                         callback(err, res);
                     }
                 };
@@ -65,7 +64,7 @@ function bindWrapper(bindFunction) {
         } catch (error) {
             tracer.addException(error);
         }
-        return bindFunction.apply(this, [dn, password, controls, callback]);
+        return bindFunction.apply(this, [dn, password, callback]);
     };
 }
 
