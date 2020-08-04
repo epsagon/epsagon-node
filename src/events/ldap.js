@@ -12,10 +12,22 @@ const moduleUtils = require('./module_utils.js');
  * @returns {Function} The wrapped function
  */
 function bindWrapper(bindFunction) {
-    return function internalBindWrapper(dn, password, callback) {
+    return function internalBindWrapper(a, b, c, d) {
+        let callback;
+        let controls;
+        let patchedCallback;
+
         try {
-            utils.debugLog(`LDAP.js bind() wrapper - dn: ${dn}`);
-            const cb = callback;
+            const name = a;
+
+            if (typeof (c) === 'function') {
+                callback = c;
+                controls = [];
+            } else if (typeof (d) === 'function') {
+                callback = d;
+                controls = c;
+            }
+            utils.debugLog(`LDAP.js bind() wrapper - name: ${name}`);
             const resource = new serverlessEvent.Resource([
                 this.url,
                 'ldap',
@@ -40,11 +52,11 @@ function bindWrapper(bindFunction) {
                     tlsOptions: this.tlsOptions || '',
                     idleTimeout: this.idleTimeout || '',
                     strictDN: this.strictDN || '',
-                    DN: dn || '',
+                    name: name || '',
                 },
             });
             const responsePromise = new Promise((resolve) => {
-                callback = (err, res) => { // eslint-disable-line no-param-reassign
+                patchedCallback = (err, res) => { // eslint-disable-line no-param-reassign
                     // The callback is run when the response for the command is received
                     bindEvent.setDuration(utils.createDurationTimestamp(startTime));
 
@@ -55,7 +67,7 @@ function bindWrapper(bindFunction) {
 
                     // Resolving to mark this event as complete
                     resolve();
-                    if (cb) {
+                    if (callback) {
                         callback(err, res);
                     }
                 };
@@ -64,7 +76,7 @@ function bindWrapper(bindFunction) {
         } catch (error) {
             tracer.addException(error);
         }
-        return bindFunction.apply(this, [dn, password, callback]);
+        return bindFunction.apply(this, [a, b, controls, patchedCallback]);
     };
 }
 
