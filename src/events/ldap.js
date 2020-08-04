@@ -29,7 +29,7 @@ function bindWrapper(bindFunction) {
             }
             utils.debugLog(`LDAP.js bind() wrapper - name: ${name}`);
             const resource = new serverlessEvent.Resource([
-                this.url,
+                this.url.hostname,
                 'ldap',
                 'bind',
             ]);
@@ -44,8 +44,8 @@ function bindWrapper(bindFunction) {
             ]);
             bindEvent.setResource(resource);
             eventInterface.addToMetadata(bindEvent, {
-                'LDAP Client': {
-                    URL: this.url || '',
+                client: {
+                    url: this.url || '',
                     socketPath: this.socketPath || '',
                     timeout: this.timeout || '',
                     connectTimeout: this.connectTimeout || '',
