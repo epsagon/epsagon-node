@@ -44,15 +44,25 @@ function bindWrapper(bindFunction) {
             ]);
             bindEvent.setResource(resource);
             eventInterface.addToMetadata(bindEvent, {
-                client: {
-                    url: this.url || '',
+                enduser: { id: name },
+                net: {
+                    transport: 'IP.TCP',
+                    protocol: this.url.protocol || '',
                     socketPath: this.socketPath || '',
                     timeout: this.timeout || '',
                     connectTimeout: this.connectTimeout || '',
                     tlsOptions: this.tlsOptions || '',
                     idleTimeout: this.idleTimeout || '',
                     strictDN: this.strictDN || '',
-                    name: name || '',
+                    pathname: this.url.pathname || '',
+                    secure: this.url.secure || '',
+                    peer: {
+                        address: this.url.href || '',
+                        name: this.url.hostname || '',
+                        hostname: this.url.hostname || '',
+                        port: this.url.port || '',
+                        service: 'ldap',
+                    },
                 },
             });
             const responsePromise = new Promise((resolve) => {
