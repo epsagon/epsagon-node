@@ -43,28 +43,28 @@ function bindWrapper(bindFunction) {
                 errorCode.ErrorCode.OK,
             ]);
             bindEvent.setResource(resource);
-            eventInterface.addToMetadata(bindEvent, {
+            const tags = utils.flatten({
                 enduser: { id: name },
                 net: {
                     transport: 'IP.TCP',
-                    protocol: this.url.protocol || '',
-                    socketPath: this.socketPath || '',
-                    timeout: this.timeout || '',
-                    connectTimeout: this.connectTimeout || '',
-                    tlsOptions: this.tlsOptions || '',
-                    idleTimeout: this.idleTimeout || '',
-                    strictDN: this.strictDN || '',
-                    pathname: this.url.pathname || '',
-                    secure: this.url.secure || '',
+                    protocol: 'protocol' in this.url ? this.url.protocol : undefined,
+                    socket_path: 'socketPath' in this.url ? this.url.socketPath : undefined,
+                    timeout: 'timeout' in this.url ? this.url.timeout : undefined,
+                    connect_timeout: 'connectTimeout' in this.url ? this.url.connectTimeout : undefined,
+                    tls_options: 'tlsOptions' in this.url ? this.url.tlsOptions : undefined,
+                    idle_timeout: 'idleTimeout' in this.url ? this.url.idleTimeout : undefined,
+                    strict_dn: 'strictDN' in this.url ? this.url.strictDN : undefined,
+                    pathname: 'pathname' in this.url ? this.url.pathname : undefined,
+                    secure: 'secure' in this.url ? this.url.secure : undefined,
                     peer: {
-                        address: this.url.href || '',
-                        name: this.url.hostname || '',
-                        hostname: this.url.hostname || '',
-                        port: this.url.port || '',
+                        address: 'href' in this.url ? this.url.href : undefined,
+                        hostname: 'hostname' in this.url ? this.url.hostname : undefined,
+                        port: 'port' in this.url ? this.url.port : undefined,
                         service: 'ldap',
                     },
                 },
             });
+            eventInterface.addToMetadata(bindEvent, tags);
             const responsePromise = new Promise((resolve) => {
                 patchedCallback = (err, res) => { // eslint-disable-line no-param-reassign
                     // The callback is run when the response for the command is received
