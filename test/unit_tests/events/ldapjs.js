@@ -2,7 +2,10 @@ const ldap = require('ldapjs');
 const epsagon = require('../../../src/index');
 const utils = require('../../../src/utils.js');
 
-
+// Test for ldap.js event without assersion, ldap server can be launched with:
+// node node_modules/ldap-server-mock/server.js
+//  --conf=./test/unit_tests/events/ldap-server-mock/ldap-server-mock-conf.json
+//  --database=./test/unit_tests/events/ldap-server-mock/users.json
 describe('ldap.js client events tests', () => {
     before((done) => {
         epsagon.init({
