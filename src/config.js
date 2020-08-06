@@ -131,7 +131,6 @@ module.exports.setConfig = function setConfig(configData) {
         config.traceCollectorURL = config.traceCollectorURL.replace('http:', 'https:');
         config.useSSL = configData.useSSL;
     }
-    
     // Check if traceCollector run locally
     if (configData.useLocalCollector) {
         config.traceCollectorURL = consts.LOCAL_URL;
