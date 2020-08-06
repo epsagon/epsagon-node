@@ -37,13 +37,13 @@ const config = {
     traceCollectorURL: process.env.EPSAGON_COLLECTOR_URL || consts.TRACE_COLLECTOR_URL,
     isEpsagonDisabled: (process.env.DISABLE_EPSAGON || '').toUpperCase() === 'TRUE',
     urlPatternsToIgnore: [],
-    internalSampleRate: 1,
+    internalSampleRate: consts.DEFAULT_SAMPLE_RATE,
     labels: {},
     sendOnlyErrors: (process.env.EPSAGON_SEND_TRACE_ON_ERROR || '').toUpperCase() === 'TRUE',
     sendTimeout: (Number(process.env.EPSAGON_SEND_TIMEOUT_SEC) || DEFAULT_TIMEOUT_SEC) * 1000.0,
     decodeHTTP: (process.env.EPSAGON_DECODE_HTTP || 'TRUE').toUpperCase() === 'TRUE',
     disableHttpResponseBodyCapture: (process.env.EPSAGON_DISABLE_HTTP_RESPONSE || '').toUpperCase() === 'TRUE',
-    loggingTracingEnabled: (process.env.EPSAGON_LOGGING_TRACING_ENABLED || 'TRUE').toUpperCase() === 'TRUE',
+    loggingTracingEnabled: (process.env.EPSAGON_LOGGING_TRACING_ENABLED || (!utils.isLambdaEnv).toString()).toUpperCase() === 'TRUE',
     /**
      * get isEpsagonPatchDisabled
      * @return {boolean} True if DISABLE_EPSAGON or DISABLE_EPSAGON_PATCH are set to TRUE, false

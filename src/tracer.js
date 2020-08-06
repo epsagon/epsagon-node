@@ -122,16 +122,18 @@ module.exports.initTrace = function initTrace(
     configData
 ) {
     try {
-        const ecsMetaUri = ecs.hasECSMetadata();
-        if (ecsMetaUri) {
-            ecs.loadECSMetadata(ecsMetaUri).catch(err => utils.debugLog(err));
+        if (!utils.isLambdaEnv) {
+            const ecsMetaUri = ecs.hasECSMetadata();
+            if (ecsMetaUri) {
+                ecs.loadECSMetadata(ecsMetaUri).catch(err => utils.debugLog(err));
+            }
+            if (k8s.hasK8sMetadata()) {
+                k8s.loadK8sMetadata();
+            }
+            azure.loadAzureMetadata((azureAdditionalConfig) => {
+                config.setConfig(Object.assign(azureAdditionalConfig, configData));
+            });
         }
-        if (k8s.hasK8sMetadata()) {
-            k8s.loadK8sMetadata();
-        }
-        azure.loadAzureMetadata((azureAdditionalConfig) => {
-            config.setConfig(Object.assign(azureAdditionalConfig, configData));
-        });
     } catch (err) {
         utils.debugLog('Could not extract container env data');
     }
@@ -280,6 +282,11 @@ function sendCurrentTrace(traceSender) {
     }
     addLabelsToTrace();
 
+    if (!tracerObj.currRunner) {
+        utils.debugLog('Epsagon - no trace was sent since runner was not found.');
+        return Promise.resolve();
+    }
+
     // adding metadata here since it has a better chance of completing in time
     eventInterface.addToMetadata(
         tracerObj.currRunner,
@@ -364,6 +371,10 @@ function sendCurrentTrace(traceSender) {
 
     const sendResult = traceSender(traceJson);
     tracerObj.pendingEvents.clear();
+
+    if (config.getConfig().sampleRate !== consts.DEFAULT_SAMPLE_RATE) {
+        tracerObj.deleted = true;
+    }
     return sendResult;
 }
 
@@ -466,19 +477,29 @@ module.exports.filterTrace = function filterTrace(traceObject, ignoredKeys) {
  *  */
 module.exports.postTrace = function postTrace(traceObject) {
     utils.debugLog(`Posting trace to ${config.getConfig().traceCollectorURL}`);
-
     utils.debugLog(`trace: ${JSON.stringify(traceObject, null, 2)}`);
+
+    // based on https://github.com/axios/axios/issues/647#issuecomment-322209906
+    // axios timeout is only after the connection is made, not the address resolution itself
+    const cancelTokenSource = axios.CancelToken.source();
+    const handle = setTimeout(() => {
+        cancelTokenSource.cancel('timeout sending trace');
+    }, config.getConfig().sendTimeout);
+
     return session.post(
         config.getConfig().traceCollectorURL,
         traceObject,
         {
             headers: { Authorization: `Bearer ${config.getConfig().token}` },
             timeout: config.getConfig().sendTimeout,
+            cancelToken: cancelTokenSource.token,
         }
     ).then((res) => {
+        clearTimeout(handle);
         utils.debugLog('Trace posted!');
         return res;
     }).catch((err) => {
+        clearTimeout(handle);
         if (err.config && err.config.data) {
             utils.debugLog(`Error sending trace. Trace size: ${err.config.data.length}`);
         } else {

@@ -10,8 +10,12 @@ declare module 'epsagon' {
     traceCollectorURL?: string
     isEpsagonDisabled?: boolean
     urlPatternsToIgnore?: string[]
+    labels?: string[]
     sendOnlyErrors?: boolean
     sendTimeout?: number
+    decodeHTTP?: boolean
+    disableHttpResponseBodyCapture?: boolean
+    loggingTracingEnabled?: boolean
   }): void
   export function label(key: string, value: string): void
   export function setError(error: Error): void
