@@ -9,6 +9,7 @@ if (REGION === undefined) {
 }
 
 module.exports.REGION = REGION;
+module.exports.LOCAL_URL = 'http://localhost:3000';
 module.exports.TRACE_COLLECTOR_URL = `https://${REGION}.tc.epsagon.com`;
 
 module.exports.COLD_START = true;
