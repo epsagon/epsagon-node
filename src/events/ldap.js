@@ -45,6 +45,7 @@ function bindWrapper(bindFunction) {
             bindEvent.setResource(resource);
             const tags = utils.flatten({
                 enduser: { id: name },
+                ldap: { strict_dn: utils.getValueIfExist(this.url, 'strictDN') },
                 net: {
                     transport: 'IP.TCP',
                     protocol: utils.getValueIfExist(this.url, 'protocol'),
@@ -53,7 +54,6 @@ function bindWrapper(bindFunction) {
                     connect_timeout: utils.getValueIfExist(this.url, 'connectTimeout'),
                     tls_options: utils.getValueIfExist(this.url, 'tlsOptions'),
                     idle_timeout: utils.getValueIfExist(this.url, 'idleTimeout'),
-                    strict_dn: utils.getValueIfExist(this.url, 'strictDN'),
                     pathname: utils.getValueIfExist(this.url, 'pathname'),
                     secure: utils.getValueIfExist(this.url, 'secure'),
                     peer: {
