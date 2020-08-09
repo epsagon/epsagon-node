@@ -21,6 +21,16 @@ function isPromise(object) {
 }
 
 /**
+ * Check if a key is in object and return its value if it does.
+ * @param {Object} object the object to look for the key
+ * @param {Object} key the key to look for
+ * @return {Object} key
+ */
+function getValueIfExist(object, key) {
+    return key in object ? object[key] : undefined;
+}
+
+/**
  * Creates a timestamp (according to epsagon-protocol timestamp format) of the current time
  * @return {double} the time in epsagon's format
  */
@@ -183,3 +193,4 @@ module.exports.flatten = flatten;
 module.exports.getLastSplittedItem = getLastSplittedItem;
 module.exports.isPromise = isPromise;
 module.exports.isLambdaEnv = isLambdaEnv;
+module.exports.getValueIfExist = getValueIfExist;
