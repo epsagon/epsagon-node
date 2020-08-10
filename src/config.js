@@ -109,6 +109,10 @@ module.exports.setConfig = function setConfig(configData) {
         config.token = configData.token;
     }
 
+    if (configData.isEpsagonDisabled) {
+        config.isEpsagonDisabled = configData.isEpsagonDisabled;
+    }
+
     if (configData.appName) {
         config.appName = configData.appName;
     }

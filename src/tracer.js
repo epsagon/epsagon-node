@@ -521,6 +521,11 @@ module.exports.sendTrace = function sendTrace(runnerUpdateFunc) {
         return Promise.resolve();
     }
 
+    if (config.getConfig().isEpsagonDisabled) {
+        tracerObj.pendingEvents.clear();
+        return Promise.resolve();
+    }
+
     addLabelsToTrace();
     utils.debugLog('Sending trace async');
     return Promise.all(tracerObj.pendingEvents.values()).then(() => {
@@ -539,6 +544,11 @@ module.exports.sendTrace = function sendTrace(runnerUpdateFunc) {
 module.exports.sendTraceSync = function sendTraceSync() {
     const tracerObj = module.exports.getTrace();
     if (!tracerObj || (tracerObj && tracerObj.disabled)) {
+        return Promise.resolve();
+    }
+
+    if (config.getConfig().isEpsagonDisabled) {
+        tracerObj.pendingEvents.clear();
         return Promise.resolve();
     }
 
