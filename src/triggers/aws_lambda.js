@@ -95,6 +95,7 @@ function createSNSTrigger(event, trigger) {
         'Notification Subject': event.Records[0].Sns.Subject,
     }, {
         'Notification Message': event.Records[0].Sns.Message,
+        'Notification Message Attributes': event.Records[0].Sns.MessageAttributes,
     });
 }
 
