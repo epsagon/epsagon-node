@@ -145,6 +145,7 @@ const SNSEventCreator = {
         resource.setName(`${paramArn.split(':').pop()}` || 'N/A');
         eventInterface.addToMetadata(event, {}, {
             'Notification Message': `${parameters.Message}`,
+            'Notification Message Attributes': `${JSON.stringify(parameters.MessageAttributes)}`,
         });
     },
 
