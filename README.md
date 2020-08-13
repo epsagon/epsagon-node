@@ -571,6 +571,8 @@ Epsagon provides out-of-the-box instrumentation (tracing) for many popular frame
 |openwhisk           |`>=3.0.0`                  |
 |@azure/cosmos       |`>=3.7.5`                  |
 |@azure/storage-blob |`>=12.2.0`                 |
+|ldapjs              |`>=2.1.0`                  |
+
 
 
 ## Configuration
