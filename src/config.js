@@ -24,7 +24,7 @@ module.exports.processIgnoredKey = function processIgnoredKey(key) {
 /**
  * The default sendTimeout to send for send operations (both sync and async)
  */
-const DEFAULT_TIMEOUT_SEC = 0.2;
+const DEFAULT_TIMEOUT_SEC = 1.0;
 
 /**
  * configuration singleton. preconfigured with default values.
