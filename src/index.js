@@ -12,6 +12,7 @@ const httpHelpers = require('./helpers/http.js');
 const tryRequire = require('./try_require.js');
 const errorCode = require('./proto/error_code_pb.js');
 const moduleUtils = require('./events/module_utils.js');
+const sqsUtils = require('./resource_utils/sqs_utils.js');
 const consts = require('./consts.js');
 
 // Requiring patcher to instrument modules
@@ -34,6 +35,7 @@ module.exports = {
     errorCode,
     httpHelpers,
     consts,
+    sqsUtils,
 };
 
 if (!config.getConfig().isEpsagonDisabled) {
