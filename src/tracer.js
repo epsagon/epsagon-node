@@ -271,10 +271,11 @@ function addLabelsToTrace() {
  * handled
  * @param {function} traceSender: The function to use to send the trace. Gets the trace object
  *     as a parameter and sends a JSON version of it to epsagon's infrastructure
+ * @param {string} epsagonId: epsagon uuid identifier used when we ussing express instrumentation.
  * @return {*} traceSender's result
  */
-function sendCurrentTrace(traceSender) {
-    const tracerObj = module.exports.getTrace();
+function sendCurrentTrace(traceSender, epsagonId) {
+    const tracerObj = module.exports.getTrace(epsagonId);
 
     const { sendOnlyErrors, ignoredKeys } = config.getConfig();
     if (!tracerObj) {
@@ -515,8 +516,8 @@ module.exports.postTrace = function postTrace(traceObject) {
  * @param {function} runnerUpdateFunc function that sets the duration of the runner.
  * @returns {Promise} a promise that is resolved when the trace transmission ends.
  */
-module.exports.sendTrace = function sendTrace(runnerUpdateFunc) {
-    const tracerObj = module.exports.getTrace();
+module.exports.sendTrace = function sendTrace(runnerUpdateFunc, epsagonId) {
+    const tracerObj = module.exports.getTrace(epsagonId);
     if (!tracerObj || (tracerObj && tracerObj.disabled)) {
         return Promise.resolve();
     }
@@ -531,7 +532,7 @@ module.exports.sendTrace = function sendTrace(runnerUpdateFunc) {
     return Promise.all(tracerObj.pendingEvents.values()).then(() => {
         // Setting runner's duration.
         runnerUpdateFunc();
-        return sendCurrentTrace(traceObject => module.exports.postTrace(traceObject));
+        return sendCurrentTrace(traceObject => module.exports.postTrace(traceObject), epsagonId);
     });
 };
 
