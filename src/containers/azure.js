@@ -62,8 +62,8 @@ module.exports.loadAzureMetadata = function loadAzureMetadata(cb) {
 
             utils.debugLog(`Received metadata: ${currentAzureLabels}`);
         }
-    }).catch((error) => {
-        utils.debugLog(error);
+    }).catch(() => {
+        utils.debugLog('Could not load azure metadata');
     });
 };
 
