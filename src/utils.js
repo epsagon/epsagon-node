@@ -66,7 +66,7 @@ function reflectPromise(promise) {
  */
 function debugLog(...args) {
     if ((process.env.EPSAGON_DEBUG || '').toUpperCase() === 'TRUE') {
-        console.log(...args); // eslint-disable-line no-console
+        console.log('[EPSAGON]', ...args); // eslint-disable-line no-console
     }
 }
 
