@@ -514,6 +514,7 @@ module.exports.postTrace = function postTrace(traceObject) {
 /**
  * Sends the trace to epsagon's infrastructure when all pending events are finished.
  * @param {function} runnerUpdateFunc function that sets the duration of the runner.
+ * @param {string} epsagon identifier for trace
  * @returns {Promise} a promise that is resolved when the trace transmission ends.
  */
 module.exports.sendTrace = function sendTrace(runnerUpdateFunc, epsagonId) {
