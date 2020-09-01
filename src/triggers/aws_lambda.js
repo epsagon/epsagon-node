@@ -187,7 +187,7 @@ function createWebSocketTrigger(event, trigger) {
     const resource = trigger.getResource();
     trigger.setId(event.requestContext.requestId);
     resource.setName(event.requestContext.domainName);
-    resource.setOperation(event.requestContext.eventType);
+    resource.setOperation(event.requestContext.eventType || 'CONNECT');
     eventInterface.addToMetadata(trigger, {
         stage: event.requestContext.stage,
         route_key: event.requestContext.routeKey,
