@@ -592,6 +592,7 @@ Epsagon provides out-of-the-box instrumentation (tracing) for many popular frame
 |mongodb             |`>=3.0.0`                  |
 |kafkajs             |`>=1.2.0`                  |
 |amqplib             |`>=0.5.0`                  |
+|amqp                |`>=0.2.0`                  |
 |redis               |`>=0.12.1`                 |
 |ioredis             |`>=4.0.0`                  |
 |mqtt                |`>=2.13.1`                 |
@@ -600,6 +601,7 @@ Epsagon provides out-of-the-box instrumentation (tracing) for many popular frame
 |@azure/cosmos       |`>=3.7.5`                  |
 |@azure/storage-blob |`>=12.2.0`                 |
 |ldapjs              |`>=2.1.0`                  |
+|ws                  |`>=7.3.1`                  |
 
 
 
