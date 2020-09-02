@@ -19,7 +19,6 @@ function amqpProducerWrapper(sendFunction) {
         let sendResponse;
         let sendEvent;
         let eventStartTime;
-        debugger
         const epsagonId = generateEpsagonTraceId();
         try {
             const { slsEvent, startTime } = eventInterface.initializeEvent(
