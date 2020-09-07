@@ -208,7 +208,11 @@ function createWebSocketTrigger(event, trigger) {
 function createEventsTrigger(event, trigger) {
     const resource = trigger.getResource();
     trigger.setId(event.id);
-    resource.setName(event.resources[0].split('/').pop());
+    let name = 'CloudWatch Events';
+    if (typeof event.resources[0] === 'string') {
+        name = event.resources[0].split('/').pop();
+    }
+    resource.setName(name);
     resource.setOperation(event['detail-type']);
     eventInterface.addToMetadata(trigger, {
         region: event.region,
@@ -319,6 +323,8 @@ module.exports.createFromEvent = function createFromEvent(event, context) {
             if ('eventSource' in event.Records[0]) {
                 triggerService = event.Records[0].eventSource.split(':').pop();
             }
+        } else if ('source' in event && 'detail-type' in event && 'detail' in event) {
+            triggerService = 'events';
         } else if ('source' in event && event.source) {
             triggerService = event.source.split('.').pop();
         } else if (('requestContext' in event) && ('elb' in event.requestContext)) {
