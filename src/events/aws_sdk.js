@@ -677,6 +677,54 @@ const batchEventCreator = {
         }
     },
 };
+
+const CloudWatchEventsEventCreator = {
+    /**
+     * Updates an event with the appropriate fields from an AWS CloudWatch Events request
+     * @param {object} request The AWS.Request object
+     * @param {proto.event_pb.Event} event The event to update the data on
+     */
+    requestHandler(request, event) {
+        const parameters = request.params || {};
+        const entry = parameters.Entries[0] || {};
+        const { operation } = request;
+        const resource = event.getResource();
+        resource.setType('events');
+        switch (operation) {
+        case 'putEvents':
+            resource.setName(parameters.EventBusName || 'CloudWatch Events');
+            eventInterface.addToMetadata(event, {
+                'aws.cloudwatch.detail_type': entry.DetailType,
+                'aws.cloudwatch.resources': entry.Resources,
+                'aws.cloudwatch.source': entry.Source,
+            }, {
+                'aws.cloudwatch.detail': entry.Detail,
+            });
+            break;
+        default:
+            break;
+        }
+    },
+
+    /**
+     * Updates an event with the appropriate fields from an AWS CloudWatch Events response
+     * @param {object} response The AWS.Response object
+     * @param {proto.event_pb.Event} event The event to update the data on
+     */
+    responseHandler(response, event) {
+        switch (response.request.operation) {
+        case 'putEvents':
+            eventInterface.addToMetadata(event, {
+                'aws.cloudwatch.event_id': `${response.data.Entries[0].EventId}`,
+            });
+            break;
+
+        default:
+            break;
+        }
+    },
+};
+
 /**
  * a map between AWS resource names and their appropriate creator object.
  */
@@ -691,6 +739,7 @@ const specificEventCreators = {
     athena: athenaEventCreator,
     stepfunctions: stepFunctionsEventCreator,
     batch: batchEventCreator,
+    cloudwatchevents: CloudWatchEventsEventCreator,
 };
 
 /**
