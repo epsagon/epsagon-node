@@ -19,6 +19,7 @@ const dnsPatcher = require('./events/dns.js');
 const natsPatcher = require('./events/nats.js');
 const mqttPatcher = require('./events/mqtt.js');
 const kafkajsPatcher = require('./events/kafkajs.js');
+const kafkaNodePatcher = require('./events/kafka-node.js');
 const bunyanPatcher = require('./events/bunyan.js');
 const azureSdkPatcher = require('./events/azure_sdk.js');
 const winstonCloudwatchPatcher = require('./events/winston_cloudwatch.js');
@@ -60,6 +61,7 @@ if (!config.getConfig().isEpsagonPatchDisabled) {
         natsPatcher,
         mqttPatcher,
         kafkajsPatcher,
+        kafkaNodePatcher,
         bunyanPatcher,
         azureSdkPatcher,
         winstonCloudwatchPatcher,
