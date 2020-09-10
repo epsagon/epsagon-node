@@ -67,9 +67,6 @@ function wrapKafkaSendFunction(sendFunction) {
             patchedCallback = (err, data) => {
                 let callbackResult;
                 try {
-                    if (callback && typeof callback === 'function') {
-                        callbackResult = callback(err, data);
-                    }
                     if (!kafkaSendEvent) {
                         utils.debugLog('Could not initialize kafka-node, skipping response.');
                         return callbackResult;
@@ -88,6 +85,10 @@ function wrapKafkaSendFunction(sendFunction) {
                     );
                 } catch (callbackErr) {
                     tracer.addException(callbackErr);
+                } finally {
+                    if (callback && typeof callback === 'function') {
+                        callbackResult = callback(err, data);
+                    }
                 }
                 resolve();
                 return callbackResult;
