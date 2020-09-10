@@ -139,9 +139,8 @@ describe('AWS Batch createRunner tests', () => {
         expect(resource.getMetadataMap().get('Home')).to.equal(process.env.HOME);
         expect(resource.getMetadataMap().get('Path')).to.equal(process.env.PATH);
         expect(resource.getMetadataMap().get('Arguments')).to.equal(JSON.stringify(process.argv));
-        runnerPromise.catch(() => {
+        runnerPromise.then(() => {
             expect(resource.getMetadataMap().get('Region')).to.be.undefined;
-            expect(this.addExceptionStub.calledOnce).to.be.true;
             done();
         });
     });
