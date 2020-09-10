@@ -57,7 +57,7 @@ function createRunner() {
                     Region: parsedBatchData.region,
                 });
             } catch (err) {
-                utils.debugLog('Could not parse Batch env data');
+                utils.debugLog(`Could not parse Batch env data ${err.toString()}`);
             }
         }
     )
