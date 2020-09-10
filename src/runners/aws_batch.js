@@ -6,6 +6,7 @@ const serverlessEvent = require('../proto/event_pb.js');
 const eventInterface = require('../event.js');
 const errorCode = require('../proto/error_code_pb.js');
 const tracer = require('../tracer.js');
+const utils = require('../utils.js');
 
 /**
  * Creates an Event representing the running function (runner)
@@ -49,9 +50,15 @@ function createRunner() {
         { timeout: 100 }
     ).then(
         (response) => {
-            eventInterface.addToMetadata(runner, {
-                Region: JSON.parse(response.data).region,
-            });
+            utils.debugLog(`Got Batch response ${response.data}`);
+            try {
+                const parsedBatchData = JSON.parse(response.data);
+                eventInterface.addToMetadata(runner, {
+                    Region: parsedBatchData.region,
+                });
+            } catch (err) {
+                utils.debugLog(`Could not parse Batch env data ${err.toString()}`);
+            }
         }
     )
         .catch((err) => {
