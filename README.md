@@ -617,7 +617,7 @@ Epsagon provides out-of-the-box instrumentation (tracing) for many popular frame
 |mysql               |`>=2`                      |
 |mysql2              |`>=1`                      |
 |pg                  |`>=4`                      |
-|mongodb             |`>=3.0.0`                  |
+|mongodb             |`>=2.2.12`                 |
 |kafkajs             |`>=1.2.0`                  |
 |kafka-node          |`>=3.0.0`                  |
 |amqplib             |`>=0.5.0`                  |
