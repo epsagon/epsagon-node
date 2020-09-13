@@ -161,7 +161,7 @@ function httpWrapper(wrappedFunction) {
                 parsedUrl = urlLib.parse(parsedUrl);
             }
 
-            const hostname = (
+            let hostname = (
                 (parsedUrl && parsedUrl.hostname) ||
                 (parsedUrl && parsedUrl.host) ||
                 (options && options.hostname) ||
@@ -169,6 +169,9 @@ function httpWrapper(wrappedFunction) {
                 (options && options.uri && options.uri.hostname) ||
                 'localhost'
             );
+            if (options.port) {
+                hostname = `${hostname}:${options.port}`;
+            }
 
             const path = (
                 (parsedUrl && parsedUrl.path) ||
