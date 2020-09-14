@@ -10,7 +10,7 @@ const URL_BLACKLIST = {
     'tc.epsagon.com': 'endsWith',
     'oauth2.googleapis.com': 'endsWith',
     'amazonaws.com':
-        (url, pattern) => url.endsWith(pattern) &&
+        (url, pattern) => (url.endsWith(pattern) || url.endsWith(`${pattern}:443`)) &&
             (url.indexOf('.execute-api.') === -1) &&
             (url.indexOf('.es.') === -1) &&
             (url.indexOf('.elb.') === -1) &&
