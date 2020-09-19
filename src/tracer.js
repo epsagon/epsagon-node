@@ -608,6 +608,30 @@ module.exports.setError = function setRunnerError(err) {
 };
 
 /**
+ * Get a link to the trace in Epsagon.
+ * @returns {string} traceUrl link to Epsagon.
+ */
+module.exports.getTraceUrl = function getTraceUrl() {
+    const tracerObj = module.exports.getTrace();
+    if (!tracerObj || !tracerObj.currRunner) {
+        utils.debugLog('Failed to get trace URL without an active tracer');
+        return '';
+    }
+    const activeRunner = tracerObj.currRunner.getResource();
+    return (activeRunner.getType() !== 'lambda') ?
+        consts.traceUrl(
+            module.exports.getTraceId(),
+            parseInt(tracerObj.currRunner.getStartTime(), 10)
+        ) : consts.lambdaTraceUrl(
+            activeRunner.getMetadataMap().get('aws_account'),
+            activeRunner.getMetadataMap().get('region'),
+            activeRunner.getName(),
+            tracerObj.currRunner.getId(),
+            parseInt(tracerObj.currRunner.getStartTime(), 10)
+        );
+};
+
+/**
  * Disable tracer
  */
 module.exports.disable = function disable() {

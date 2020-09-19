@@ -60,3 +60,6 @@ module.exports.STRONG_ID_KEYS = [
     'CLOUDWATCH_LOG_GROUP_NAME',
     'CLOUDWATCH_LOG_STREAM_NAME',
 ];
+
+module.exports.traceUrl = (id, requestTime) => `https://app.epsagon.com/trace/${id}?timestamp=${requestTime}`;
+module.exports.lambdaTraceUrl = (awsAccount, region, functionName, requestId, requestTime) => `https://app.epsagon.com/functions/${awsAccount}/${region}/${functionName}?requestId=${requestId}&requestTime=${requestTime}`;
