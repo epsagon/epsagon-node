@@ -136,9 +136,9 @@ describe('tracer module tests', () => {
             'lambda',
             'invoke',
             {
-                'aws_account': '123',
-                'region': 'us',
-                'trace_id': '123',
+                aws_account: '123',
+                region: 'us',
+                trace_id: '123',
             },
         ]);
 
@@ -323,7 +323,7 @@ describe('tracer module tests', () => {
     it('getTraceUrl: sanity', () => {
         tracer.getTrace = tracerObj.get;
         const runner = tracerObj.get().trace.getEventList()[0];
-        runner.getResource().setType('node_function')
+        runner.getResource().setType('node_function');
         const url = tracer.getTraceUrl();
         expect(url).to.equal(consts.traceUrl(
             runner.getResource().getMetadataMap().get('trace_id'),
