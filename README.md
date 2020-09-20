@@ -22,6 +22,7 @@ This package provides tracing to Node.js applications for the collection of dist
   - [Custom Errors](#custom-errors)
   - [Filter Sensitive Data](#filter-sensitive-data)
   - [Ignore Endpoints](#ignore-endpoints)
+  - [Trace URL](#trace-url)
 - [Frameworks](#frameworks)
 - [Integrations](#integrations)
 - [Configuration](#configuration)
@@ -154,6 +155,18 @@ You can ignore certain incoming requests by specifying endpoints:
 ```javascript
 epsagon.ignoreEndpoints(['/healthcheck'])
 ```
+
+### Trace URL
+
+You can get the Epsagon dashboard URL for the current trace, using the following:
+```node
+import epsagon
+
+# Inside some endpoint or function
+console.log('Epsagon trace URL:', epsagon.getTraceUrl())
+```
+
+This can be useful to have an easy access the trace from different platforms.
 
 
 ## Frameworks
