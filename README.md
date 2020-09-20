@@ -160,8 +160,6 @@ epsagon.ignoreEndpoints(['/healthcheck'])
 
 You can get the Epsagon dashboard URL for the current trace, using the following:
 ```node
-import epsagon
-
 # Inside some endpoint or function
 console.log('Epsagon trace URL:', epsagon.getTraceUrl())
 ```
