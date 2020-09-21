@@ -135,7 +135,11 @@ describe('tracer module tests', () => {
             'mock-func',
             'lambda',
             'invoke',
-            {},
+            {
+                aws_account: '123',
+                region: 'us',
+                trace_id: '123',
+            },
         ]);
 
         const runner = new serverlessEvent.Event([
@@ -314,6 +318,30 @@ describe('tracer module tests', () => {
         tracer.label('label1', { sub: 'value' });
         const labels = JSON.parse(tracerObj.get().trace.getEventList()[0].getResource().getMetadataMap().get('labels'));
         expect(labels['label1.sub']).to.equal('value');
+    });
+
+    it('getTraceUrl: sanity', () => {
+        tracer.getTrace = tracerObj.get;
+        const runner = tracerObj.get().trace.getEventList()[0];
+        runner.getResource().setType('node_function');
+        const url = tracer.getTraceUrl();
+        expect(url).to.equal(consts.traceUrl(
+            runner.getResource().getMetadataMap().get('trace_id'),
+            parseInt(runner.getStartTime(), 10)
+        ));
+    });
+
+    it('getTraceUrl: lambda sanity', () => {
+        tracer.getTrace = tracerObj.get;
+        const url = tracer.getTraceUrl();
+        const runner = tracerObj.get().trace.getEventList()[0];
+        expect(url).to.equal(consts.lambdaTraceUrl(
+            runner.getResource().getMetadataMap().get('aws_account'),
+            runner.getResource().getMetadataMap().get('region'),
+            runner.getResource().getName(),
+            runner.getId(),
+            parseInt(runner.getStartTime(), 10)
+        ));
     });
 
     function checkException(storedException, originalException, additionalData) {

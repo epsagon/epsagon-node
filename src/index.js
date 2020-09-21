@@ -26,6 +26,7 @@ module.exports = {
     wrapBatchJob: f => f,
     label: f => f,
     setError: f => f,
+    getTraceUrl: f => f,
     tracer,
     config,
     utils,
@@ -46,6 +47,7 @@ if (!config.getConfig().isEpsagonDisabled) {
     module.exports.wrapBatchJob = batchWrapper.wrapBatchJob;
     module.exports.label = tracer.label;
     module.exports.setError = tracer.setError;
+    module.exports.getTraceUrl = tracer.getTraceUrl;
 }
 
 module.exports.wrapper = lambdaEnvWrapper.wrapper;
