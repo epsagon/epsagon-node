@@ -662,6 +662,7 @@ Advanced options can be configured as a parameter to the init() method or as env
 |sendTimeout        |EPSAGON_SEND_TIMEOUT_SEC   |Float  |`1.0`        |The timeout duration in seconds to send the traces to the trace collector          |
 |decodeHTTP         |EPSAGON_DECODE_HTTP        |Boolean|`true`       |Whether to decode and decompress HTTP responses into the payload                   |
 |httpErrorStatusCode|EPSAGON_HTTP_ERR_CODE      |Integer|`400`        |The minimum number of an HTTP response status code to treat as an error            |
+|-                  |EPSAGON_PROPAGATE_LAMBDA_ID|Boolean|`False`      |Insert Lambda request ID into the response payload                                 |
 |-                  |DISABLE_EPSAGON_PATCH      |Boolean|`false`      |Disable the library patching (instrumentation)                                     |
 |-                  |EPSAGON_DEBUG              |Boolean|`false`      |Enable debug prints for troubleshooting                                            |
 |-                  |EPSAGON_PROPAGATE_NATS_ID  |Boolean|`false`      |Whether to propagate a correlation ID in NATS.io calls for distributed tracing     |
