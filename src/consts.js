@@ -19,6 +19,8 @@ module.exports.COLD_START = true;
  */
 module.exports.STEP_ID_NAME = 'Epsagon';
 
+module.exports.EPSAGON_EVENT_ID_KEY = '_epsagon_event_id';
+
 module.exports.MAX_VALUE_CHARS = 3 * 1024;
 
 module.exports.MAX_LABEL_SIZE = 10 * 1024;
