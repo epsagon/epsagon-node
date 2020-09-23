@@ -293,6 +293,37 @@ module.exports.lambdaWrapper = function lambdaWrapper(functionToWrap) {
     return wrapped;
 };
 
+
+/**
+ * Extract the step data from the event, and updates the runner and the response.
+ * @param {object} originalEvent Lambda function event data
+ * @param {Event} runner event
+ * @param {object} response Lambda function response data
+ * @returns {object} response the update response with steps
+ */
+function extractAndAppendStepData(originalEvent, runner, response) {
+    let step = null;
+    if (typeof response === 'object') {
+        if (!step) {
+            if (originalEvent && originalEvent[STEP_ID_NAME]) {
+                step = Object.assign({}, originalEvent[STEP_ID_NAME]);
+                step.step_num += 1;
+            } else {
+                step = { id: uuid4(), step_num: 0 };
+            }
+        }
+        response[STEP_ID_NAME] = step; // eslint-disable-line no-param-reassign
+        eventInterface.addToMetadata(runner, {
+            steps_dict: step,
+        });
+    }
+
+    utils.debugLog('Step function response update attempt');
+    utils.debugLog(`Updated response: ${util.inspect(response, { showHidden: false, depth: null })}`);
+    return response;
+}
+
+
 /**
  * Creates a wrapper that adds a step id to the result of a step machine.
  * @param {function} functionToWrap The function to wrap
@@ -300,34 +331,11 @@ module.exports.lambdaWrapper = function lambdaWrapper(functionToWrap) {
  */
 function createStepIdAddWrapper(functionToWrap) {
     return (originalEvent, originalContext, originalCallback, runner) => {
-        let step = null;
-
-        const updateStepResult = (result) => {
-            if (typeof result === 'object') {
-                if (!step) {
-                    if (originalEvent && originalEvent[STEP_ID_NAME]) {
-                        step = Object.assign({}, originalEvent[STEP_ID_NAME]);
-                        step.step_num += 1;
-                    } else {
-                        step = { id: uuid4(), step_num: 0 };
-                    }
-                }
-                result[STEP_ID_NAME] = step; // eslint-disable-line no-param-reassign
-                eventInterface.addToMetadata(runner, {
-                    steps_dict: step,
-                });
-            }
-
-            if ((process.env.EPSAGON_DEBUG || '').toUpperCase() === 'TRUE') {
-                // eslint-disable-next-line no-console
-                console.log('Step function result update attempt');
-                // eslint-disable-next-line no-console
-                console.log(
-                    'Updated result: ',
-                    util.inspect(result, { showHidden: false, depth: null })
-                );
-            }
-        };
+        const updateStepResult = response => extractAndAppendStepData(
+            originalEvent,
+            runner,
+            response
+        );
 
         const callbackWrapper = (error, result) => {
             if (!error) {
@@ -336,11 +344,20 @@ function createStepIdAddWrapper(functionToWrap) {
             return originalCallback(error, result);
         };
 
-        const result = functionToWrap(
+        let result = functionToWrap(
             originalEvent,
             originalContext,
             callbackWrapper
         );
+
+        if (result && typeof result.then === 'function') {
+            utils.debugLog('Step function response is async');
+            result = result.then(response => extractAndAppendStepData(
+                originalEvent,
+                runner,
+                response
+            ));
+        }
 
         return result;
     };
