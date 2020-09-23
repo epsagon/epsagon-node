@@ -10,7 +10,7 @@ const { getConfig } = require('../config.js');
 const awsLambdaTrigger = require('../triggers/aws_lambda.js');
 const eventInterface = require('../event.js');
 const lambdaRunner = require('../runners/aws_lambda.js');
-const { STEP_ID_NAME, MAX_VALUE_CHARS } = require('../consts.js');
+const { STEP_ID_NAME, MAX_VALUE_CHARS, EPSAGON_EVENT_ID_KEY } = require('../consts.js');
 
 const FAILED_TO_SERIALIZE_MESSAGE = 'Unable to stringify response body as json';
 const TIMEOUT_WINDOW = 200;
@@ -19,6 +19,25 @@ const epsagonWrapped = Symbol('epsagonWrapped');
 module.exports.epsagonWrapped = epsagonWrapped;
 module.exports.TIMEOUT_WINDOW = TIMEOUT_WINDOW;
 module.exports.FAILED_TO_SERIALIZE_MESSAGE = FAILED_TO_SERIALIZE_MESSAGE;
+
+
+/**
+ * Appends the Epsagon ID (runner request ID) for distributed tracing connection
+ * @param {Event} runner event
+ * @param {object} returnValue Current function's return value
+ * @returns {object} returnValue Updated return value
+ */
+function propagateEpsagonId(runner, returnValue) {
+    if (process.env.EPSAGON_PROPAGATE_LAMBDA_ID && typeof returnValue === 'object') {
+        // eslint-disable-next-line no-param-reassign
+        returnValue[EPSAGON_EVENT_ID_KEY] = runner.getId();
+        eventInterface.addToMetadata(runner, {
+            propagation_enabled: true,
+        });
+    }
+    return returnValue;
+}
+
 
 /**
  * The epsagon's base lambda wrapper, wrap a lambda function with it to trace it
@@ -163,6 +182,8 @@ function baseLambdaWrapper(
         let waitForOriginalCallbackPromise = Promise.resolve();
         const wrappedCallback = (error, result) => {
             utils.debugLog('wrapped callback called', error, result);
+            // eslint-disable-next-line no-param-reassign
+            result = propagateEpsagonId(runner, result);
             if (callbackCalled) {
                 utils.debugLog('not calling callback since it was already called');
                 return;
@@ -250,6 +271,8 @@ function baseLambdaWrapper(
                 result = result
                     .then((res) => {
                         utils.debugLog('user promise resolved (in then)');
+                        // eslint-disable-next-line no-param-reassign
+                        res = propagateEpsagonId(runner, res);
                         returnValue = res;
                         return handleUserExecutionDone(null, res, true);
                     })
