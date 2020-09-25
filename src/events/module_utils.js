@@ -1,6 +1,30 @@
 const shimmer = require('shimmer');
+const fs = require('fs');
+const path = require('path');
 const tryRequire = require('../try_require');
 const utils = require('../utils');
+
+let autoNodePaths;
+/**
+ * finds recursively all node_modules sub folders.
+ * @param {String} dirPath the root folder to start searching.
+ * @param {Array} arrayOfNodeModulesPaths array of the founded node_modules paths.
+ * @return {Array} an array of all the founded node_modules sub folders paths
+ */
+const getAllNodeModulesPaths = (dirPath, arrayOfNodeModulesPaths = []) => {
+    let arrayOfNodeModulesPathsCopied = arrayOfNodeModulesPaths;
+    const files = fs.readdirSync(dirPath);
+    files.forEach((file) => {
+        if (fs.statSync(`${dirPath}/${file}`).isDirectory()) {
+            if (file === 'node_modules') {
+                arrayOfNodeModulesPathsCopied.push(path.join(dirPath, file));
+            } else {
+                arrayOfNodeModulesPathsCopied = getAllNodeModulesPaths(`${dirPath}/${file}`, arrayOfNodeModulesPathsCopied);
+            }
+        }
+    });
+    return arrayOfNodeModulesPathsCopied;
+};
 
 /**
  * finds all the instances of a module in the NODE_PATH
@@ -20,10 +44,23 @@ module.exports.getModules = function getModules(id) {
 
     const searchPaths = require.resolve.paths(id);
     if (process.env.EPSAGON_ADD_NODE_PATH) {
-        searchPaths.push(...process.env.EPSAGON_ADD_NODE_PATH.split(':'));
+        searchPaths.push(...process.env.EPSAGON_ADD_NODE_PATH.split(':').map(item => item.trim()));
     }
-    searchPaths.forEach((path) => {
-        const module = tryRequire(`${path}/${id}`);
+    if (process.env.EPSAGON_AUTO_ADD_NODE_PATHS &&
+        process.env.EPSAGON_AUTO_ADD_NODE_PATHS.toUpperCase() === 'TRUE'
+    ) {
+        const rootFolder = path.dirname(require.main.filename);
+        if (!autoNodePaths) {
+            autoNodePaths = getAllNodeModulesPaths(rootFolder);
+        }
+        autoNodePaths.forEach((nodePath) => {
+            if (!searchPaths.includes(nodePath)) {
+                searchPaths.push(nodePath);
+            }
+        });
+    }
+    searchPaths.forEach((searchPath) => {
+        const module = tryRequire(`${searchPath}/${id}`);
         if (module) {
             modules.push(module);
         }
