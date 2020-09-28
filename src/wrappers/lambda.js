@@ -28,7 +28,7 @@ module.exports.FAILED_TO_SERIALIZE_MESSAGE = FAILED_TO_SERIALIZE_MESSAGE;
  * @returns {object} returnValue Updated return value
  */
 function propagateEpsagonId(runner, returnValue) {
-    if (process.env.EPSAGON_PROPAGATE_LAMBDA_ID && typeof returnValue === 'object') {
+    if (process.env.EPSAGON_PROPAGATE_LAMBDA_ID && returnValue && typeof returnValue === 'object') {
         // eslint-disable-next-line no-param-reassign
         returnValue[EPSAGON_EVENT_ID_KEY] = runner.getId();
         eventInterface.addToMetadata(runner, {
