@@ -169,8 +169,7 @@ function httpWrapper(wrappedFunction) {
                 (options && options.uri && options.uri.hostname) ||
                 'localhost'
             );
-            // Capture the port if provided and is different than standard 80 and 443
-            if (options.port && !['80', '443'].includes(options.port)) {
+            if (options.port) {
                 hostname = `${hostname}:${options.port}`;
             }
 
