@@ -34,6 +34,9 @@ module.exports.DEFAULT_SAMPLE_RATE = 1;
 // Key name to inject epsagon correlation ID
 module.exports.EPSAGON_HEADER = 'epsagon-trace-id';
 
+// In some cases we manually add the Lambda node_modules path, where it is not found by default
+module.exports.LAMBDA_DEFAULT_NODE_MODULES_PATH = '/var/task/node_modules';
+
 module.exports.STRONG_ID_KEYS = [
     'key',
     'request_id',
