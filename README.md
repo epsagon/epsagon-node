@@ -512,6 +512,14 @@ const messageHandler = message => {
 };
 ```
 
+Or in batch message handler:
+```javascript
+const batchMessageHandler = messages => {
+  messages[0].epsagon.label('key', 'value');
+  messages[0].epsagon.setError(Error('My custom error'));
+};
+```
+
 
 ### amqplib
 
