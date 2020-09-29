@@ -3,6 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const tryRequire = require('../try_require');
 const utils = require('../utils');
+const { LAMBDA_DEFAULT_NODE_MODULES_PATH } = require('../consts');
 
 let autoNodePaths;
 /**
@@ -34,6 +35,7 @@ const getAllNodeModulesPaths = (dirPath, arrayOfNodeModulesPaths = []) => {
 module.exports.getModules = function getModules(id) {
     const modules = [];
     if (typeof require.resolve.paths !== 'function') {
+        utils.debugLog('require.resolve.paths is not a function');
         // running in a bundler that doesn't support require.resolve.paths(). e.g. webpack.
         const module = tryRequire(id);
         if (module) {
@@ -53,15 +55,20 @@ module.exports.getModules = function getModules(id) {
         if (!autoNodePaths) {
             autoNodePaths = getAllNodeModulesPaths(rootFolder);
         }
+        utils.debugLog('Found the following paths', autoNodePaths);
         autoNodePaths.forEach((nodePath) => {
             if (!searchPaths.includes(nodePath)) {
                 searchPaths.push(nodePath);
             }
         });
     }
+    if (utils.isLambdaEnv && !searchPaths.includes(LAMBDA_DEFAULT_NODE_MODULES_PATH)) {
+        searchPaths.push(LAMBDA_DEFAULT_NODE_MODULES_PATH);
+    }
     searchPaths.forEach((searchPath) => {
         const module = tryRequire(`${searchPath}/${id}`);
         if (module) {
+            utils.debugLog('Loaded module', id, searchPath);
             modules.push(module);
         }
     });
