@@ -13,7 +13,7 @@ const lambdaRunner = require('../runners/aws_lambda.js');
 const { STEP_ID_NAME, MAX_VALUE_CHARS, EPSAGON_EVENT_ID_KEY } = require('../consts.js');
 
 const FAILED_TO_SERIALIZE_MESSAGE = 'Unable to stringify response body as json';
-const TIMEOUT_WINDOW = 200;
+const TIMEOUT_WINDOW = parseInt(process.env.EPSAGON_LAMBDA_TIMEOUT_THRESHOLD_MS || 200, 10);
 const epsagonWrapped = Symbol('epsagonWrapped');
 
 module.exports.epsagonWrapped = epsagonWrapped;
