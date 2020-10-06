@@ -100,7 +100,7 @@ epsagon.label('key', 'metric')
 epsagon.label('itemsInCart', itemsInCart)
 ```
 
-You can also use it iniside init function:
+You can also set global labels as part of the Epsagon initialisation:
 ```javascript
 epsagon.init({
   token: 'epsagon-token',
