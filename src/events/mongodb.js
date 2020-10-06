@@ -25,6 +25,37 @@ function stringifyData(obj) {
 }
 
 /**
+ * Extract MongoDB metadata from response.
+ * @param {Object} event MongoDB event.
+ * @return {Object} response metadata.
+ */
+const getMongodbMetadata = (event) => {
+    const { commandName, reply } = event;
+    let metaData = {};
+    switch (commandName) {
+    case 'find':
+        if (reply.cursor && Array.isArray(reply.cursor.firstBatch)) {
+            metaData = { items_count: reply.cursor.firstBatch.length };
+        }
+        break;
+    case 'getMore':
+        if (reply.cursor && Array.isArray(reply.cursor.nextBatch)) {
+            metaData = { items_count: reply.cursor.nextBatch.length };
+        }
+        break;
+    case 'count':
+        if (reply.ok) {
+            metaData = { items_count: reply.n };
+        }
+        break;
+    default:
+        break;
+    }
+
+    return metaData;
+};
+
+/**
  * Extracts connection details from a conenction
  * @param {Object} connId The connectionId object of the instrumented event
  * @return {{port: *, host: *}} extracted connection details
@@ -112,7 +143,7 @@ function onStartHook(event) {
 function handleEventResponse(event, hasError) {
     try {
         const { resolve, dbapiEvent } = requestsResolvers[event.requestId];
-
+        eventInterface.addToMetadata(dbapiEvent, getMongodbMetadata(event));
         dbapiEvent.setDuration(utils.createTimestampFromTime(event.duration));
         if (hasError) {
             eventInterface.setException(
