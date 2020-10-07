@@ -531,6 +531,8 @@ module.exports.sendTrace = function sendTrace(runnerUpdateFunc) {
     return Promise.all(tracerObj.pendingEvents.values()).then(() => {
         // Setting runner's duration.
         runnerUpdateFunc();
+        // TODO: use environment variable to check if we need to use the queue,
+        //  if true, use pushTrace(traceObject) instead of postTrace(traceObject)
         return sendCurrentTrace(traceObject => module.exports.postTrace(traceObject));
     });
 };
