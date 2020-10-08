@@ -20,6 +20,7 @@ class TraceQueue extends EventEmitter {
         this.batchQueueTime = config.getConfig().batchQueueTime;
         this.batchSender = batchSender;
         this.currentByteSize = 0;
+        this.initQueue();
     }
 
     /**
