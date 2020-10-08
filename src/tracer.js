@@ -16,6 +16,7 @@ const ecs = require('./containers/ecs.js');
 const k8s = require('./containers/k8s.js');
 const azure = require('./containers/azure.js');
 const winstonCloudwatch = require('./events/winston_cloudwatch');
+const traceQueue = require('./trace_queue.js');
 const { isStrongId } = require('./helpers/events');
 
 /**
@@ -527,12 +528,14 @@ module.exports.sendTrace = function sendTrace(runnerUpdateFunc) {
     }
 
     addLabelsToTrace();
-    utils.debugLog('Sending trace async');
+    utils.debugLog('Sending trace async...');
     return Promise.all(tracerObj.pendingEvents.values()).then(() => {
         // Setting runner's duration.
         runnerUpdateFunc();
-        // TODO: use environment variable to check if we need to use the queue,
-        //  if true, use pushTrace(traceObject) instead of postTrace(traceObject)
+        if (config.getConfig().sendBatch) {
+            const queue = traceQueue.getInstance();
+            return sendCurrentTrace(traceObject => queue.push(traceObject));
+        }
         return sendCurrentTrace(traceObject => module.exports.postTrace(traceObject));
     });
 };

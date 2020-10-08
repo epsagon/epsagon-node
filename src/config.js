@@ -44,6 +44,9 @@ const config = {
     decodeHTTP: (process.env.EPSAGON_DECODE_HTTP || 'TRUE').toUpperCase() === 'TRUE',
     disableHttpResponseBodyCapture: (process.env.EPSAGON_DISABLE_HTTP_RESPONSE || '').toUpperCase() === 'TRUE',
     loggingTracingEnabled: (process.env.EPSAGON_LOGGING_TRACING_ENABLED || (!utils.isLambdaEnv).toString()).toUpperCase() === 'TRUE',
+    sendBatch: (process.env.EPSAGON_SEND_BATCH || 'FALSE').toUpperCase() === 'TRUE',
+    batchSize: (Number(process.env.EPSAGON_BATCH_SIZE) || consts.DEFAULT_BATCH_SIZE),
+    batchQueueTime: (Number(process.env.EPSAGON_BATCH_QUEUE_TIME) || consts.DEFAULT_BATCH_QUEUE_TIME), // miliseconds
     /**
      * get isEpsagonPatchDisabled
      * @return {boolean} True if DISABLE_EPSAGON or DISABLE_EPSAGON_PATCH are set to TRUE, false
@@ -176,6 +179,18 @@ module.exports.setConfig = function setConfig(configData) {
     if (Number(configData.sendTimeout)) { // we do not allow 0 as a timeout
         config.sendTimeout = Number(configData.sendTimeout);
     }
+
+    if (configData.sendBatch) {
+        config.sendBatch = configData.sendBatch;
+    }
+
+    if (configData.batchSize) {
+        config.batchSize = configData.batchSize;
+    }
+    if (configData.batchQueueTime) {
+        config.batchQueueTime = configData.batchQueueTime;
+    }
+
 
     if (configData.labels) {
         config.labels = utils.flatten([...configData.labels].reduce((labels, label) => {
