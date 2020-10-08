@@ -8,29 +8,95 @@ const https = require('https');
 const http = require('http');
 const utils = require('../src/utils.js');
 const config = require('./config.js');
+const consts = require('./consts.js');
+
 
 class TraceQueue extends EventEmitter {
     constructor(batchSender) {
         super();
         this.batchSize = config.getConfig().batchSize;
+        this.batchBytesLimit = consts.batchBytesLimit;
         this.traces = [];
         this.batchQueueTime = config.getConfig().batchQueueTime;
         this.batchSender = batchSender;
+        this.currentByteSize = 0;
     }
-
 
     /**
-   * Checks if max number of traces was reached
-   * @returns {Boolean}
+   * Init queue event listners
    */
-    batchSizeReached() {
-        return this.traces.length === this.batchSize;
+    initQueue() {
+        this.removeAllListeners();
+        this.currentByteSize = 0;
+        this.flush();
+        //  check if queue reached batch size
+        this.on('traceQueued', () => {
+            if (this.batchSizeReached()) {
+                utils.debugLog(`Queue size reached ${this.currentSize}, batch ready! Releasing... `);
+                this.releaseBatch();
+            }
+        });
+
+        // update queue size in bytes + check if limit reached
+        this.on('traceQueued', (trace) => {
+            this.addToCurrentByteSize(trace);
+            if (this.byteSizeLimitReached()) {
+                utils.debugLog(`Queue byte size reached ${this.currentByteSize} Bytes, releasing batch... `);
+                this.releaseBatch(this.batchSize - 1);
+            }
+        });
+
+        this.on('batchReleased', (batch) => {
+            this.batchSender(batch);
+            this.emit('batchSent', batch);
+        });
     }
 
+    /**
+   * Queue size getter
+   * @returns {Number}
+   */
     get currentSize() {
         return this.traces.length;
     }
 
+
+    /**
+   * Checks if queue size reached batch size
+   * @returns {Boolean}
+   */
+    batchSizeReached() {
+        return this.currentSize === this.batchSize;
+    }
+
+    /**
+   * Checks if queue byte size reached its limit
+   * @returns {Boolean}
+   */
+    byteSizeLimitReached() {
+        return this.currentByteSize >= this.batchBytesLimit;
+    }
+
+    /**
+   * add given trace byte size to total byte size
+   * @returns {Number}
+   */
+    addToCurrentByteSize(trace) {
+        this.currentByteSize += JSON.stringify(trace).length;
+    }
+
+    /**
+   * subtract given trace byte size to total byte size
+   * @returns {Number}
+   */
+    subtractFromCurrentByteSize(trace) {
+        this.currentByteSize -= JSON.stringify(trace).length;
+        this.currentByteSize = Math.max(this.currentByteSize, 0);
+    }
+
+    /**
+   * Flush queue
+   */
     flush() {
         this.traces = [];
     }
@@ -46,10 +112,6 @@ class TraceQueue extends EventEmitter {
         this.traces.push({ trace, timestamp });
         utils.debugLog(`Trace ${trace} pushed to queue`);
         this.emit('traceQueued', trace);
-        if (this.batchSizeReached()) {
-            utils.debugLog(`Queue size reached ${this.currentSize}, batch ready! `);
-            this.releaseBatch();
-        }
         return this;
     }
 
@@ -58,12 +120,14 @@ class TraceQueue extends EventEmitter {
    * Release batch of traces
    * @returns {TraceQueue}
    */
-    releaseBatch() {
+    releaseBatch(count = this.batchSize) {
         const batch = [];
-        while (batch.length < this.batchSize && !!this.traces.length) {
-            batch.push(this.traces.shift().trace);
+        utils.debugLog(`Releasing batch size ${count}...`);
+        while (batch.length < count && !!this.traces.length) {
+            const shiftedTrace = this.traces.shift().trace;
+            batch.push(shiftedTrace);
+            this.subtractFromCurrentByteSize(shiftedTrace);
         }
-        utils.debugLog(`Releasing batch size ${batch.length}...`);
         this.emit('batchReleased', batch);
         return this;
     }
@@ -114,15 +178,10 @@ function postBatch(batchObject) {
         }
         utils.debugLog(`${err ? err.stack : err}`);
         return err;
-    }); // Always resolve.
+    });
 }
 
 const queue = new TraceQueue(postBatch);
-
-
-queue.on('batchReleased', (batch) => {
-    queue.batchSender(batch);
-});
 
 
 module.exports.getInstance = () => queue;
