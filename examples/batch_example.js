@@ -7,7 +7,7 @@ epsagon.init({
     appName: 'batch-test',
     metadataOnly: false,
     sendBatch: true,
-    batchSize: 1,
+    batchSize: 5,
     maxBatchSizeBytes: 5000000
 });
 
@@ -25,7 +25,7 @@ function doRequest(options) {
       });
   
       req.on('error', err => {
-        reject(err);
+        resolve(err);
       });
     }); 
   }
@@ -33,9 +33,9 @@ function doRequest(options) {
 
 async function testAsyncFunction() {
     const options = {
-        host: '127.0.0.1', 
-        port: 3000, 
+        host: 'localhost', 
         method: 'GET', 
+        // timeout: 1000
     };
     doRequest(options)
     console.log("logging something")
@@ -49,10 +49,15 @@ const wrappedAsyncTestFunction = epsagon.nodeWrapper(testAsyncFunction);
 const wrappedSyncTestFunction = epsagon.nodeWrapper(testSyncFunction);
 
 async function main (){
-    await wrappedAsyncTestFunction()
-    // await wrappedAsyncTestFunction()
-
-
+  Promise.all([
+    wrappedAsyncTestFunction(),
+    wrappedAsyncTestFunction(),
+    wrappedAsyncTestFunction(),
+    wrappedAsyncTestFunction(),
+    wrappedAsyncTestFunction(),
+    wrappedAsyncTestFunction()]
+  )
 }
+
 
 main()

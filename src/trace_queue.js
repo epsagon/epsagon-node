@@ -26,7 +26,7 @@ const session = axios.create({
  */
 function postBatch(batchObject) {
     utils.debugLog(`[QUEUE] Posting batch to ${config.getConfig().traceCollectorURL}...`);
-    utils.debugLog(`[QUEUE] Batch: ${JSON.stringify(batchObject, null, 2)}`);
+    // utils.debugLog(`[QUEUE] Batch: ${JSON.stringify(batchObject, null, 2)}`);
 
     const cancelTokenSource = axios.CancelToken.source();
     const handle = setTimeout(() => {
@@ -68,7 +68,6 @@ class TraceQueue extends EventEmitter.EventEmitter {
     constructor() {
         super();
         this.batchSender = postBatch;
-        this.traces = [];
         this.updateConfig();
         this.initQueue();
     }
@@ -87,7 +86,6 @@ class TraceQueue extends EventEmitter.EventEmitter {
    */
     initQueue() {
         this.removeAllListeners();
-        this.currentByteSize = 0;
         this.flush();
         this.on('traceQueued', () => {
             if (this.byteSizeLimitReached()) {
@@ -104,6 +102,7 @@ class TraceQueue extends EventEmitter.EventEmitter {
             this.batchSender(batch);
             this.emit('batchSent', batch);
         });
+        process.once('exit', () => this.releaseBatch());
     }
 
     /**
@@ -153,6 +152,7 @@ class TraceQueue extends EventEmitter.EventEmitter {
    */
     flush() {
         this.traces = [];
+        this.currentByteSize = 0;
     }
 
     /**
@@ -163,15 +163,16 @@ class TraceQueue extends EventEmitter.EventEmitter {
    */
     push(trace) {
         try {
-            const timestamp = new Date();
+            const timestamp = Date.now();
             this.traces.push({ trace, timestamp });
-            utils.debugLog('[QUEUE] Trace pushed to queue!');
+            utils.debugLog('[QUEUE] Trace pushed to queue');
+            // utils.debugLog(`[QUEUE] ${JOSN.stringify(trace)}`);
+
             this.addToCurrentByteSize(trace);
             utils.debugLog(`[QUEUE] Queue size: ${this.currentSize} traces, total size of ${this.currentByteSize} Bytes`);
             this.emit('traceQueued', trace);
         } catch (err) {
             utils.debugLog(`[QUEUE] Failed pushing trace to queue: ${JSON.stringify(trace)}`);
-            this.emit('QueueFailed', trace);
             utils.debugLog(`[QUEUE] ${err}`);
         }
         return this;
@@ -186,16 +187,16 @@ class TraceQueue extends EventEmitter.EventEmitter {
     releaseBatch(count = this.batchSize) {
         try {
             const batch = [];
-            utils.debugLog(`[QUEUE] Releasing batch - (${count} traces)...`);
+            utils.debugLog('[QUEUE] Releasing batch...');
             while (batch.length < count && !!this.traces.length) {
-                const shiftedTrace = this.traces.shift().trace;
-                batch.push(shiftedTrace);
-                this.subtractFromCurrentByteSize(shiftedTrace);
+                const shiftedTrace = this.traces.shift();
+                utils.debugLog(`${shiftedTrace.timestamp} [QUEUE] Releasing trace...`);
+                batch.push(shiftedTrace.trace);
+                this.subtractFromCurrentByteSize(shiftedTrace.trace);
             }
             this.emit('batchReleased', batch);
         } catch (err) {
             utils.debugLog('[QUEUE] Failed releasing batch!');
-            this.emit('ReleaseFailed');
             utils.debugLog(`[QUEUE] ${err}`);
         }
         return this;
