@@ -34,8 +34,8 @@ module.exports.loadAzureMetadata = function loadAzureMetadata(cb) {
     utils.debugLog(`loading azure metadata, url: (${URL})`);
     const source = axios.CancelToken.source();
     setTimeout(() => {
-      source.cancel();
-      // Timeout Logic
+        source.cancel();
+        // Timeout Logic
     }, AZURE_REQUEST_TIMEOUT);
 
     const options = {
@@ -43,7 +43,7 @@ module.exports.loadAzureMetadata = function loadAzureMetadata(cb) {
             Metadata: 'True',
         },
         timeout: AZURE_REQUEST_TIMEOUT,
-        cancelToken: source.token
+        cancelToken: source.token,
     };
 
     return axios.get(URL, options).then((response) => {
