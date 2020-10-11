@@ -7,6 +7,7 @@ let currentAzureLabels = null;
 const AZURE_CHECK_HOST = process.env.AZURE_HOST || 'http://169.254.169.254';
 const PATH = process.env.AZURE_PATH || '/metadata/instance?api-version=2019-06-01';
 const URL = `${AZURE_CHECK_HOST}${PATH}`;
+const AZURE_REQUEST_TIMEOUT = process.env.AZURE_REQUEST_TIMEOUT || 3000;
 
 const parseAzureTags = (tags) => {
     const splittedTags = tags.split(';');
@@ -31,10 +32,18 @@ module.exports.loadAzureMetadata = function loadAzureMetadata(cb) {
     if (currentAzureLabels) return Promise.resolve(currentAzureLabels);
 
     utils.debugLog(`loading azure metadata, url: (${URL})`);
+    const source = axios.CancelToken.source();
+    setTimeout(() => {
+      source.cancel();
+      // Timeout Logic
+    }, AZURE_REQUEST_TIMEOUT);
+
     const options = {
         headers: {
             Metadata: 'True',
         },
+        timeout: AZURE_REQUEST_TIMEOUT,
+        cancelToken: source.token
     };
 
     return axios.get(URL, options).then((response) => {
