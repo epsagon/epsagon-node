@@ -25,8 +25,8 @@ const session = axios.create({
  * @returns {Promise} a promise that is resolved after the batch is posted.
  */
 function postBatch(batchObject) {
-    utils.debugLog(`Posting batch to ${config.getConfig().traceCollectorURL}...`);
-    utils.debugLog(`Batch: ${JSON.stringify(batchObject, null, 2)}`);
+    utils.debugLog(`[QUEUE] Posting batch to ${config.getConfig().traceCollectorURL}...`);
+    utils.debugLog(`[QUEUE] Batch: ${JSON.stringify(batchObject, null, 2)}`);
 
     const cancelTokenSource = axios.CancelToken.source();
     const handle = setTimeout(() => {
@@ -43,16 +43,16 @@ function postBatch(batchObject) {
         }
     ).then((res) => {
         clearTimeout(handle);
-        utils.debugLog('Batch posted!');
+        utils.debugLog('[QUEUE] Batch posted!');
         return res;
     }).catch((err) => {
         clearTimeout(handle);
         if (err.config && err.config.data) {
-            utils.debugLog(`Error sending trace. Batch size: ${err.config.data.length}`);
+            utils.debugLog(`[QUEUE] Error sending trace. Batch size: ${err.config.data.length}`);
         } else {
-            utils.debugLog(`Error sending trace. Error: ${err}`);
+            utils.debugLog(`[QUEUE] Error sending trace. Error: ${err}`);
         }
-        utils.debugLog(`${err ? err.stack : err}`);
+        utils.debugLog(`[QUEUE] ${err ? err.stack : err}`);
         return err;
     });
 }
@@ -82,15 +82,16 @@ class TraceQueue extends EventEmitter {
         this.flush();
         this.on('traceQueued', () => {
             if (this.byteSizeLimitReached()) {
-                utils.debugLog(`Queue byte size reached ${this.currentByteSize} Bytes, releasing batch...`);
-                this.releaseBatch(this.batchSize - 1);
+                utils.debugLog(`[QUEUE] Queue Byte size reached ${this.currentByteSize} Bytes, releasing batch...`);
+                this.releaseBatch(this.currentSize - 1);
             } else if (this.batchSizeReached()) {
-                utils.debugLog(`Queue size reached ${this.currentSize}, releasing batch... `);
+                utils.debugLog(`[QUEUE] Queue size reached ${this.currentSize}, releasing batch... `);
                 this.releaseBatch();
             }
         });
 
         this.on('batchReleased', (batch) => {
+            utils.debugLog(`[QUEUE] Queue Byte size reached ${this.currentByteSize} Bytes, releasing batch...`);
             this.batchSender(batch);
             this.emit('batchSent', batch);
         });
@@ -152,11 +153,18 @@ class TraceQueue extends EventEmitter {
    * @returns {TraceQueue}
    */
     push(trace) {
-        const timestamp = new Date();
-        this.traces.push({ trace, timestamp });
-        utils.debugLog(`Trace ${trace} pushed to queue`);
-        this.addToCurrentByteSize(trace);
-        this.emit('traceQueued', trace);
+        try {
+            const timestamp = new Date();
+            this.traces.push({ trace, timestamp });
+            utils.debugLog('[QUEUE] Trace pushed to queue!');
+            this.addToCurrentByteSize(trace);
+            utils.debugLog(`[QUEUE] Queue size: ${this.currentSize} traces, total size of ${this.currentByteSize} Bytes`);
+            this.emit('traceQueued', trace);
+        } catch (err) {
+            utils.debugLog(`[QUEUE] Failed pushing trace to queue: ${JSON.stringify(trace)}`);
+            this.emit('QueueFailed', trace);
+            utils.debugLog(`[QUEUE] ${err}`);
+        }
         return this;
     }
 
@@ -166,14 +174,20 @@ class TraceQueue extends EventEmitter {
    * @returns {TraceQueue}
    */
     releaseBatch(count = this.batchSize) {
-        const batch = [];
-        utils.debugLog(`Releasing batch size ${count}...`);
-        while (batch.length < count && !!this.traces.length) {
-            const shiftedTrace = this.traces.shift().trace;
-            batch.push(shiftedTrace);
-            this.subtractFromCurrentByteSize(shiftedTrace);
+        try {
+            const batch = [];
+            utils.debugLog(`[QUEUE] Releasing batch - (${count} traces)...`);
+            while (batch.length < count && !!this.traces.length) {
+                const shiftedTrace = this.traces.shift().trace;
+                batch.push(shiftedTrace);
+                this.subtractFromCurrentByteSize(shiftedTrace);
+            }
+            this.emit('batchReleased', batch);
+        } catch (err) {
+            utils.debugLog('[QUEUE] Failed releasing batch!');
+            this.emit('ReleaseFailed');
+            utils.debugLog(`[QUEUE] ${err}`);
         }
-        this.emit('batchReleased', batch);
         return this;
     }
 }
