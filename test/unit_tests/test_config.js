@@ -98,4 +98,63 @@ describe('tracer config tests', () => {
             expect(config.getConfig().sendTimeout).to.be.equal(Number(sendTimeoutString));
         });
     });
+
+
+    it('setConfig: set custom maxBatchSizeBytes', () => {
+        const maxBatchSizeBytes = 10;
+        config.setConfig({ maxBatchSizeBytes });
+        expect(config.getConfig().maxBatchSizeBytes).to.be.equal(maxBatchSizeBytes);
+
+        const maxBatchSizeBytesString = '10';
+        config.setConfig({ maxBatchSizeBytes: maxBatchSizeBytesString });
+        expect(config.getConfig().maxBatchSizeBytes).to.be.equal(Number(maxBatchSizeBytesString));
+
+        const invalidmaxBatchSizeBytesStrings = ['1200.1.1', 'affewfew', '4.4.a', '234a', '', null, undefined, 0];
+        invalidmaxBatchSizeBytesStrings.forEach((invalidmaxBatchSizeBytesString) => {
+            config.setConfig({ maxBatchSizeBytes: invalidmaxBatchSizeBytesString });
+            // checking the old value did not change
+            expect(config.getConfig().maxBatchSizeBytes)
+                .to.be.equal(Number(maxBatchSizeBytesString));
+        });
+    });
+
+    it('setConfig: set custom maxTraceWait', () => {
+        const maxTraceWait = 1000;
+        config.setConfig({ maxTraceWait });
+        expect(config.getConfig().maxTraceWait).to.be.equal(maxTraceWait);
+
+        const maxTraceWaitString = '1000';
+        config.setConfig({ maxTraceWait: maxTraceWaitString });
+        expect(config.getConfig().maxTraceWait).to.be.equal(Number(maxTraceWaitString));
+
+        const invalidMaxTraceWaitStrings = ['1200.1.1', 'affewfew', '4.4.a', '234a', '', null, undefined, 0];
+        invalidMaxTraceWaitStrings.forEach((invalidMaxTraceWaitString) => {
+            config.setConfig({ maxTraceWait: invalidMaxTraceWaitString });
+            // checking the old value did not change
+            expect(config.getConfig().maxTraceWait).to.be.equal(Number(maxTraceWaitString));
+        });
+    });
+
+    it('setConfig: set custom batchSize', () => {
+        const batchSize = 10;
+        config.setConfig({ batchSize });
+        expect(config.getConfig().batchSize).to.be.equal(batchSize);
+
+        const batchSizeString = '10';
+        config.setConfig({ batchSize: batchSizeString });
+        expect(config.getConfig().batchSize).to.be.equal(Number(batchSizeString));
+
+        const invalidbatchSizeStrings = ['1200.1.1', 'affewfew', '4.4.a', '234a', '', null, undefined, 0];
+        invalidbatchSizeStrings.forEach((invalidbatchSizeString) => {
+            config.setConfig({ batchSize: invalidbatchSizeString });
+            // checking the old value did not change
+            expect(config.getConfig().batchSize).to.be.equal(Number(batchSizeString));
+        });
+    });
+
+    it('setConfig: set custom batch send', () => {
+        const sendBatch = true;
+        config.setConfig({ sendBatch });
+        expect(config.getConfig().sendBatch).to.be.equal(true);
+    });
 });

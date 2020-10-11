@@ -29,13 +29,13 @@ module.exports.MAX_HTTP_VALUE_SIZE = 10 * 1024;
 
 module.exports.MAX_TRACE_SIZE_BYTES = 64 * 1024;
 
-module.exports.MAX_BATCH_SIZE_BYTES = 5 * 64 * 1024;
-
 module.exports.DEFAULT_SAMPLE_RATE = 1;
 
 module.exports.DEFAULT_BATCH_SIZE = 1;
 
-module.exports.DEFAULT_BATCH_QUEUE_TIME = 1000; // miliseconds
+module.exports.MAX_TRACE_WAIT = 1000; // miliseconds
+
+module.exports.MAX_BATCH_SIZE_BYTES = 10 * 64 * 1024;
 
 
 // Key name to inject epsagon correlation ID

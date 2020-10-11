@@ -16,13 +16,19 @@ const ecs = require('./containers/ecs.js');
 const k8s = require('./containers/k8s.js');
 const azure = require('./containers/azure.js');
 const winstonCloudwatch = require('./events/winston_cloudwatch');
-const traceQueue = require('./trace_queue.js');
+const TraceQueue = require('./trace_queue.js');
 const { isStrongId } = require('./helpers/events');
+
 
 /**
  * Returns a function to get the relevant tracer.
  */
 module.exports.getTrace = () => {};
+
+/**
+ * Returns a trace queue singletone.
+ */
+const traceQueue = TraceQueue.getInstance();
 
 /**
  * Creates a new Trace object
@@ -139,6 +145,7 @@ module.exports.initTrace = function initTrace(
         utils.debugLog('Could not extract container env data');
     }
     config.setConfig(configData);
+    traceQueue.updateConfig();
 };
 
 
@@ -533,8 +540,7 @@ module.exports.sendTrace = function sendTrace(runnerUpdateFunc) {
         // Setting runner's duration.
         runnerUpdateFunc();
         if (config.getConfig().sendBatch) {
-            const queue = traceQueue.getInstance();
-            return sendCurrentTrace(traceObject => queue.push(traceObject));
+            return sendCurrentTrace(traceObject => traceQueue.push(traceObject));
         }
         return sendCurrentTrace(traceObject => module.exports.postTrace(traceObject));
     });

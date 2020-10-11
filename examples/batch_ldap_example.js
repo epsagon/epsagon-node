@@ -5,13 +5,14 @@ const ldap = require('ldapjs');
 const client = ldap.createClient({
     url: 'ldap://localhost:4389',
 });
-    epsagon.init({
-        token: process.env.EPSAGON_TOKEN,
-        appName: 'ldap-test',
-        metadataOnly: false,
-        sendBatch: true,
-        batchSize: 2
-    });
+epsagon.init({
+    token: process.env.EPSAGON_TOKEN,
+    appName: 'ldap-test',
+    metadataOnly: false,
+    sendBatch: true,
+    batchSize: 4,
+    maxBatchSizeBytes: 5000000
+});
 
 
 
@@ -22,6 +23,11 @@ async function testFunction() {
 const wrappedTestFunction = epsagon.nodeWrapper(testFunction);
 wrappedTestFunction();
 wrappedTestFunction();
+wrappedTestFunction();
+wrappedTestFunction();
+
+
+
 
 
 client.destroy();

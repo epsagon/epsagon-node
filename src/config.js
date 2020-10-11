@@ -46,7 +46,10 @@ const config = {
     loggingTracingEnabled: (process.env.EPSAGON_LOGGING_TRACING_ENABLED || (!utils.isLambdaEnv).toString()).toUpperCase() === 'TRUE',
     sendBatch: (process.env.EPSAGON_SEND_BATCH || 'FALSE').toUpperCase() === 'TRUE',
     batchSize: (Number(process.env.EPSAGON_BATCH_SIZE) || consts.DEFAULT_BATCH_SIZE),
-    batchQueueTime: (Number(process.env.EPSAGON_BATCH_QUEUE_TIME) || consts.DEFAULT_BATCH_QUEUE_TIME), // miliseconds
+    maxTraceWait: (Number(process.env.EPSAGON_MAX_TRACE_WAIT) ||
+     consts.MAX_TRACE_WAIT), // miliseconds
+    maxBatchSizeBytes: (Number(process.env.EPSAGON_MAX_BATCH_SIZE_BYTES) ||
+     consts.MAX_BATCH_SIZE_BYTES),
     /**
      * get isEpsagonPatchDisabled
      * @return {boolean} True if DISABLE_EPSAGON or DISABLE_EPSAGON_PATCH are set to TRUE, false
@@ -180,15 +183,18 @@ module.exports.setConfig = function setConfig(configData) {
         config.sendTimeout = Number(configData.sendTimeout);
     }
 
-    if (configData.sendBatch) {
+    if (typeof configData.sendBatch === 'boolean') {
         config.sendBatch = configData.sendBatch;
     }
 
-    if (configData.batchSize) {
-        config.batchSize = configData.batchSize;
+    if (Number(configData.batchSize)) {
+        config.batchSize = Number(configData.batchSize);
     }
-    if (configData.batchQueueTime) {
-        config.batchQueueTime = configData.batchQueueTime;
+    if (Number(configData.maxTraceWait)) {
+        config.maxTraceWait = Number(configData.maxTraceWait);
+    }
+    if (Number(configData.maxBatchSizeBytes)) {
+        config.maxBatchSizeBytes = Number(configData.maxBatchSizeBytes);
     }
 
 

@@ -17,9 +17,9 @@ declare module 'epsagon' {
     disableHttpResponseBodyCapture?: boolean
     loggingTracingEnabled?: boolean
     sendBatch?: boolean
-    batchQueueTime?: number
+    maxTraceWait?: number
     batchSize?: number
-
+    maxBatchSizeBytes?: number
   }): void
   export function label(key: string, value: string): void
   export function setError(error: Error): void

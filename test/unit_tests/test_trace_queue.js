@@ -71,13 +71,13 @@ describe('trace queue tests', () => {
         traceQueue.push(traces[4]);
     });
     it('push traces while not reaching byte size limit', () => {
-        traceQueue.batchBytesLimit = 21;
+        traceQueue.maxBatchSizeBytes = 21;
         const traces = ['trace_1', 'trace_2', 'trace_3', 'trace_4', 'trace_5'];
         traceQueue.push(traces[0]);
         expect(traceQueue.currentSize).to.equal(1);
     });
     it('push traces while reaching more than byte size limit', () => {
-        traceQueue.batchBytesLimit = 21;
+        traceQueue.maxBatchSizeBytes = 21;
         const traces = ['trace_1', 'trace_2', 'trace_3', 'trace_4', 'trace_5'];
         traceQueue.push(traces[0]);
         traceQueue.push(traces[1]);
@@ -87,7 +87,7 @@ describe('trace queue tests', () => {
         expect(traceQueue.currentSize).to.equal(2);
     });
     it('push traces while reaching no more than byte size limit', () => {
-        traceQueue.batchBytesLimit = 21;
+        traceQueue.maxBatchSizeBytes = 21;
         const traces = ['trace_1', 'trace_2', 'trace_3', 'trace_4', 'trace_5'];
         traceQueue.push(traces[0]);
         traceQueue.push(traces[1]);
