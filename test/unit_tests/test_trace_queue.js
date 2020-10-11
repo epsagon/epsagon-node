@@ -96,4 +96,10 @@ describe('trace queue tests', () => {
         traceQueue.push(traces[2]);
         expect(traceQueue.currentSize).to.equal(1);
     });
+    it('push big trace larger than size limit', () => {
+        traceQueue.maxBatchSizeBytes = 5;
+        const traces = ['trace_1', 'trace_2'];
+        traceQueue.push(traces[0]);
+        expect(traceQueue.currentSize).to.equal(0);
+    });
 });

@@ -1,8 +1,7 @@
-/* eslint-disable prefer-destructuring */
-/* eslint-disable no-console */
-/* eslint-disable valid-jsdoc */
-/* eslint-disable require-jsdoc */
-const EventEmitter = require('events').EventEmitter;
+/**
+ * @fileoverview The traces queue, cunsume traces and sends in batches
+ */
+const EventEmitter = require('events');
 const axios = require('axios');
 const https = require('https');
 const http = require('http');
@@ -13,6 +12,7 @@ const config = require('./config.js');
 /**
  * Session for the post requests to the collector
  */
+// TODO: add token on header
 const session = axios.create({
     timeout: config.getConfig().sendTimeout,
     httpAgent: new http.Agent({ keepAlive: true }),
@@ -57,8 +57,14 @@ function postBatch(batchObject) {
     });
 }
 
-
-class TraceQueue extends EventEmitter {
+/**
+ * The trace queue class
+ * @param {function} batchSender function to send batch traces
+ */
+class TraceQueue extends EventEmitter.EventEmitter {
+    /**
+     * EventEmitter class
+     */
     constructor() {
         super();
         this.batchSender = postBatch;
@@ -67,6 +73,9 @@ class TraceQueue extends EventEmitter {
         this.initQueue();
     }
 
+    /**
+   * Update the queue config
+   */
     updateConfig() {
         this.maxTraceWait = config.getConfig().maxTraceWait;
         this.maxBatchSizeBytes = config.getConfig().maxBatchSizeBytes;
@@ -83,7 +92,7 @@ class TraceQueue extends EventEmitter {
         this.on('traceQueued', () => {
             if (this.byteSizeLimitReached()) {
                 utils.debugLog(`[QUEUE] Queue Byte size reached ${this.currentByteSize} Bytes, releasing batch...`);
-                this.releaseBatch(this.currentSize - 1);
+                this.releaseBatch(Math.max(this.currentSize - 1, 1));
             } else if (this.batchSizeReached()) {
                 utils.debugLog(`[QUEUE] Queue size reached ${this.currentSize}, releasing batch... `);
                 this.releaseBatch();
@@ -91,7 +100,7 @@ class TraceQueue extends EventEmitter {
         });
 
         this.on('batchReleased', (batch) => {
-            utils.debugLog(`[QUEUE] Queue Byte size reached ${this.currentByteSize} Bytes, releasing batch...`);
+            utils.debugLog('[QUEUE] Sending batch...');
             this.batchSender(batch);
             this.emit('batchSent', batch);
         });
@@ -99,7 +108,7 @@ class TraceQueue extends EventEmitter {
 
     /**
    * Queue size getter
-   * @returns {Number}
+   * @returns {Number} Queue length
    */
     get currentSize() {
         return this.traces.length;
@@ -108,15 +117,15 @@ class TraceQueue extends EventEmitter {
 
     /**
    * Checks if queue size reached batch size
-   * @returns {Boolean}
+   * @returns {Boolean} Indicator for if current queue size is larger than batch size definition
    */
     batchSizeReached() {
-        return this.currentSize === this.batchSize;
+        return this.currentSize >= this.batchSize;
     }
 
     /**
    * Checks if queue byte size reached its limit
-   * @returns {Boolean}
+   * @returns {Boolean} Indicator for if current queue byte size is larger than byte size definition
    */
     byteSizeLimitReached() {
         return this.currentByteSize >= this.maxBatchSizeBytes;
@@ -124,7 +133,7 @@ class TraceQueue extends EventEmitter {
 
     /**
    * add given trace byte size to total byte size
-   * @returns {Number}
+   * @param {object} trace Trace object
    */
     addToCurrentByteSize(trace) {
         this.currentByteSize += JSON.stringify(trace).length;
@@ -132,7 +141,7 @@ class TraceQueue extends EventEmitter {
 
     /**
    * subtract given trace byte size to total byte size
-   * @returns {Number}
+   * @param {object} trace Trace object
    */
     subtractFromCurrentByteSize(trace) {
         this.currentByteSize -= JSON.stringify(trace).length;
@@ -149,8 +158,8 @@ class TraceQueue extends EventEmitter {
     /**
    * Push trace to queue, emit event, and check if queue max queue length reached,
    * if it does, send batch.
-   * @param {String} trace
-   * @returns {TraceQueue}
+   * @param {object} trace Trace object
+   * @returns {TraceQueue} This trace queue
    */
     push(trace) {
         try {
@@ -171,7 +180,8 @@ class TraceQueue extends EventEmitter {
 
     /**
    * Release batch of traces
-   * @returns {TraceQueue}
+   * @param {Number} count amount of traces to release from queue
+   * @returns {TraceQueue} This trace queue
    */
     releaseBatch(count = this.batchSize) {
         try {
