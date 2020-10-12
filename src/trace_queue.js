@@ -64,9 +64,9 @@ class TraceQueue extends EventEmitter.EventEmitter {
     constructor() {
         super();
         this.batchSender = postBatch;
-        this.updateConfig();
         this.initQueue();
     }
+
     // TODO: case where sending batch exceedes batch byte size limit
     /**
    * Batch release interval
@@ -92,6 +92,7 @@ class TraceQueue extends EventEmitter.EventEmitter {
    * Init queue event listners
    */
     initQueue() {
+        this.updateConfig();
         this.removeAllListeners();
         this.flush();
         this.initReleaseInterval();
@@ -103,12 +104,13 @@ class TraceQueue extends EventEmitter.EventEmitter {
                 utils.debugLog(`[QUEUE] Queue size reached ${this.currentSize}, releasing batch... `);
                 this.emit('releaseRequest');
             }
+            return this;
         });
 
         this.on('releaseRequest', (count = this.batchSize) => {
             try {
-                utils.debugLog('[QUEUE] Releasing batch...');
                 const batch = this.queue.splice(0, count);
+                utils.debugLog('[QUEUE] Releasing batch...');
                 this.subtractFromCurrentByteSize(batch);
                 this.emit('batchReleased', batch);
             } catch (err) {
@@ -130,21 +132,24 @@ class TraceQueue extends EventEmitter.EventEmitter {
     /**
      * Push trace to queue, emit event, and check if queue max queue length reached,
      * if it does, send batch.
-     * @param {object} traceJSON Trace JSON
+     * @param {object} traceJson Trace JSON
      * @returns {TraceQueue} This trace queue
      */
-    push(traceJSON) {
+    push(traceJson) {
         try {
             if (this.currentByteSize >= this.maxQueueSizeBytes) {
                 utils.debugLog(`[QUEUE] Discardig trace, queue size reached max size of ${this.currentByteSize} Bytes`);
                 return this;
             }
             const timestamp = Date.now();
-            const traceString = JSON.stringify(traceJSON);
-            const trace = { traceJSON, traceString, timestamp };
+            const json = traceJson;
+            const string = JSON.stringify(json);
+            const byteLength = string.length;
+            // eslint-disable-next-line object-curly-newline
+            const trace = { json, string, byteLength, timestamp };
             this.queue.push(trace);
             this.addToCurrentByteSize([trace]);
-            utils.debugLog(`[QUEUE] Trace pushed to queue: ${traceString}`);
+            utils.debugLog(`[QUEUE] Trace size ${byteLength} Bytes pushed to queue: ${string}`);
             utils.debugLog(`[QUEUE] Queue size: ${this.currentSize} traces, total size of ${this.currentByteSize} Bytes`);
             this.emit('traceQueued', trace);
         } catch (err) {
@@ -159,7 +164,7 @@ class TraceQueue extends EventEmitter.EventEmitter {
     */
     addToCurrentByteSize(traces) {
         traces.forEach((trace) => {
-            this.currentByteSize += trace.traceString.length;
+            this.currentByteSize += trace.byteLength;
         });
     }
 
@@ -169,7 +174,7 @@ class TraceQueue extends EventEmitter.EventEmitter {
     */
     subtractFromCurrentByteSize(traces) {
         traces.forEach((trace) => {
-            this.currentByteSize -= trace.traceString.length;
+            this.currentByteSize -= trace.byteLength;
             this.currentByteSize = Math.max(this.currentByteSize, 0);
         });
     }
