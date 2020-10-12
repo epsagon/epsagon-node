@@ -73,6 +73,7 @@ class TraceQueue extends EventEmitter.EventEmitter {
    */
     initReleaseInterval() {
         this.releaseInterval = setInterval(() => {
+            utils.debugLog('[QUEUE] Releaase interval reached');
             if (this.currentSize > 0) this.emit('releaseRequest');
         }, this.maxTraceWait);
     }
@@ -149,7 +150,7 @@ class TraceQueue extends EventEmitter.EventEmitter {
             const trace = { json, string, byteLength, timestamp };
             this.queue.push(trace);
             this.addToCurrentByteSize([trace]);
-            utils.debugLog(`[QUEUE] Trace size ${byteLength} Bytes pushed to queue: ${string}`);
+            utils.debugLog(`[QUEUE] Trace size ${byteLength} Bytes pushed to queue`);
             utils.debugLog(`[QUEUE] Queue size: ${this.currentSize} traces, total size of ${this.currentByteSize} Bytes`);
             this.emit('traceQueued', trace);
         } catch (err) {
