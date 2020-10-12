@@ -8,13 +8,14 @@ epsagon.init({
     metadataOnly: false,
     sendBatch: true,
     batchSize: 5,
-    maxBatchSizeBytes: 5000000
+    maxBatchSizeBytes: 5000000,
+    maxTraceWait: 5000
 });
 
 
-function timeout(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-}
+// function timeout(ms) {
+//     return new Promise(resolve => setTimeout(resolve, ms));
+// }
 
 function doRequest(options) {
     return new Promise ((resolve, reject) => {
@@ -35,24 +36,16 @@ async function testAsyncFunction() {
     const options = {
         host: 'localhost', 
         method: 'GET', 
-        // timeout: 1000
     };
     doRequest(options)
     console.log("logging something")
 }
 
-function testSyncFunction() {
-    console.log("logging something")
-}
 
 const wrappedAsyncTestFunction = epsagon.nodeWrapper(testAsyncFunction);
-const wrappedSyncTestFunction = epsagon.nodeWrapper(testSyncFunction);
 
 async function main (){
   Promise.all([
-    wrappedAsyncTestFunction(),
-    wrappedAsyncTestFunction(),
-    wrappedAsyncTestFunction(),
     wrappedAsyncTestFunction(),
     wrappedAsyncTestFunction(),
     wrappedAsyncTestFunction()]

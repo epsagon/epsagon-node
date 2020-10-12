@@ -118,6 +118,24 @@ describe('tracer config tests', () => {
         });
     });
 
+    it('setConfig: set custom maxQueueSizeBytes', () => {
+        const maxQueueSizeBytes = 10;
+        config.setConfig({ maxQueueSizeBytes });
+        expect(config.getConfig().maxQueueSizeBytes).to.be.equal(maxQueueSizeBytes);
+
+        const maxQueueSizeBytesString = '10';
+        config.setConfig({ maxQueueSizeBytes: maxQueueSizeBytesString });
+        expect(config.getConfig().maxQueueSizeBytes).to.be.equal(Number(maxQueueSizeBytesString));
+
+        const invalidmaxQueueSizeBytesStrings = ['1200.1.1', 'affewfew', '4.4.a', '234a', '', null, undefined, 0];
+        invalidmaxQueueSizeBytesStrings.forEach((invalidmaxQueueSizeBytesString) => {
+            config.setConfig({ maxQueueSizeBytes: invalidmaxQueueSizeBytesString });
+            // checking the old value did not change
+            expect(config.getConfig().maxQueueSizeBytes)
+                .to.be.equal(Number(maxQueueSizeBytesString));
+        });
+    });
+
     it('setConfig: set custom maxTraceWait', () => {
         const maxTraceWait = 1000;
         config.setConfig({ maxTraceWait });
@@ -151,6 +169,7 @@ describe('tracer config tests', () => {
             expect(config.getConfig().batchSize).to.be.equal(Number(batchSizeString));
         });
     });
+
 
     it('setConfig: set custom batch send', () => {
         const sendBatch = true;

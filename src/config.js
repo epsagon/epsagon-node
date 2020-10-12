@@ -48,8 +48,10 @@ const config = {
     batchSize: (Number(process.env.EPSAGON_BATCH_SIZE) || consts.DEFAULT_BATCH_SIZE),
     maxTraceWait: (Number(process.env.EPSAGON_MAX_TRACE_WAIT) ||
      consts.MAX_TRACE_WAIT), // miliseconds
-    maxBatchSizeBytes: (Number(process.env.EPSAGON_MAX_BATCH_SIZE_BYTES) ||
-     consts.MAX_BATCH_SIZE_BYTES),
+    maxBatchSizeBytes: consts.BATCH_SIZE_BYTES_HARD_LIMIT,
+    maxQueueSizeBytes: consts.QUEUE_SIZE_BYTES_HARD_LIMIT,
+
+
     /**
      * get isEpsagonPatchDisabled
      * @return {boolean} True if DISABLE_EPSAGON or DISABLE_EPSAGON_PATCH are set to TRUE, false
@@ -194,7 +196,19 @@ module.exports.setConfig = function setConfig(configData) {
         config.maxTraceWait = Number(configData.maxTraceWait);
     }
     if (Number(configData.maxBatchSizeBytes)) {
-        config.maxBatchSizeBytes = Number(configData.maxBatchSizeBytes);
+        if (Number(configData.maxBatchSizeBytes) > consts.QUEUE_SIZE_BYTES_HARD_LIMIT) {
+            utils.debugLog(`User configured maxBatchSizeBytes exceeded batch size hard limit of ${consts.BATCH_SIZE_BYTES_HARD_LIMIT} Bytes`);
+        } else {
+            config.maxBatchSizeBytes = Number(configData.maxBatchSizeBytes);
+        }
+    }
+
+    if (Number(configData.maxQueueSizeBytes)) {
+        if (Number(configData.maxQueueSizeBytes) > consts.QUEUE_SIZE_BYTES_HARD_LIMIT) {
+            utils.debugLog(`User configured maxQueueSizeBytes exceeded queue size hard limit of ${consts.QUEUE_SIZE_BYTES_HARD_LIMIT} Bytes`);
+        } else {
+            config.maxQueueSizeBytes = Number(configData.maxQueueSizeBytes);
+        }
     }
 
 
