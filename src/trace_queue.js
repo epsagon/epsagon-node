@@ -24,7 +24,7 @@ const session = axios.create({
  * @param {*} batchObject The batch data to send.
  * @returns {Promise} a promise that is resolved after the batch is posted.
  */
-function postBatch(batchObject) {
+async function postBatch(batchObject) {
     utils.debugLog(`[QUEUE] Posting batch to ${config.getConfig().traceCollectorURL}...`);
     const cancelTokenSource = axios.CancelToken.source();
     const handle = setTimeout(() => {
@@ -97,18 +97,20 @@ class TraceQueue extends EventEmitter.EventEmitter {
         this.removeAllListeners();
         this.flush();
         this.initReleaseInterval();
-        this.on('traceQueued', () => {
+        this.on('traceQueued', function traceQueued() {
             if (this.byteSizeLimitReached()) {
                 utils.debugLog(`[QUEUE] Queue Byte size reached ${this.currentByteSize} Bytes, releasing batch...`);
                 this.emit('releaseRequest', Math.max(this.currentSize - 1, 1));
             } else if (this.batchSizeReached()) {
                 utils.debugLog(`[QUEUE] Queue size reached ${this.currentSize}, releasing batch... `);
                 this.emit('releaseRequest');
+            } else {
+                clearInterval(this.releaseInterval);
             }
             return this;
         });
 
-        this.on('releaseRequest', (count = this.batchSize) => {
+        this.on('releaseRequest', function releaseRequest(count = this.batchSize) {
             try {
                 const batch = this.queue.splice(0, count);
                 utils.debugLog('[QUEUE] Releasing batch...');
@@ -121,11 +123,10 @@ class TraceQueue extends EventEmitter.EventEmitter {
             return this;
         });
 
-        this.on('batchReleased', (batch) => {
+        this.on('batchReleased', async function batchReleased(batch) {
             utils.debugLog('[QUEUE] Sending batch...');
             const batchJSON = batch.map(trace => trace.traceJSON);
             this.batchSender(batchJSON);
-            this.emit('batchSent', batch);
         });
         process.on('exit', () => this.emit('releaseRequest'));
     }

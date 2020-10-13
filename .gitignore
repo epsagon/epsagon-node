@@ -6,3 +6,4 @@ src/resource_utils/sql_utils.js
 .vscode
 .env
 .pytest_cache
+*.cpuprofile

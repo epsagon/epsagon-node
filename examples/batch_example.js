@@ -1,5 +1,6 @@
 const epsagon = require('../src/index');
 const http = require('http');
+const { Console } = require('console');
 
 
 epsagon.init({
@@ -7,7 +8,7 @@ epsagon.init({
     appName: 'batch-test',
     metadataOnly: false,
     sendBatch: true,
-    batchSize: 5,
+    batchSize: 5000,
     maxBatchSizeBytes: 5000000,
     maxTraceWait: 5000
 });
@@ -45,12 +46,30 @@ async function testAsyncFunction() {
 const wrappedAsyncTestFunction = epsagon.nodeWrapper(testAsyncFunction);
 
 async function main (){
-  Promise.all([
-    wrappedAsyncTestFunction(),
+  await wrappedAsyncTestFunction()
+  await wrappedAsyncTestFunction()
+
+  await wrappedAsyncTestFunction()
+
+  await wrappedAsyncTestFunction()
+
+  await wrappedAsyncTestFunction()
+  await wrappedAsyncTestFunction()
+  await wrappedAsyncTestFunction()
+  await wrappedAsyncTestFunction()
+  await wrappedAsyncTestFunction()
+  await wrappedAsyncTestFunction()
+  await wrappedAsyncTestFunction()
+  await wrappedAsyncTestFunction()
+
+  await Promise.all([
     wrappedAsyncTestFunction(),
     wrappedAsyncTestFunction()]
+  
   )
 }
+
+
 
 
 main()
