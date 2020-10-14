@@ -12,6 +12,9 @@ describe('tracer config tests', () => {
         traceCollectorURL: consts.TRACE_COLLECTOR_URL,
         ignoredKeys: [],
         sendTimeout: 200,
+        sendBatch: false,
+        maxBatchSizeBytes: consts.BATCH_SIZE_BYTES_HARD_LIMIT,
+        maxQueueSizeBytes: consts.QUEUE_SIZE_BYTES_HARD_LIMIT,
     };
 
 
@@ -20,6 +23,9 @@ describe('tracer config tests', () => {
     }
 
     beforeEach(() => {
+        resetConfig();
+    });
+    afterEach(() => {
         resetConfig();
     });
 
@@ -133,23 +139,6 @@ describe('tracer config tests', () => {
             // checking the old value did not change
             expect(config.getConfig().maxQueueSizeBytes)
                 .to.be.equal(Number(maxQueueSizeBytesString));
-        });
-    });
-
-    it('setConfig: set custom maxTraceWait', () => {
-        const maxTraceWait = 1000;
-        config.setConfig({ maxTraceWait });
-        expect(config.getConfig().maxTraceWait).to.be.equal(maxTraceWait);
-
-        const maxTraceWaitString = '1000';
-        config.setConfig({ maxTraceWait: maxTraceWaitString });
-        expect(config.getConfig().maxTraceWait).to.be.equal(Number(maxTraceWaitString));
-
-        const invalidMaxTraceWaitStrings = ['1200.1.1', 'affewfew', '4.4.a', '234a', '', null, undefined, 0];
-        invalidMaxTraceWaitStrings.forEach((invalidMaxTraceWaitString) => {
-            config.setConfig({ maxTraceWait: invalidMaxTraceWaitString });
-            // checking the old value did not change
-            expect(config.getConfig().maxTraceWait).to.be.equal(Number(maxTraceWaitString));
         });
     });
 

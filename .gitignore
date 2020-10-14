@@ -7,3 +7,4 @@ src/resource_utils/sql_utils.js
 .env
 .pytest_cache
 *.cpuprofile
+tenna_releases

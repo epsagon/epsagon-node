@@ -67,26 +67,13 @@ class TraceQueue extends EventEmitter.EventEmitter {
         this.initQueue();
     }
 
-    // TODO: case where sending batch exceedes batch byte size limit
-    /**
-   * Batch release interval
-   */
-    initReleaseInterval() {
-        this.releaseInterval = setInterval(() => {
-            utils.debugLog('[QUEUE] Releaase interval reached');
-            if (this.currentSize > 0) this.emit('releaseRequest');
-        }, this.maxTraceWait);
-    }
-
     /**
    * Update the queue config
    */
     updateConfig() {
-        this.maxTraceWait = config.getConfig().maxTraceWait;
         this.maxBatchSizeBytes = config.getConfig().maxBatchSizeBytes;
         this.batchSize = config.getConfig().batchSize;
         this.maxQueueSizeBytes = config.getConfig().maxQueueSizeBytes;
-        clearInterval(this.releaseInterval);
     }
 
     /**
@@ -96,7 +83,6 @@ class TraceQueue extends EventEmitter.EventEmitter {
         this.updateConfig();
         this.removeAllListeners();
         this.flush();
-        this.initReleaseInterval();
         this.on('traceQueued', function traceQueued() {
             if (this.byteSizeLimitReached()) {
                 utils.debugLog(`[QUEUE] Queue Byte size reached ${this.currentByteSize} Bytes, releasing batch...`);
@@ -104,8 +90,6 @@ class TraceQueue extends EventEmitter.EventEmitter {
             } else if (this.batchSizeReached()) {
                 utils.debugLog(`[QUEUE] Queue size reached ${this.currentSize}, releasing batch... `);
                 this.emit('releaseRequest');
-            } else {
-                clearInterval(this.releaseInterval);
             }
             return this;
         });
@@ -128,7 +112,10 @@ class TraceQueue extends EventEmitter.EventEmitter {
             const batchJSON = batch.map(trace => trace.traceJSON);
             this.batchSender(batchJSON);
         });
-        process.on('exit', () => this.emit('releaseRequest'));
+        process.on('exit', function releaseAndClearQueue() {
+            this.emit('releaseRequest');
+            this.removeAllListeners();
+        });
     }
 
     /**
@@ -215,5 +202,6 @@ class TraceQueue extends EventEmitter.EventEmitter {
     }
 }
 
+const traceQueue = new TraceQueue();
 
-module.exports.getInstance = () => new TraceQueue();
+module.exports.getInstance = () => traceQueue;

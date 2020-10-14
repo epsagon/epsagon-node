@@ -3,13 +3,32 @@ const chai = require('chai');
 const chaiAsPromised = require('chai-as-promised');
 const { expect } = require('chai');
 const TraceQueue = require('../../src/trace_queue.js');
+// const config = require('../../src/config.js');
+// const consts = require('../../src/consts.js');
 
 chai.use(chaiAsPromised);
 
 const traceQueue = TraceQueue.getInstance();
 
 describe('trace queue tests', () => {
+    // const DEFAULT_CONFIG = {
+    //     token: '',
+    //     appName: 'Application',
+    //     metadataOnly: true,
+    //     useSSL: true,
+    //     traceCollectorURL: consts.TRACE_COLLECTOR_URL,
+    //     ignoredKeys: [],
+    //     sendTimeout: 200,
+    //     sendBatch: false,
+    // };
+
+
+    // function resetConfig() {
+    //     Object.assign(config.getConfig(), DEFAULT_CONFIG);
+    // }
+
     beforeEach(() => {
+        // resetConfig();
         traceQueue.initQueue();
         traceQueue.batchSender = function batchSender(batch) {
             console.log(`Sending batch: ${batch.map(trace => trace)}`);
@@ -46,6 +65,8 @@ describe('trace queue tests', () => {
     });
     it('release batch on reaching batch size', (done) => {
         traceQueue.batchSize = 5;
+        // console.log(traceQueue.maxBatchSizeBytes);
+        console.log(traceQueue.maxQueueSizeBytes);
         const traces = ['trace_1', 'trace_2', 'trace_3', 'trace_4', 'trace_5'];
         traceQueue.on('batchReleased', (batch) => {
             expect(traceQueue.currentSize).to.equal(0);
@@ -62,7 +83,7 @@ describe('trace queue tests', () => {
     it('sending batch on reaching batch size', (done) => {
         traceQueue.batchSize = 5;
         const traces = ['trace_1', 'trace_2', 'trace_3', 'trace_4', 'trace_5'];
-        traceQueue.on('batchSent', (batch) => {
+        traceQueue.on('batchReleased', (batch) => {
             expect(traceQueue.currentSize).to.equal(0);
             expect(batch.map(trace => trace.json)).to.eql(traces);
             done();
@@ -122,18 +143,4 @@ describe('trace queue tests', () => {
         traceQueue.push(traces[1]);
         expect(traceQueue.currentSize).to.equal(1);
     });
-    it('push traces less than batch while reaching release interval', (done) => {
-        traceQueue.batchSize = 5;
-        traceQueue.maxBatchSizeBytes = 32;
-        traceQueue.maxTraceWait = 2000;
-        const traces = ['trace_1', 'trace_2', 'trace_3'];
-        traceQueue.on('batchSent', (batch) => {
-            expect(traceQueue.currentSize).to.equal(0);
-            expect(batch.map(trace => trace.json)).to.eql(traces);
-            done();
-        });
-        traceQueue.push(traces[0]);
-        traceQueue.push(traces[1]);
-        traceQueue.push(traces[2]);
-    }).timeout(3000);
 });

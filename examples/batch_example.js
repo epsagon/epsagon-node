@@ -13,6 +13,13 @@ epsagon.init({
     maxTraceWait: 5000
 });
 
+epsagon.init({
+  token: process.env.EPSAGON_TOKEN,
+  appName: 'batch-test',
+  metadataOnly: false,
+  sendBatch: true,
+  batchSize: 5000,
+});
 
 // function timeout(ms) {
 //     return new Promise(resolve => setTimeout(resolve, ms));
