@@ -209,6 +209,14 @@ function httpWrapper(wrappedFunction) {
                 }
             }
 
+            if (options && 
+                options.headers && 
+                options.headers.epsagonSkipResponseData &&
+                options.agent) {
+                options.agent.epsagonSkipResponseData = true
+                delete options.headers.epsagonSkipResponseData
+            }
+
             const agent = (
                 // eslint-disable-next-line no-underscore-dangle
                 (options && options.agent) || (options && options._defaultAgent) ||
@@ -404,7 +412,7 @@ function httpWrapper(wrappedFunction) {
                     // Listening to data only if options.epsagonSkipResponseData!=true or no options
                     if (
                         (!options || (options && !options.epsagonSkipResponseData &&
-                        (!options.headers || (options.headers && !options.headers.epsagonSkipResponseData))) &&
+                        (!options.agent || (options.agent && !options.agent.epsagonSkipResponseData))) &&
                         !config.getConfig().disableHttpResponseBodyCapture)
                     ) {
                         res.on('data', chunk => addChunk(chunk, chunks));
