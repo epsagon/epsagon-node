@@ -209,12 +209,12 @@ function httpWrapper(wrappedFunction) {
                 }
             }
 
-            if (options && 
-                options.headers && 
+            if (options &&
+                options.headers &&
                 options.headers.epsagonSkipResponseData &&
                 options.agent) {
-                options.agent.epsagonSkipResponseData = true
-                delete options.headers.epsagonSkipResponseData
+                options.agent.epsagonSkipResponseData = true;
+                delete options.headers.epsagonSkipResponseData;
             }
 
             const agent = (
@@ -316,7 +316,7 @@ function httpWrapper(wrappedFunction) {
             clientRequest = wrappedFunction.apply(
                 this, buildParams(url, options, patchedCallback)
             );
-            
+
             if (
                 options &&
                 options.epsagonSkipResponseData &&
@@ -408,13 +408,25 @@ function httpWrapper(wrappedFunction) {
                     }
                 });
 
+                const checkIfOmitData = () => {
+                    if (options) {
+                        if (options.epsagonSkipResponseData) {
+                            return true;
+                        }
+                        if (options.agent && options.agent.epsagonSkipResponseData) {
+                            return true;
+                        }
+                    }
+                    if (config.getConfig().disableHttpResponseBodyCapture) {
+                        return true;
+                    }
+
+                    return false;
+                };
+
                 clientRequest.on('response', (res) => {
                     // Listening to data only if options.epsagonSkipResponseData!=true or no options
-                    if (
-                        (!options || (options && !options.epsagonSkipResponseData &&
-                        (!options.agent || (options.agent && !options.agent.epsagonSkipResponseData))) &&
-                        !config.getConfig().disableHttpResponseBodyCapture)
-                    ) {
+                    if (!checkIfOmitData()) {
                         res.on('data', chunk => addChunk(chunk, chunks));
                     }
                     res.on('end', () => {
@@ -465,18 +477,24 @@ function fetchH2Wrapper(wrappedFunc) {
     };
 }
 
+/**
+ * Flagging simple-oauth2 http requests with
+ * a flag to omit our response.on('data') because of collision
+ * @param {Function} wrappedFunc connect function
+ * @return {Function} the wrapped function
+ */
 function clientRequestWrapper(wrappedFunc) {
     return function internalClientRequestWrapper(url, params, opts) {
-        let newOpts = opts || {}
+        const newOpts = opts || {};
         if (newOpts.headers) {
             newOpts.headers = {
                 ...opts.headers,
-                epsagonSkipResponseData: true
-            }
+                epsagonSkipResponseData: true,
+            };
         } else {
             newOpts.headers = {
-                epsagonSkipResponseData: true
-            }
+                epsagonSkipResponseData: true,
+            };
         }
         return wrappedFunc.apply(this, [url, params, newOpts]);
     };
