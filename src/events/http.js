@@ -308,7 +308,7 @@ function httpWrapper(wrappedFunction) {
             clientRequest = wrappedFunction.apply(
                 this, buildParams(url, options, patchedCallback)
             );
-
+            
             if (
                 options &&
                 options.epsagonSkipResponseData &&
@@ -403,8 +403,9 @@ function httpWrapper(wrappedFunction) {
                 clientRequest.on('response', (res) => {
                     // Listening to data only if options.epsagonSkipResponseData!=true or no options
                     if (
-                        (!options || (options && !options.epsagonSkipResponseData)) &&
-                        !config.getConfig().disableHttpResponseBodyCapture
+                        (!options || (options && !options.epsagonSkipResponseData &&
+                        (!options.headers || (options.headers && !options.headers.epsagonSkipResponseData))) &&
+                        !config.getConfig().disableHttpResponseBodyCapture)
                     ) {
                         res.on('data', chunk => addChunk(chunk, chunks));
                     }
@@ -456,6 +457,24 @@ function fetchH2Wrapper(wrappedFunc) {
     };
 }
 
+function clientRequestWrapper(wrappedFunc) {
+    return function internalClientRequestWrapper(url, params, opts) {
+        let newOpts = opts || {}
+        if (newOpts.headers) {
+            newOpts.headers = {
+                ...opts.headers,
+                epsagonSkipResponseData: true
+            }
+        } else {
+            newOpts.headers = {
+                epsagonSkipResponseData: true
+            }
+        }
+        return wrappedFunc.apply(this, [url, params, newOpts]);
+    };
+}
+
+
 module.exports = {
     /**
      * Initializes the http tracer
@@ -472,6 +491,12 @@ module.exports = {
             'connect',
             fetchH2Wrapper,
             fetch => fetch.OriginPool.prototype
+        );
+        moduleUtils.patchModule(
+            'simple-oauth2/lib/client.js',
+            'request',
+            clientRequestWrapper,
+            client => client.prototype
         );
     },
 };
