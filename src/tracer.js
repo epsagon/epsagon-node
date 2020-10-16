@@ -428,17 +428,18 @@ module.exports.filterTrace = function filterTrace(traceObject, ignoredKeys) {
             return obj;
         }
 
-        const keys = Object
+        const unFilteredKeys = Object
             .keys(obj)
             .filter(isNotIgnored);
+        const maskedKeys = Object.keys(obj).filter(k => !isNotIgnored(k));
 
-        const primitive = keys.filter(k => !isObject(obj[k]) && !isString(obj[k]));
-        const objects = keys
+        const primitive = unFilteredKeys.filter(k => !isObject(obj[k]) && !isString(obj[k]));
+        const objects = unFilteredKeys
             .filter(k => isObject(obj[k]))
             .map(k => ({ [k]: filterObject(obj[k]) }));
 
         // trying to JSON load strings to filter sensitive data
-        keys.filter(k => isString(obj[k])).forEach((k) => {
+        unFilteredKeys.filter(k => isString(obj[k])).forEach((k) => {
             try {
                 const subObj = JSON.parse(obj[k]);
                 if (subObj && isObject(subObj)) {
@@ -452,6 +453,7 @@ module.exports.filterTrace = function filterTrace(traceObject, ignoredKeys) {
         });
 
         return Object.assign({},
+            maskedKeys.reduce((sum, key) => Object.assign({}, sum, { [key]: '****' }), {}),
             primitive.reduce((sum, key) => Object.assign({}, sum, { [key]: obj[key] }), {}),
             objects.reduce((sum, value) => Object.assign({}, sum, value), {}));
     }

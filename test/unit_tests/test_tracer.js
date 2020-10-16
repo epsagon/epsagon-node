@@ -54,7 +54,11 @@ describe('filter keys function', () => {
         const expected = {
             events: [{
                 resource: {
-                    metadata: { message: 'not-personal' },
+                    metadata: {
+                        message: 'not-personal',
+                        studentId: '****',
+                        employeeId: '****',
+                    },
                 },
             }],
         };
@@ -93,7 +97,12 @@ describe('filter keys function', () => {
         const expected = {
             events: [{
                 resource: {
-                    metadata: { field: { message: 'not-personal' } },
+                    metadata: {
+                        field: {
+                            message: 'not-personal',
+                            studentId: '****',
+                        },
+                    },
                 },
             }],
         };
@@ -120,7 +129,13 @@ describe('filter keys function', () => {
         const expected = {
             events: [{
                 resource: {
-                    metadata: { field: { message: 'not-personal' }, nonFiltered: 'studentid' },
+                    metadata: {
+                        field: {
+                            message: 'not-personal',
+                            studentId: '****',
+                        },
+                        nonFiltered: 'studentid',
+                    },
                 },
             }],
         };

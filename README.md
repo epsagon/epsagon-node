@@ -650,6 +650,9 @@ Epsagon provides out-of-the-box instrumentation (tracing) for many popular frame
 |@azure/storage-blob |`>=12.2.0`                 |
 |ldapjs              |`>=2.1.0`                  |
 |ws                  |`>=7.3.1`                  |
+|pino                |`>=6.0.0`                  |
+|bunyan              |`>=1.8.0`                  |
+|winston             |`>=2.4.5`                  |
 
 
 
