@@ -71,9 +71,9 @@ function setJsonPayload(httpEvent, key, data, encoding) {
                 utils.debugLog(`Could decode ${key} with ${encoding} in http`);
             }
         }
-        let jsonData = decodedData;
+        const jsonData = decodedData;
         try {
-            jsonData = JSON.parse(jsonData);
+            JSON.parse(jsonData);
             eventInterface.addToMetadata(httpEvent, {}, {
                 [key]: jsonData.toString(),
             });
