@@ -111,11 +111,11 @@ function createSQSTrigger(event, trigger) {
     resource.setOperation('ReceiveMessage');
     const sqsMessageBody = event.Records[0].body || '{}';
     eventInterface.addToMetadata(trigger, {
-        'MD5 Of Message Body': event.Records[0].md5OfBody,
-        Attributes: event.Records[0].attributes,
-        'Message Attributes': event.Records[0].messageAttributes,
+        'MD5 Of Message Body': event.Records.map(r => r.md5OfBody),
+        Attributes: event.Records.map(r => r.attributes),
+        'Message Attributes': event.Records.map(r => r.messageAttributes),
     }, {
-        'Message Body': sqsMessageBody,
+        'Message Body': event.Records.map(r => r.body || '{}'),
     });
     try {
         const messageBody = JSON.parse(sqsMessageBody);
