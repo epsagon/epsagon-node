@@ -55,7 +55,7 @@ function resolveHttpPromise(httpEvent, resolveFunction, startTime) {
 
 
 /**
- * Set the duration of the event, and resolves the promise using the given function.
+ * Attempts to json parse the data and set it at key on the event's metadata.
  * @param {object} httpEvent The current event
  * @param {string} key name in metadata
  * @param {string} data data to jsonify
@@ -63,20 +63,31 @@ function resolveHttpPromise(httpEvent, resolveFunction, startTime) {
  */
 function setJsonPayload(httpEvent, key, data, encoding) {
     try {
-        let jsonData = data;
+        let decodedData = data;
         if (config.getConfig().decodeHTTP && ENCODING_FUNCTIONS[encoding]) {
             try {
-                jsonData = ENCODING_FUNCTIONS[encoding](data);
+                decodedData = ENCODING_FUNCTIONS[encoding](data);
             } catch (err) {
                 utils.debugLog(`Could decode ${key} with ${encoding} in http`);
             }
         }
-        JSON.parse(jsonData);
-        eventInterface.addToMetadata(httpEvent, {}, {
-            [key]: jsonData.toString(),
-        });
+        let jsonData = decodedData;
+        try {
+            jsonData = JSON.parse(jsonData);
+            eventInterface.addToMetadata(httpEvent, {}, {
+                [key]: jsonData.toString(),
+            });
+        } catch (err) {
+            utils.debugLog(`Could not parse JSON ${key} in http`);
+            eventInterface.addToMetadata(httpEvent, {}, {
+                [key]: decodedData.toString('utf-8'),
+            });
+        }
     } catch (err) {
-        utils.debugLog(`Could not parse JSON ${key} in http`);
+        utils.debugLog(`Could not decode data and parse JSON ${key} in http`);
+        eventInterface.addToMetadata(httpEvent, {}, {
+            [key]: data,
+        });
     }
 }
 
