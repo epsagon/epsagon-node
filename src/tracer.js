@@ -202,29 +202,40 @@ function getTrimmedMetadata(eventMetadata, isRunner) {
 function getTrimmedTrace(traceSize, jsTrace) {
     let currentTraceSize = traceSize;
     const trimmedTrace = Object.assign({}, jsTrace);
-    trimmedTrace.events = jsTrace.events.sort(event => (['runner', 'trigger'].includes(event.origin) ? -1 : 1));
+    let totalTrimmedExceptions = 0;
+    let totalTrimmedEvents = 0;
+    // Trimming trace exceptions.
+    if (trimmedTrace.exceptions.length > 1) {
+        const firstException = trimmedTrace.exceptions[0];
+        currentTraceSize -=
+          JSON.stringify(trimmedTrace.exceptions).length - JSON.stringify(firstException).length;
+        totalTrimmedExceptions = trimmedTrace.exceptions.length - 1;
+        trimmedTrace.exceptions = [firstException];
+    }
     // Trimming trace events metadata.
-    for (let i = jsTrace.events.length - 1; i >= 0; i -= 1) {
-        const currentEvent = trimmedTrace.events[i];
-        const isRunner = currentEvent.origin === 'runner';
-        let eventMetadata = currentEvent.resource.metadata;
-        if (eventMetadata) {
-            const originalEventMetadataSize = JSON.stringify(eventMetadata).length;
-            const trimmedMetadata = getTrimmedMetadata(eventMetadata, isRunner);
-            if (trimmedMetadata) {
-                eventMetadata = trimmedMetadata;
-                const trimmedSize =
+    if (currentTraceSize >= consts.MAX_TRACE_SIZE_BYTES) {
+        trimmedTrace.events = jsTrace.events.sort(event => (['runner', 'trigger'].includes(event.origin) ? -1 : 1));
+        for (let i = jsTrace.events.length - 1; i >= 0; i -= 1) {
+            const currentEvent = trimmedTrace.events[i];
+            const isRunner = currentEvent.origin === 'runner';
+            let eventMetadata = currentEvent.resource.metadata;
+            if (eventMetadata) {
+                const originalEventMetadataSize = JSON.stringify(eventMetadata).length;
+                const trimmedMetadata = getTrimmedMetadata(eventMetadata, isRunner);
+                if (trimmedMetadata) {
+                    eventMetadata = trimmedMetadata;
+                    const trimmedSize =
                     originalEventMetadataSize - JSON.stringify(trimmedMetadata).length;
-                currentTraceSize -= trimmedSize;
-                if (currentTraceSize < consts.MAX_TRACE_SIZE_BYTES) {
-                    break;
+                    currentTraceSize -= trimmedSize;
+                    if (currentTraceSize < consts.MAX_TRACE_SIZE_BYTES) {
+                        break;
+                    }
                 }
             }
         }
     }
     // Trimming trace events.
     if (currentTraceSize >= consts.MAX_TRACE_SIZE_BYTES) {
-        let totalTrimmedEvents = 0;
         for (let i = jsTrace.events.length - 1; i >= 0; i -= 1) {
             const event = trimmedTrace.events[i];
             if (!['runner', 'trigger'].includes(event.origin)) {
@@ -236,9 +247,9 @@ function getTrimmedTrace(traceSize, jsTrace) {
                 }
             }
         }
-        if (totalTrimmedEvents) {
-            utils.debugLog(`Epsagon - Trace size is larger than maximum size, ${totalTrimmedEvents} events was trimmed.`);
-        }
+    }
+    if (totalTrimmedEvents || totalTrimmedExceptions) {
+        utils.debugLog(`Epsagon - Trace size is larger than maximum size, ${totalTrimmedEvents} events and ${totalTrimmedExceptions} exceptions was trimmed.`);
     }
     return trimmedTrace;
 }
