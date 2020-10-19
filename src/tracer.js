@@ -193,6 +193,21 @@ function getTrimmedMetadata(eventMetadata, isRunner) {
     return trimmedEventMetadata;
 }
 
+
+/**
+ * Trimming trace exceptions.
+ * @param {Object} traceExceptions Trace exceptions
+ * @returns {array} array of the first exception,
+ *  total exceptions have been trimmed and the reduce size.
+ */
+function trimTraceExceptions(traceExceptions) {
+    const firstException = traceExceptions[0];
+    const totalTrimmed = traceExceptions.length - 1;
+    const reduceSize =
+    JSON.stringify(traceExceptions).length - JSON.stringify(firstException).length;
+    return [firstException, totalTrimmed, reduceSize];
+}
+
 /**
  * Trimming trace to a size less than MAX_TRACE_SIZE_BYTES.
  * @param {number} traceSize Trace size.
@@ -202,29 +217,41 @@ function getTrimmedMetadata(eventMetadata, isRunner) {
 function getTrimmedTrace(traceSize, jsTrace) {
     let currentTraceSize = traceSize;
     const trimmedTrace = Object.assign({}, jsTrace);
-    trimmedTrace.events = jsTrace.events.sort(event => (['runner', 'trigger'].includes(event.origin) ? -1 : 1));
+    let totalTrimmedExceptions = 0;
+    let totalTrimmedEvents = 0;
+    // Trimming trace exceptions.
+    if (trimmedTrace.exceptions.length > 1) {
+        const [firstException, totalTrimmed, reduceSize] = trimTraceExceptions(
+            trimmedTrace.exceptions
+        );
+        currentTraceSize -= reduceSize;
+        totalTrimmedExceptions = totalTrimmed;
+        trimmedTrace.exceptions = [firstException];
+    }
     // Trimming trace events metadata.
-    for (let i = jsTrace.events.length - 1; i >= 0; i -= 1) {
-        const currentEvent = trimmedTrace.events[i];
-        const isRunner = currentEvent.origin === 'runner';
-        let eventMetadata = currentEvent.resource.metadata;
-        if (eventMetadata) {
-            const originalEventMetadataSize = JSON.stringify(eventMetadata).length;
-            const trimmedMetadata = getTrimmedMetadata(eventMetadata, isRunner);
-            if (trimmedMetadata) {
-                eventMetadata = trimmedMetadata;
-                const trimmedSize =
+    if (currentTraceSize >= consts.MAX_TRACE_SIZE_BYTES) {
+        trimmedTrace.events = jsTrace.events.sort(event => (['runner', 'trigger'].includes(event.origin) ? -1 : 1));
+        for (let i = jsTrace.events.length - 1; i >= 0; i -= 1) {
+            const currentEvent = trimmedTrace.events[i];
+            let eventMetadata = currentEvent.resource.metadata;
+            if (eventMetadata) {
+                const isRunner = currentEvent.origin === 'runner';
+                const originalEventMetadataSize = JSON.stringify(eventMetadata).length;
+                const trimmedMetadata = getTrimmedMetadata(eventMetadata, isRunner);
+                if (trimmedMetadata) {
+                    eventMetadata = trimmedMetadata;
+                    const trimmedSize =
                     originalEventMetadataSize - JSON.stringify(trimmedMetadata).length;
-                currentTraceSize -= trimmedSize;
-                if (currentTraceSize < consts.MAX_TRACE_SIZE_BYTES) {
-                    break;
+                    currentTraceSize -= trimmedSize;
+                    if (currentTraceSize < consts.MAX_TRACE_SIZE_BYTES) {
+                        break;
+                    }
                 }
             }
         }
     }
     // Trimming trace events.
     if (currentTraceSize >= consts.MAX_TRACE_SIZE_BYTES) {
-        let totalTrimmedEvents = 0;
         for (let i = jsTrace.events.length - 1; i >= 0; i -= 1) {
             const event = trimmedTrace.events[i];
             if (!['runner', 'trigger'].includes(event.origin)) {
@@ -236,9 +263,9 @@ function getTrimmedTrace(traceSize, jsTrace) {
                 }
             }
         }
-        if (totalTrimmedEvents) {
-            utils.debugLog(`Epsagon - Trace size is larger than maximum size, ${totalTrimmedEvents} events was trimmed.`);
-        }
+    }
+    if (totalTrimmedEvents || totalTrimmedExceptions) {
+        utils.debugLog(`Epsagon - Trace size is larger than maximum size, ${totalTrimmedEvents} events and ${totalTrimmedExceptions} exceptions were trimmed.`);
     }
     return trimmedTrace;
 }
