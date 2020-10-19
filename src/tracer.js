@@ -193,6 +193,21 @@ function getTrimmedMetadata(eventMetadata, isRunner) {
     return trimmedEventMetadata;
 }
 
+
+/**
+ * Trimming trace exceptions.
+ * @param {Object} traceExceptions Trace exceptions
+ * @returns {array} array of the first exception,
+ *  total exceptions have been trimmed and the reduce size.
+ */
+function trimTraceExceptions(traceExceptions) {
+    const firstException = traceExceptions[0];
+    const totalTrimmed = traceExceptions.length - 1;
+    const reduceSize =
+    JSON.stringify(traceExceptions).length - JSON.stringify(firstException).length;
+    return [firstException, totalTrimmed, reduceSize];
+}
+
 /**
  * Trimming trace to a size less than MAX_TRACE_SIZE_BYTES.
  * @param {number} traceSize Trace size.
@@ -206,10 +221,11 @@ function getTrimmedTrace(traceSize, jsTrace) {
     let totalTrimmedEvents = 0;
     // Trimming trace exceptions.
     if (trimmedTrace.exceptions.length > 1) {
-        const firstException = trimmedTrace.exceptions[0];
-        currentTraceSize -=
-          JSON.stringify(trimmedTrace.exceptions).length - JSON.stringify(firstException).length;
-        totalTrimmedExceptions = trimmedTrace.exceptions.length - 1;
+        const [firstException, totalTrimmed, reduceSize] = trimTraceExceptions(
+            trimmedTrace.exceptions
+        );
+        currentTraceSize -= reduceSize;
+        totalTrimmedExceptions = totalTrimmed;
         trimmedTrace.exceptions = [firstException];
     }
     // Trimming trace events metadata.
@@ -217,9 +233,9 @@ function getTrimmedTrace(traceSize, jsTrace) {
         trimmedTrace.events = jsTrace.events.sort(event => (['runner', 'trigger'].includes(event.origin) ? -1 : 1));
         for (let i = jsTrace.events.length - 1; i >= 0; i -= 1) {
             const currentEvent = trimmedTrace.events[i];
-            const isRunner = currentEvent.origin === 'runner';
             let eventMetadata = currentEvent.resource.metadata;
             if (eventMetadata) {
+                const isRunner = currentEvent.origin === 'runner';
                 const originalEventMetadataSize = JSON.stringify(eventMetadata).length;
                 const trimmedMetadata = getTrimmedMetadata(eventMetadata, isRunner);
                 if (trimmedMetadata) {
@@ -249,7 +265,7 @@ function getTrimmedTrace(traceSize, jsTrace) {
         }
     }
     if (totalTrimmedEvents || totalTrimmedExceptions) {
-        utils.debugLog(`Epsagon - Trace size is larger than maximum size, ${totalTrimmedEvents} events and ${totalTrimmedExceptions} exceptions was trimmed.`);
+        utils.debugLog(`Epsagon - Trace size is larger than maximum size, ${totalTrimmedEvents} events and ${totalTrimmedExceptions} exceptions were trimmed.`);
     }
     return trimmedTrace;
 }

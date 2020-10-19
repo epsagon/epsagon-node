@@ -64,15 +64,6 @@ module.exports.STRONG_ID_KEYS = [
     'logging_tracing_enabled',
     'CLOUDWATCH_LOG_GROUP_NAME',
     'CLOUDWATCH_LOG_STREAM_NAME',
-    'log_stream_name',
-    'log_group_name',
-    'function_version',
-    'memory',
-    'aws_account',
-    'cold_start',
-    'region',
-    'status_code',
-
 ];
 
 module.exports.traceUrl = (id, requestTime) => `https://app.epsagon.com/trace/${id}?timestamp=${requestTime}`;
