@@ -110,13 +110,7 @@ function createSQSTrigger(event, trigger) {
     resource.setName(event.Records[0].eventSourceARN.split(':').slice(-1)[0]);
     resource.setOperation('ReceiveMessage');
     const sqsMessageBody = event.Records[0].body || '{}';
-    eventInterface.addToMetadata(trigger, {
-        'MD5 Of Message Body': event.Records.map(r => r.md5OfBody),
-        Attributes: event.Records.map(r => r.attributes),
-        'Message Attributes': event.Records.map(r => r.messageAttributes),
-    }, {
-        'Message Body': event.Records.map(r => r.body || '{}'),
-    });
+    eventInterface.addToMetadata(trigger, { records: event.Records });
     try {
         const messageBody = JSON.parse(sqsMessageBody);
         // Extracting sqs data in case of is a part of a step functions flow.
