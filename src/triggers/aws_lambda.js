@@ -10,6 +10,7 @@ const errorCode = require('../proto/error_code_pb.js');
 const eventInterface = require('../event.js');
 const utils = require('../utils');
 const resourceUtils = require('../resource_utils/sqs_utils.js');
+const config = require('../config.js');
 
 const AWS = tryRequire('aws-sdk');
 
@@ -110,7 +111,19 @@ function createSQSTrigger(event, trigger) {
     resource.setName(event.Records[0].eventSourceARN.split(':').slice(-1)[0]);
     resource.setOperation('ReceiveMessage');
     const sqsMessageBody = event.Records[0].body || '{}';
-    eventInterface.addToMetadata(trigger, { records: event.Records });
+    eventInterface.addToMetadata(trigger, {
+        records: event.Records.map((r) => {
+            const record = {
+                'MD5 Of Message Body': r.md5OfBody,
+                Attributes: r.attributes,
+                'Message Attributes': r.messageAttributes,
+            };
+            if (!config.getConfig().metadataOnly) {
+                record['Message Body'] = r.body || '{}';
+            }
+            return record;
+        }),
+    });
     try {
         const messageBody = JSON.parse(sqsMessageBody);
         // Extracting sqs data in case of is a part of a step functions flow.
