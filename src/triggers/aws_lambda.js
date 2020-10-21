@@ -100,6 +100,7 @@ function createSNSTrigger(event, trigger) {
     });
 }
 
+const MAX_SQS_BODY_LENGTH = 1 * 1024; // (1K)
 /**
  * Initializes an event representing a trigger to the lambda caused by SQS
  * @param {object} event The event the lambda was triggered with
@@ -115,11 +116,12 @@ function createSQSTrigger(event, trigger) {
         records: event.Records.map((r) => {
             const record = {
                 'MD5 Of Message Body': r.md5OfBody,
-                Attributes: r.attributes,
-                'Message Attributes': r.messageAttributes,
+                'Message ID': r.messageId,
             };
             if (!config.getConfig().metadataOnly) {
-                record['Message Body'] = r.body || '{}';
+                record['Message Body'] = utils.truncateMessage(r.body || '{}', MAX_SQS_BODY_LENGTH);
+                record.Attributes = r.attributes;
+                record['Message Attributes'] = r.messageAttributes;
             }
             return record;
         }),
