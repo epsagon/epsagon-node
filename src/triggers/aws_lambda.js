@@ -10,6 +10,7 @@ const errorCode = require('../proto/error_code_pb.js');
 const eventInterface = require('../event.js');
 const utils = require('../utils');
 const resourceUtils = require('../resource_utils/sqs_utils.js');
+const config = require('../config.js');
 
 const AWS = tryRequire('aws-sdk');
 
@@ -99,6 +100,7 @@ function createSNSTrigger(event, trigger) {
     });
 }
 
+const MAX_SQS_BODY_LENGTH = 1 * 1024; // (1K)
 /**
  * Initializes an event representing a trigger to the lambda caused by SQS
  * @param {object} event The event the lambda was triggered with
@@ -111,11 +113,18 @@ function createSQSTrigger(event, trigger) {
     resource.setOperation('ReceiveMessage');
     const sqsMessageBody = event.Records[0].body || '{}';
     eventInterface.addToMetadata(trigger, {
-        'MD5 Of Message Body': event.Records[0].md5OfBody,
-        Attributes: event.Records[0].attributes,
-        'Message Attributes': event.Records[0].messageAttributes,
-    }, {
-        'Message Body': sqsMessageBody,
+        record: event.Records.map((r) => {
+            const record = {
+                'MD5 Of Message Body': r.md5OfBody,
+                'Message ID': r.messageId,
+            };
+            if (!config.getConfig().metadataOnly) {
+                record['Message Body'] = utils.truncateMessage(r.body || '{}', MAX_SQS_BODY_LENGTH);
+                record.Attributes = r.attributes;
+                record['Message Attributes'] = r.messageAttributes;
+            }
+            return record;
+        }),
     });
     try {
         const messageBody = JSON.parse(sqsMessageBody);

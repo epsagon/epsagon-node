@@ -181,6 +181,20 @@ const getLastSplittedItem = (string, seperator) => {
 const isLambdaEnv = !!process.env.AWS_LAMBDA_FUNCTION_NAME;
 
 
+/**
+ * Function to truncate a long string to a maximum length.
+ * @param {string} message to be trancated.
+ * @param {integer} maxSize maximum message length.
+ * @returns {string} First `maxSize` characters of `message`.
+ */
+function truncateMessage(message, maxSize) {
+    if (message.length <= maxSize) {
+        return message;
+    }
+    return message.slice(0, maxSize);
+}
+
+
 module.exports.createTimestampFromTime = createTimestampFromTime;
 module.exports.createTimestamp = createTimestamp;
 module.exports.createDurationTimestamp = createDurationTimestamp;
@@ -194,3 +208,4 @@ module.exports.getLastSplittedItem = getLastSplittedItem;
 module.exports.isPromise = isPromise;
 module.exports.isLambdaEnv = isLambdaEnv;
 module.exports.getValueIfExist = getValueIfExist;
+module.exports.truncateMessage = truncateMessage;
