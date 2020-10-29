@@ -637,6 +637,19 @@ module.exports.setError = function setRunnerError(err) {
 };
 
 /**
+ * Set runner as an warning.
+ * @param {Error} err error data
+ */
+module.exports.setWarning = function setRunnerWarning(err) {
+    const tracerObj = module.exports.getTrace();
+    if (!tracerObj || !tracerObj.currRunner) {
+        utils.debugLog('Failed to setWarning without an active tracer');
+        return;
+    }
+    eventInterface.setException(tracerObj.currRunner, err, true, true);
+};
+
+/**
  * Get a link to the trace in Epsagon.
  * @returns {string} traceUrl link to Epsagon.
  */

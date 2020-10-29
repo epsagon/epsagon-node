@@ -129,6 +129,22 @@ try {
 epsagon.setError(Error('My custom error'));
 ```
 
+### Custom Warnings
+
+This API allows you to flag the trace with a warning and also enables more flexible alerting
+
+Add the following call inside your code:
+```javascript
+try {
+  // something bad happens
+} catch (err) {
+  epsagon.setWarning(err);
+}
+
+// Or manually specify Error object
+epsagon.setWarning(Error('My custom error'));
+```
+
 In some [frameworks](#frameworks) custom errors can be declared in different ways.
 
 ### Filter Sensitive Data
