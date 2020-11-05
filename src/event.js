@@ -16,10 +16,11 @@ const serverlessEvent = require('./proto/event_pb.js');
  * @param {proto.event_pb.Event} event The event the exception is set on
  * @param {Error} error The error to set as the exception
  * @param {boolean} handled False if the exception was raised by the wrapped function
+ * @param {boolean} warning True if this exception marked as warning.
  */
-module.exports.setException = function setException(event, error, handled = true) {
+module.exports.setException = function setException(event, error, handled = true, warning = false) {
     try {
-        event.setErrorCode(errorCode.ErrorCode.EXCEPTION);
+        event.setErrorCode(warning ? errorCode.ErrorCode.OK : errorCode.ErrorCode.EXCEPTION);
         const userException = new exception.Exception([
             error.name,
             error.message,
@@ -28,6 +29,7 @@ module.exports.setException = function setException(event, error, handled = true
         ]);
         event.setException(userException);
         userException.getAdditionalDataMap().set('handled', handled);
+        userException.getAdditionalDataMap().set('warning', warning);
     } catch (err) {
         tracer.addException(err);
     }
