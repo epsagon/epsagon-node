@@ -19,6 +19,7 @@ declare module 'epsagon' {
   }): void
   export function label(key: string, value: string): void
   export function setError(error: Error): void
+  export function setWarning(error: Error): void
   export function getTraceUrl(): string
   export function lambdaWrapper<T extends Function>(f: T): T
   export function stepLambdaWrapper<T extends Function>(f: T): T
