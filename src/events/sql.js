@@ -96,9 +96,13 @@ module.exports.wrapSqlQuery = function wrapSqlQuery(queryString, params, callbac
                 if (err) {
                     eventInterface.setException(dbapiEvent, err);
                 } else {
-                    let { rowCount } = res;
+                    let { rowCount, rows } = res;
                     if (!rowCount && res instanceof Array) {
                         rowCount = res.length;
+                        eventInterface.addToMetadata(dbapiEvent, { 'sql.rows': res });
+                    }
+                    else if (rowCount && rows instanceof Array && rows.length) {
+                        eventInterface.addToMetadata(dbapiEvent, { 'sql.rows': rows });
                     }
                     eventInterface.addToMetadata(dbapiEvent, { rowCount });
                 }
