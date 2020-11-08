@@ -182,7 +182,7 @@ module.exports.restart = function restart() {
 function getTrimmedMetadata(eventMetadata, isRunner) {
     let trimmedEventMetadata;
     Object.keys(eventMetadata).forEach((eventKey) => {
-        if (!(isStrongId(eventKey) || (isRunner && eventKey == 'labels'))) {
+        if (!(isStrongId(eventKey) || (isRunner && eventKey === 'labels'))) {
             if (!trimmedEventMetadata) {
                 trimmedEventMetadata = eventMetadata;
                 trimmedEventMetadata.is_trimmed = true;
