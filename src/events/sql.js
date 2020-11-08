@@ -105,6 +105,9 @@ module.exports.wrapSqlQuery = function wrapSqlQuery(queryString, params, callbac
                     }
                     eventInterface.addToMetadata(dbapiEvent, { rowCount });
                     if (rowCount && rows instanceof Array && rows.length) {
+                        if (rows.length > MAX_QUERY_ELEMENTS) {
+                            eventInterface.addToMetadata(dbapiEvent, { is_trimmed: true });
+                        }
                         eventInterface.addToMetadata(
                             dbapiEvent,
                             { 'sql.rows': rows.slice(0, MAX_QUERY_ELEMENTS) }
