@@ -29,8 +29,6 @@ function handleFunctionWithoutCallback(original, startTime, fsEvent, args) {
  */
 function wrapFsWriteFileFunction(original, originalName) {
     return function internalWrapFsWriteFileFunction(file, data, options, callback) {
-        let patchedCallback;
-        let clientRequest;
         const fileName = typeof file === 'object' ? file.toString() : file;
         const fsCallback = typeof (callback || options) === 'function' && (callback || options);
         const { slsEvent: fsEvent, startTime } = eventInterface.initializeEvent('file_system', fileName, originalName, 'file_system');
@@ -46,6 +44,9 @@ function wrapFsWriteFileFunction(original, originalName) {
                 options,
             ]);
         }
+        let patchedCallback;
+        let clientRequest;
+        let clientRequestHasBeenCalled;
         try {
             const responsePromise = new Promise((resolve) => {
                 patchedCallback = (err) => {
@@ -55,8 +56,10 @@ function wrapFsWriteFileFunction(original, originalName) {
                 };
             });
             if (typeof callback === 'function') {
+                clientRequestHasBeenCalled = true;
                 clientRequest = original.apply(this, [file, data, options, patchedCallback]);
             } else if (typeof options === 'function') {
+                clientRequestHasBeenCalled = true;
                 clientRequest = original.apply(this, [file, data, patchedCallback]);
             }
             tracer.addEvent(fsEvent, responsePromise);
@@ -64,7 +67,7 @@ function wrapFsWriteFileFunction(original, originalName) {
             tracer.addException(err);
         }
 
-        return clientRequest || fsCallback ?
+        return clientRequest || clientRequestHasBeenCalled ?
             clientRequest :
             original.apply(this, [file, data, options, callback]);
     };
