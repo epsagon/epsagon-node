@@ -645,6 +645,7 @@ Epsagon provides out-of-the-box instrumentation (tracing) for many popular frame
 |https               |Fully supported            |
 |http2               |Fully supported            |
 |dns                 |Fully supported            |
+|fs                  |Fully supported            |
 |aws-sdk             |`>=2.2.0`                  |
 |amazon-dax-client   |`>=1.0.2`                  |
 |@google-cloud       |`>=2.0.0`                  |
