@@ -182,7 +182,7 @@ module.exports.restart = function restart() {
 function getTrimmedMetadata(eventMetadata, isRunner) {
     let trimmedEventMetadata;
     Object.keys(eventMetadata).forEach((eventKey) => {
-        if (!isStrongId(eventKey) && (isRunner && eventKey !== 'labels')) {
+        if (!(isStrongId(eventKey) || (isRunner && eventKey === 'labels'))) {
             if (!trimmedEventMetadata) {
                 trimmedEventMetadata = eventMetadata;
                 trimmedEventMetadata.is_trimmed = true;
@@ -228,6 +228,7 @@ function getTrimmedTrace(traceSize, jsTrace) {
         totalTrimmedExceptions = totalTrimmed;
         trimmedTrace.exceptions = [firstException];
     }
+    utils.debugLog(`Epsagon - Pre metadata trim: current trace size ${currentTraceSize}`);
     // Trimming trace events metadata.
     if (currentTraceSize >= consts.MAX_TRACE_SIZE_BYTES) {
         trimmedTrace.events = jsTrace.events.sort(event => (['runner', 'trigger'].includes(event.origin) ? -1 : 1));
@@ -250,6 +251,7 @@ function getTrimmedTrace(traceSize, jsTrace) {
             }
         }
     }
+    utils.debugLog(`Epsagon - After metadata trim: current trace size ${currentTraceSize}`);
     // Trimming trace events.
     if (currentTraceSize >= consts.MAX_TRACE_SIZE_BYTES) {
         for (let i = jsTrace.events.length - 1; i >= 0; i -= 1) {
@@ -264,6 +266,7 @@ function getTrimmedTrace(traceSize, jsTrace) {
             }
         }
     }
+    utils.debugLog(`Epsagon - After events trim: current trace size ${currentTraceSize}`);
     if (totalTrimmedEvents || totalTrimmedExceptions) {
         utils.debugLog(`Epsagon - Trace size is larger than maximum size, ${totalTrimmedEvents} events and ${totalTrimmedExceptions} exceptions were trimmed.`);
     }
