@@ -728,7 +728,7 @@ const CloudWatchEventsEventCreator = {
 
 const CloudWatchLogsEventCreator = {
     /**
-     * Updates an event with the appropriate fields from an AWS CloudWatch Events request
+     * Updates an event with the appropriate fields from an AWS CloudWatch Logs request
      * @param {object} request The AWS.Request object
      * @param {proto.event_pb.Event} event The event to update the data on
      */
@@ -751,7 +751,7 @@ const CloudWatchLogsEventCreator = {
     },
 
     /**
-     * Updates an event with the appropriate fields from an AWS CloudWatch Events response
+     * Updates an event with the appropriate fields from an AWS CloudWatch Logs response
      * @param {object} response The AWS.Response object
      * @param {proto.event_pb.Event} event The event to update the data on
      */
