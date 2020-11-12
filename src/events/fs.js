@@ -28,14 +28,20 @@ function handleFunctionWithoutCallback(original, startTime, fsEvent, args) {
  * @returns {Function} The wrapped function
  */
 function wrapFsWriteFileFunction(original, originalName) {
-    return function internalWrapFsWriteFileFunction(path, data, options, callback) {
+    return function internalWrapFsWriteFileFunction(file, data, options, callback) {
         let patchedCallback;
-        const fsCallback = typeof (callback || options) === 'function' && (callback || options);
         let clientRequest;
-        const { slsEvent: fsEvent, startTime } = eventInterface.initializeEvent('file_system', path, originalName, 'file_system');
+        const fileName = typeof file === 'object' ? file.toString() : file;
+        const fsCallback = typeof (callback || options) === 'function' && (callback || options);
+        const { slsEvent: fsEvent, startTime } = eventInterface.initializeEvent('file_system', fileName, originalName, 'file_system');
+
+        eventInterface.addToMetadata(fsEvent, { 'fs.file': fileName });
+        if (!!options && typeof options === 'object') {
+            eventInterface.addToMetadata(fsEvent, { options });
+        }
         if (!fsCallback) {
             return handleFunctionWithoutCallback(original, startTime, fsEvent, [
-                path,
+                fileName,
                 data,
                 options,
             ]);
@@ -49,9 +55,9 @@ function wrapFsWriteFileFunction(original, originalName) {
                 };
             });
             if (typeof callback === 'function') {
-                clientRequest = original.apply(this, [path, data, options, patchedCallback]);
+                clientRequest = original.apply(this, [file, data, options, patchedCallback]);
             } else if (typeof options === 'function') {
-                clientRequest = original.apply(this, [path, data, patchedCallback]);
+                clientRequest = original.apply(this, [file, data, patchedCallback]);
             }
             tracer.addEvent(fsEvent, responsePromise);
         } catch (err) {
@@ -60,7 +66,7 @@ function wrapFsWriteFileFunction(original, originalName) {
 
         return clientRequest || fsCallback ?
             clientRequest :
-            original.apply(this, [path, data, options, callback]);
+            original.apply(this, [file, data, options, callback]);
     };
 }
 
