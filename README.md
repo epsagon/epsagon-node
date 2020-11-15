@@ -649,6 +649,7 @@ Epsagon provides out-of-the-box instrumentation (tracing) for many popular frame
 |https               |Fully supported            |
 |http2               |Fully supported            |
 |dns                 |Fully supported            |
+|fs                  |Fully supported            |
 |aws-sdk             |`>=2.2.0`                  |
 |amazon-dax-client   |`>=1.0.2`                  |
 |@google-cloud       |`>=2.0.0`                  |
@@ -700,6 +701,7 @@ Advanced options can be configured as a parameter to the init() method or as env
 |-                  |EPSAGON_ADD_NODE_PATH      |String |-            |List of folders to looks for node_modules when patching libraries. Separated by `:`|
 |-                  |EPSAGON_AUTO_ADD_NODE_PATHS|Boolean |`false`     |Auto add node_modules sub folders to look when patching libraries.                 |
 |-                  |EPSAGON_DNS_INSTRUMENTATION|Boolean|`false`      |Whether to capture `dns` calls into the trace                                      |
+|-                  |EPSAGON_FS_INSTRUMENTATION |Boolean|`false`      |Whether to capture node `file system` calls into the trace                         |
 |-                  |EPSAGON_LOGGING_TRACING_ENABLED|Boolean|`true`      |whether to add an Epsagon ID to the logs in order to correlate traces to logs in the dashboard|
 |-                  |EPSAGON_STEPS_ID           |String|-             |The Epsagon step id from the ECS step functions state input     |
 |-                  |EPSAGON_STEPS_NUM          |String|`0`         |The step number of the ECS step functions state     |
