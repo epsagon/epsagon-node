@@ -209,6 +209,14 @@ function httpWrapper(wrappedFunction) {
                 }
             }
 
+            if (options &&
+                options.headers &&
+                options.headers.epsagonSkipResponseData &&
+                options.agent) {
+                options.agent.epsagonSkipResponseData = true;
+                delete options.headers.epsagonSkipResponseData;
+            }
+
             const agent = (
                 // eslint-disable-next-line no-underscore-dangle
                 (options && options.agent) || (options && options._defaultAgent) ||
@@ -400,12 +408,25 @@ function httpWrapper(wrappedFunction) {
                     }
                 });
 
+                const checkIfOmitData = () => {
+                    if (options) {
+                        if (options.epsagonSkipResponseData) {
+                            return true;
+                        }
+                        if (options.agent && options.agent.epsagonSkipResponseData) {
+                            return true;
+                        }
+                    }
+                    if (config.getConfig().disableHttpResponseBodyCapture) {
+                        return true;
+                    }
+
+                    return false;
+                };
+
                 clientRequest.on('response', (res) => {
                     // Listening to data only if options.epsagonSkipResponseData!=true or no options
-                    if (
-                        (!options || (options && !options.epsagonSkipResponseData)) &&
-                        !config.getConfig().disableHttpResponseBodyCapture
-                    ) {
+                    if (!checkIfOmitData()) {
                         res.on('data', chunk => addChunk(chunk, chunks));
                     }
                     res.on('end', () => {
@@ -456,6 +477,30 @@ function fetchH2Wrapper(wrappedFunc) {
     };
 }
 
+/**
+ * Flagging simple-oauth2 http requests with
+ * a flag to omit our response.on('data') because of collision
+ * @param {Function} wrappedFunc connect function
+ * @return {Function} the wrapped function
+ */
+function clientRequestWrapper(wrappedFunc) {
+    return function internalClientRequestWrapper(url, params, opts) {
+        const newOpts = opts || {};
+        if (newOpts.headers) {
+            newOpts.headers = {
+                ...opts.headers,
+                epsagonSkipResponseData: true,
+            };
+        } else {
+            newOpts.headers = {
+                epsagonSkipResponseData: true,
+            };
+        }
+        return wrappedFunc.apply(this, [url, params, newOpts]);
+    };
+}
+
+
 module.exports = {
     /**
      * Initializes the http tracer
@@ -472,6 +517,12 @@ module.exports = {
             'connect',
             fetchH2Wrapper,
             fetch => fetch.OriginPool.prototype
+        );
+        moduleUtils.patchModule(
+            'simple-oauth2/lib/client.js',
+            'request',
+            clientRequestWrapper,
+            client => client.prototype
         );
     },
 };

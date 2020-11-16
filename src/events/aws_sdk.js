@@ -725,6 +725,51 @@ const CloudWatchEventsEventCreator = {
     },
 };
 
+
+const CloudWatchLogsEventCreator = {
+    /**
+     * Updates an event with the appropriate fields from an AWS CloudWatch Logs request
+     * @param {object} request The AWS.Request object
+     * @param {proto.event_pb.Event} event The event to update the data on
+     */
+    requestHandler(request, event) {
+        const parameters = request.params || {};
+        const { operation } = request;
+        const resource = event.getResource();
+        resource.setType('logs');
+        switch (operation) {
+        case 'filterLogEvents':
+            resource.setName(parameters.logGroupName);
+            eventInterface.addToMetadata(event, {
+                'aws.cloudwatch.log_streams': request.logStreamNames,
+                'aws.cloudwatch.start_time': request.startTime,
+            });
+            break;
+        default:
+            break;
+        }
+    },
+
+    /**
+     * Updates an event with the appropriate fields from an AWS CloudWatch Logs response
+     * @param {object} response The AWS.Response object
+     * @param {proto.event_pb.Event} event The event to update the data on
+     */
+    responseHandler(response, event) {
+        switch (response.request.operation) {
+        case 'filterLogEvents':
+            eventInterface.addToMetadata(event, {
+                'aws.cloudwatch.events_count': response.data.events.length,
+                'aws.cloudwatch.searched_log_streams': response.data.searchedLogStreams.length,
+            });
+            break;
+
+        default:
+            break;
+        }
+    },
+};
+
 /**
  * a map between AWS resource names and their appropriate creator object.
  */
@@ -740,6 +785,7 @@ const specificEventCreators = {
     stepfunctions: stepFunctionsEventCreator,
     batch: batchEventCreator,
     cloudwatchevents: CloudWatchEventsEventCreator,
+    cloudwatchlogs: CloudWatchLogsEventCreator,
 };
 
 /**

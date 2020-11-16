@@ -8,6 +8,8 @@ const errorCode = require('../proto/error_code_pb.js');
 
 const MAX_QUERY_SIZE = 2048;
 const MAX_PARAMS_LENGTH = 5;
+const MAX_QUERY_ELEMENTS = 100;
+
 
 /**
  * Parse query arguments - get the callback and params
@@ -96,11 +98,21 @@ module.exports.wrapSqlQuery = function wrapSqlQuery(queryString, params, callbac
                 if (err) {
                     eventInterface.setException(dbapiEvent, err);
                 } else {
-                    let { rowCount } = res;
+                    let { rowCount, rows } = res;
                     if (!rowCount && res instanceof Array) {
                         rowCount = res.length;
+                        rows = res;
                     }
                     eventInterface.addToMetadata(dbapiEvent, { rowCount });
+                    if (rowCount && rows instanceof Array && rows.length) {
+                        if (rows.length > MAX_QUERY_ELEMENTS) {
+                            eventInterface.addToMetadata(dbapiEvent, { is_trimmed: true });
+                        }
+                        eventInterface.addToMetadata(
+                            dbapiEvent,
+                            { 'sql.rows': rows.slice(0, MAX_QUERY_ELEMENTS) }
+                        );
+                    }
                 }
 
                 resolve();

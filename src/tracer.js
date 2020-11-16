@@ -15,6 +15,7 @@ const consts = require('./consts.js');
 const ecs = require('./containers/ecs.js');
 const k8s = require('./containers/k8s.js');
 const azure = require('./containers/azure.js');
+const ec2 = require('./containers/ec2.js');
 const winstonCloudwatch = require('./events/winston_cloudwatch');
 const TraceQueue = require('./trace_queue.js');
 const { isStrongId } = require('./helpers/events');
@@ -140,6 +141,7 @@ module.exports.initTrace = function initTrace(
             azure.loadAzureMetadata((azureAdditionalConfig) => {
                 config.setConfig(Object.assign(azureAdditionalConfig, configData));
             });
+            ec2.loadEC2Metadata().catch(err => utils.debugLog(err));
         }
     } catch (err) {
         utils.debugLog('Could not extract container env data');
@@ -190,7 +192,7 @@ module.exports.restart = function restart() {
 function getTrimmedMetadata(eventMetadata, isRunner) {
     let trimmedEventMetadata;
     Object.keys(eventMetadata).forEach((eventKey) => {
-        if (!isStrongId(eventKey) && (isRunner && eventKey !== 'labels')) {
+        if (!(isStrongId(eventKey) || (isRunner && eventKey === 'labels'))) {
             if (!trimmedEventMetadata) {
                 trimmedEventMetadata = eventMetadata;
                 trimmedEventMetadata.is_trimmed = true;
@@ -199,6 +201,21 @@ function getTrimmedMetadata(eventMetadata, isRunner) {
         }
     });
     return trimmedEventMetadata;
+}
+
+
+/**
+ * Trimming trace exceptions.
+ * @param {Object} traceExceptions Trace exceptions
+ * @returns {array} array of the first exception,
+ *  total exceptions have been trimmed and the reduce size.
+ */
+function trimTraceExceptions(traceExceptions) {
+    const firstException = traceExceptions[0];
+    const totalTrimmed = traceExceptions.length - 1;
+    const reduceSize =
+    JSON.stringify(traceExceptions).length - JSON.stringify(firstException).length;
+    return [firstException, totalTrimmed, reduceSize];
 }
 
 /**
@@ -210,29 +227,43 @@ function getTrimmedMetadata(eventMetadata, isRunner) {
 function getTrimmedTrace(traceSize, jsTrace) {
     let currentTraceSize = traceSize;
     const trimmedTrace = Object.assign({}, jsTrace);
-    trimmedTrace.events = jsTrace.events.sort(event => (['runner', 'trigger'].includes(event.origin) ? -1 : 1));
+    let totalTrimmedExceptions = 0;
+    let totalTrimmedEvents = 0;
+    // Trimming trace exceptions.
+    if (trimmedTrace.exceptions.length > 1) {
+        const [firstException, totalTrimmed, reduceSize] = trimTraceExceptions(
+            trimmedTrace.exceptions
+        );
+        currentTraceSize -= reduceSize;
+        totalTrimmedExceptions = totalTrimmed;
+        trimmedTrace.exceptions = [firstException];
+    }
+    utils.debugLog(`Epsagon - Pre metadata trim: current trace size ${currentTraceSize}`);
     // Trimming trace events metadata.
-    for (let i = jsTrace.events.length - 1; i >= 0; i -= 1) {
-        const currentEvent = trimmedTrace.events[i];
-        const isRunner = currentEvent.origin === 'runner';
-        let eventMetadata = currentEvent.resource.metadata;
-        if (eventMetadata) {
-            const originalEventMetadataSize = JSON.stringify(eventMetadata).length;
-            const trimmedMetadata = getTrimmedMetadata(eventMetadata, isRunner);
-            if (trimmedMetadata) {
-                eventMetadata = trimmedMetadata;
-                const trimmedSize =
+    if (currentTraceSize >= consts.MAX_TRACE_SIZE_BYTES) {
+        trimmedTrace.events = jsTrace.events.sort(event => (['runner', 'trigger'].includes(event.origin) ? -1 : 1));
+        for (let i = jsTrace.events.length - 1; i >= 0; i -= 1) {
+            const currentEvent = trimmedTrace.events[i];
+            let eventMetadata = currentEvent.resource.metadata;
+            if (eventMetadata) {
+                const isRunner = currentEvent.origin === 'runner';
+                const originalEventMetadataSize = JSON.stringify(eventMetadata).length;
+                const trimmedMetadata = getTrimmedMetadata(eventMetadata, isRunner);
+                if (trimmedMetadata) {
+                    eventMetadata = trimmedMetadata;
+                    const trimmedSize =
                     originalEventMetadataSize - JSON.stringify(trimmedMetadata).length;
-                currentTraceSize -= trimmedSize;
-                if (currentTraceSize < consts.MAX_TRACE_SIZE_BYTES) {
-                    break;
+                    currentTraceSize -= trimmedSize;
+                    if (currentTraceSize < consts.MAX_TRACE_SIZE_BYTES) {
+                        break;
+                    }
                 }
             }
         }
     }
+    utils.debugLog(`Epsagon - After metadata trim: current trace size ${currentTraceSize}`);
     // Trimming trace events.
     if (currentTraceSize >= consts.MAX_TRACE_SIZE_BYTES) {
-        let totalTrimmedEvents = 0;
         for (let i = jsTrace.events.length - 1; i >= 0; i -= 1) {
             const event = trimmedTrace.events[i];
             if (!['runner', 'trigger'].includes(event.origin)) {
@@ -244,9 +275,10 @@ function getTrimmedTrace(traceSize, jsTrace) {
                 }
             }
         }
-        if (totalTrimmedEvents) {
-            utils.debugLog(`Epsagon - Trace size is larger than maximum size, ${totalTrimmedEvents} events was trimmed.`);
-        }
+    }
+    utils.debugLog(`Epsagon - After events trim: current trace size ${currentTraceSize}`);
+    if (totalTrimmedEvents || totalTrimmedExceptions) {
+        utils.debugLog(`Epsagon - Trace size is larger than maximum size, ${totalTrimmedEvents} events and ${totalTrimmedExceptions} exceptions were trimmed.`);
     }
     return trimmedTrace;
 }
@@ -303,6 +335,7 @@ function sendCurrentTrace(traceSender) {
     ecs.addECSMetadata(tracerObj.currRunner);
     k8s.addK8sMetadata(tracerObj.currRunner);
     azure.addAzureMetadata(tracerObj.currRunner);
+    ec2.addEC2Metadata(tracerObj.currRunner);
 
     // Check if got error events
     if (sendOnlyErrors) {
@@ -436,17 +469,18 @@ module.exports.filterTrace = function filterTrace(traceObject, ignoredKeys) {
             return obj;
         }
 
-        const keys = Object
+        const unFilteredKeys = Object
             .keys(obj)
             .filter(isNotIgnored);
+        const maskedKeys = Object.keys(obj).filter(k => !isNotIgnored(k));
 
-        const primitive = keys.filter(k => !isObject(obj[k]) && !isString(obj[k]));
-        const objects = keys
+        const primitive = unFilteredKeys.filter(k => !isObject(obj[k]) && !isString(obj[k]));
+        const objects = unFilteredKeys
             .filter(k => isObject(obj[k]))
             .map(k => ({ [k]: filterObject(obj[k]) }));
 
         // trying to JSON load strings to filter sensitive data
-        keys.filter(k => isString(obj[k])).forEach((k) => {
+        unFilteredKeys.filter(k => isString(obj[k])).forEach((k) => {
             try {
                 const subObj = JSON.parse(obj[k]);
                 if (subObj && isObject(subObj)) {
@@ -460,6 +494,7 @@ module.exports.filterTrace = function filterTrace(traceObject, ignoredKeys) {
         });
 
         return Object.assign({},
+            maskedKeys.reduce((sum, key) => Object.assign({}, sum, { [key]: '****' }), {}),
             primitive.reduce((sum, key) => Object.assign({}, sum, { [key]: obj[key] }), {}),
             objects.reduce((sum, value) => Object.assign({}, sum, value), {}));
     }
@@ -616,6 +651,19 @@ module.exports.setError = function setRunnerError(err) {
         return;
     }
     eventInterface.setException(tracerObj.currRunner, err);
+};
+
+/**
+ * Set runner as an warning.
+ * @param {Error} err error data
+ */
+module.exports.setWarning = function setRunnerWarning(err) {
+    const tracerObj = module.exports.getTrace();
+    if (!tracerObj || !tracerObj.currRunner) {
+        utils.debugLog('Failed to setWarning without an active tracer');
+        return;
+    }
+    eventInterface.setException(tracerObj.currRunner, err, true, true);
 };
 
 /**
