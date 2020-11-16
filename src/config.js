@@ -44,6 +44,14 @@ const config = {
     decodeHTTP: (process.env.EPSAGON_DECODE_HTTP || 'TRUE').toUpperCase() === 'TRUE',
     disableHttpResponseBodyCapture: (process.env.EPSAGON_DISABLE_HTTP_RESPONSE || '').toUpperCase() === 'TRUE',
     loggingTracingEnabled: (process.env.EPSAGON_LOGGING_TRACING_ENABLED || (!utils.isLambdaEnv).toString()).toUpperCase() === 'TRUE',
+    sendBatch: (process.env.EPSAGON_SEND_BATCH || 'FALSE').toUpperCase() === 'TRUE',
+    batchSize: (Number(process.env.EPSAGON_BATCH_SIZE) || consts.DEFAULT_BATCH_SIZE),
+    maxTraceWait: (Number(process.env.EPSAGON_MAX_TRACE_WAIT) ||
+     consts.MAX_TRACE_WAIT), // miliseconds
+    maxBatchSizeBytes: consts.BATCH_SIZE_BYTES_HARD_LIMIT,
+    maxQueueSizeBytes: consts.QUEUE_SIZE_BYTES_HARD_LIMIT,
+
+
     /**
      * get isEpsagonPatchDisabled
      * @return {boolean} True if DISABLE_EPSAGON or DISABLE_EPSAGON_PATCH are set to TRUE, false
@@ -176,6 +184,33 @@ module.exports.setConfig = function setConfig(configData) {
     if (Number(configData.sendTimeout)) { // we do not allow 0 as a timeout
         config.sendTimeout = Number(configData.sendTimeout);
     }
+
+    if (typeof configData.sendBatch === 'boolean') {
+        config.sendBatch = configData.sendBatch;
+    }
+
+    if (Number(configData.batchSize)) {
+        config.batchSize = Number(configData.batchSize);
+    }
+    if (Number(configData.maxTraceWait)) {
+        config.maxTraceWait = Number(configData.maxTraceWait);
+    }
+    if (Number(configData.maxBatchSizeBytes)) {
+        if (Number(configData.maxBatchSizeBytes) > consts.QUEUE_SIZE_BYTES_HARD_LIMIT) {
+            utils.debugLog(`User configured maxBatchSizeBytes exceeded batch size hard limit of ${consts.BATCH_SIZE_BYTES_HARD_LIMIT} Bytes`);
+        } else {
+            config.maxBatchSizeBytes = Number(configData.maxBatchSizeBytes);
+        }
+    }
+
+    if (Number(configData.maxQueueSizeBytes)) {
+        if (Number(configData.maxQueueSizeBytes) > consts.QUEUE_SIZE_BYTES_HARD_LIMIT) {
+            utils.debugLog(`User configured maxQueueSizeBytes exceeded queue size hard limit of ${consts.QUEUE_SIZE_BYTES_HARD_LIMIT} Bytes`);
+        } else {
+            config.maxQueueSizeBytes = Number(configData.maxQueueSizeBytes);
+        }
+    }
+
 
     if (configData.labels) {
         config.labels = utils.flatten([...configData.labels].reduce((labels, label) => {

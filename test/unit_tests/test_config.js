@@ -12,6 +12,9 @@ describe('tracer config tests', () => {
         traceCollectorURL: consts.TRACE_COLLECTOR_URL,
         ignoredKeys: [],
         sendTimeout: 200,
+        sendBatch: false,
+        maxBatchSizeBytes: consts.BATCH_SIZE_BYTES_HARD_LIMIT,
+        maxQueueSizeBytes: consts.QUEUE_SIZE_BYTES_HARD_LIMIT,
     };
 
 
@@ -20,6 +23,9 @@ describe('tracer config tests', () => {
     }
 
     beforeEach(() => {
+        resetConfig();
+    });
+    afterEach(() => {
         resetConfig();
     });
 
@@ -97,5 +103,66 @@ describe('tracer config tests', () => {
             // checking the old value did not change
             expect(config.getConfig().sendTimeout).to.be.equal(Number(sendTimeoutString));
         });
+    });
+
+
+    it('setConfig: set custom maxBatchSizeBytes', () => {
+        const maxBatchSizeBytes = 10;
+        config.setConfig({ maxBatchSizeBytes });
+        expect(config.getConfig().maxBatchSizeBytes).to.be.equal(maxBatchSizeBytes);
+
+        const maxBatchSizeBytesString = '10';
+        config.setConfig({ maxBatchSizeBytes: maxBatchSizeBytesString });
+        expect(config.getConfig().maxBatchSizeBytes).to.be.equal(Number(maxBatchSizeBytesString));
+
+        const invalidmaxBatchSizeBytesStrings = ['1200.1.1', 'affewfew', '4.4.a', '234a', '', null, undefined, 0];
+        invalidmaxBatchSizeBytesStrings.forEach((invalidmaxBatchSizeBytesString) => {
+            config.setConfig({ maxBatchSizeBytes: invalidmaxBatchSizeBytesString });
+            // checking the old value did not change
+            expect(config.getConfig().maxBatchSizeBytes)
+                .to.be.equal(Number(maxBatchSizeBytesString));
+        });
+    });
+
+    it('setConfig: set custom maxQueueSizeBytes', () => {
+        const maxQueueSizeBytes = 10;
+        config.setConfig({ maxQueueSizeBytes });
+        expect(config.getConfig().maxQueueSizeBytes).to.be.equal(maxQueueSizeBytes);
+
+        const maxQueueSizeBytesString = '10';
+        config.setConfig({ maxQueueSizeBytes: maxQueueSizeBytesString });
+        expect(config.getConfig().maxQueueSizeBytes).to.be.equal(Number(maxQueueSizeBytesString));
+
+        const invalidmaxQueueSizeBytesStrings = ['1200.1.1', 'affewfew', '4.4.a', '234a', '', null, undefined, 0];
+        invalidmaxQueueSizeBytesStrings.forEach((invalidmaxQueueSizeBytesString) => {
+            config.setConfig({ maxQueueSizeBytes: invalidmaxQueueSizeBytesString });
+            // checking the old value did not change
+            expect(config.getConfig().maxQueueSizeBytes)
+                .to.be.equal(Number(maxQueueSizeBytesString));
+        });
+    });
+
+    it('setConfig: set custom batchSize', () => {
+        const batchSize = 10;
+        config.setConfig({ batchSize });
+        expect(config.getConfig().batchSize).to.be.equal(batchSize);
+
+        const batchSizeString = '10';
+        config.setConfig({ batchSize: batchSizeString });
+        expect(config.getConfig().batchSize).to.be.equal(Number(batchSizeString));
+
+        const invalidbatchSizeStrings = ['1200.1.1', 'affewfew', '4.4.a', '234a', '', null, undefined, 0];
+        invalidbatchSizeStrings.forEach((invalidbatchSizeString) => {
+            config.setConfig({ batchSize: invalidbatchSizeString });
+            // checking the old value did not change
+            expect(config.getConfig().batchSize).to.be.equal(Number(batchSizeString));
+        });
+    });
+
+
+    it('setConfig: set custom batch send', () => {
+        const sendBatch = true;
+        config.setConfig({ sendBatch });
+        expect(config.getConfig().sendBatch).to.be.equal(true);
     });
 });

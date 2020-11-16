@@ -17,12 +17,19 @@ const k8s = require('./containers/k8s.js');
 const azure = require('./containers/azure.js');
 const ec2 = require('./containers/ec2.js');
 const winstonCloudwatch = require('./events/winston_cloudwatch');
+const TraceQueue = require('./trace_queue.js');
 const { isStrongId } = require('./helpers/events');
+
 
 /**
  * Returns a function to get the relevant tracer.
  */
 module.exports.getTrace = () => {};
+
+/**
+ * Returns a trace queue singletone.
+ */
+const traceQueue = TraceQueue.getInstance();
 
 /**
  * Creates a new Trace object
@@ -140,6 +147,7 @@ module.exports.initTrace = function initTrace(
         utils.debugLog('Could not extract container env data');
     }
     config.setConfig(configData);
+    traceQueue.updateConfig();
 };
 
 
@@ -562,10 +570,13 @@ module.exports.sendTrace = function sendTrace(runnerUpdateFunc) {
     }
 
     addLabelsToTrace();
-    utils.debugLog('Sending trace async');
+    utils.debugLog('Sending trace async...');
     return Promise.all(tracerObj.pendingEvents.values()).then(() => {
         // Setting runner's duration.
         runnerUpdateFunc();
+        if (config.getConfig().sendBatch) {
+            return sendCurrentTrace(traceObject => traceQueue.push(traceObject));
+        }
         return sendCurrentTrace(traceObject => module.exports.postTrace(traceObject));
     });
 };

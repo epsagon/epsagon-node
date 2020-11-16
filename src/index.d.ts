@@ -16,6 +16,10 @@ declare module 'epsagon' {
     decodeHTTP?: boolean
     disableHttpResponseBodyCapture?: boolean
     loggingTracingEnabled?: boolean
+    sendBatch?: boolean
+    maxTraceWait?: number
+    batchSize?: number
+    maxBatchSizeBytes?: number
   }): void
   export function label(key: string, value: string): void
   export function setError(error: Error): void
