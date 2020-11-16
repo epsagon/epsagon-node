@@ -28,6 +28,7 @@ const winstonPatcher = require('./events/winston.js');
 const amqplibPatcher = require('./events/amqplib.js');
 const amqpPatcher = require('./events/amqp.js');
 const ldapPatcher = require('./events/ldap.js');
+const fs = require('./events/fs.js');
 
 
 /**
@@ -71,5 +72,6 @@ if (!config.getConfig().isEpsagonPatchDisabled) {
         amqplibPatcher,
         amqpPatcher,
         ldapPatcher,
+        fs,
     ].forEach(patch);
 }
