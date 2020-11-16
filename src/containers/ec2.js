@@ -28,11 +28,13 @@ module.exports.loadEC2Metadata = function loadEC2Metadata() {
             timeout: EPSAGON_EC2_REQUEST_TIMEOUT,
             cancelToken: source.token,
         }).then((response) => {
-            utils.debugLog(`Received response for ${attribute}: ${response.data}`);
+            utils.debugLog(`Received response for ${attribute}`);
             if (response.status === 200) {
+                const attributeKey = attribute.replace('-', '_');
+                const attributeData = response.data;
                 if (!currentEC2Labels) currentEC2Labels = {};
-                currentEC2Labels[`aws.ec2.${attribute}`] = response.data;
-                utils.debugLog(`Received ${attribute}: ${attribute}`);
+                currentEC2Labels[`aws.ec2.${attributeKey}`] = attributeData;
+                utils.debugLog(`${attributeKey} stored with: ${attributeData}`);
             }
             return attribute;
         })
