@@ -15,6 +15,7 @@ const consts = require('./consts.js');
 const ecs = require('./containers/ecs.js');
 const k8s = require('./containers/k8s.js');
 const azure = require('./containers/azure.js');
+const ec2 = require('./containers/ec2.js');
 const winstonCloudwatch = require('./events/winston_cloudwatch');
 const { isStrongId } = require('./helpers/events');
 
@@ -133,6 +134,7 @@ module.exports.initTrace = function initTrace(
             azure.loadAzureMetadata((azureAdditionalConfig) => {
                 config.setConfig(Object.assign(azureAdditionalConfig, configData));
             });
+            ec2.loadEC2Metadata().catch(err => utils.debugLog(err));
         }
     } catch (err) {
         utils.debugLog('Could not extract container env data');
@@ -325,6 +327,7 @@ function sendCurrentTrace(traceSender) {
     ecs.addECSMetadata(tracerObj.currRunner);
     k8s.addK8sMetadata(tracerObj.currRunner);
     azure.addAzureMetadata(tracerObj.currRunner);
+    ec2.addEC2Metadata(tracerObj.currRunner);
 
     // Check if got error events
     if (sendOnlyErrors) {
