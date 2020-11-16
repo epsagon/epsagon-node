@@ -11,24 +11,7 @@ chai.use(chaiAsPromised);
 const traceQueue = TraceQueue.getInstance();
 
 describe('trace queue tests', () => {
-    // const DEFAULT_CONFIG = {
-    //     token: '',
-    //     appName: 'Application',
-    //     metadataOnly: true,
-    //     useSSL: true,
-    //     traceCollectorURL: consts.TRACE_COLLECTOR_URL,
-    //     ignoredKeys: [],
-    //     sendTimeout: 200,
-    //     sendBatch: false,
-    // };
-
-
-    // function resetConfig() {
-    //     Object.assign(config.getConfig(), DEFAULT_CONFIG);
-    // }
-
     beforeEach(() => {
-        // resetConfig();
         traceQueue.initQueue();
         traceQueue.batchSender = function batchSender(batch) {
             console.log(`Sending batch: ${batch.map(trace => trace)}`);

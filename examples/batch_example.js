@@ -21,10 +21,6 @@ epsagon.init({
   batchSize: 5000,
 });
 
-// function timeout(ms) {
-//     return new Promise(resolve => setTimeout(resolve, ms));
-// }
-
 function doRequest(options) {
     return new Promise ((resolve, reject) => {
       let req = http.request(options);
