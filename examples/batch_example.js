@@ -10,7 +10,7 @@ epsagon.init({
     sendBatch: true,
     batchSize: 5000,
     maxBatchSizeBytes: 5000000,
-    maxTraceWait: 5000
+    maxTraceWait: 5000 // not in use
 });
 
 epsagon.init({

@@ -1,6 +1,6 @@
 {
   "name": "epsagon",
-  "version": "1.88.1-beta.2",
+  "version": "0.0.0-development",
   "description": "Epsagon Instrumentation for Node.js",
   "keywords": [
     "serverless",
