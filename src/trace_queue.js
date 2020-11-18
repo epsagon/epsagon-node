@@ -109,7 +109,7 @@ class TraceQueue extends EventEmitter.EventEmitter {
 
         this.on('batchReleased', async function batchReleased(batch) {
             utils.debugLog('[QUEUE] Sending batch...');
-            const batchJSON = batch.map(trace => trace.traceJSON);
+            const batchJSON = batch.map(trace => trace.json);
             this.batchSender(batchJSON);
         });
         process.on('exit', function releaseAndClearQueue() {
