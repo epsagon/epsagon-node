@@ -4,21 +4,12 @@ const { Console } = require('console');
 
 
 epsagon.init({
-    token: process.env.EPSAGON_TOKEN,
-    appName: 'batch-test',
-    metadataOnly: false,
-    sendBatch: true,
-    batchSize: 5000,
-    maxBatchSizeBytes: 5000000,
-    maxTraceWait: 5000 // not in use
-});
-
-epsagon.init({
   token: process.env.EPSAGON_TOKEN,
   appName: 'batch-test',
   metadataOnly: false,
   sendBatch: true,
-  batchSize: 5000,
+  batchSize: 5,
+  maxBatchSizeBytes: 5000000,
 });
 
 function doRequest(options) {
