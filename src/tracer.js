@@ -316,7 +316,7 @@ function addLabelsToTrace() {
 function sendCurrentTrace(traceSender) {
     const tracerObj = module.exports.getTrace();
 
-    const { sendOnlyErrors, ignoredKeys } = config.getConfig();
+    const { sendOnlyErrors, ignoredKeys, removeIgnoredKeys } = config.getConfig();
     if (!tracerObj) {
         return Promise.resolve();
     }
@@ -396,7 +396,7 @@ function sendCurrentTrace(traceSender) {
     traceJson = ignoredKeys &&
         Array.isArray(ignoredKeys) &&
         ignoredKeys.length > 0 ?
-        module.exports.filterTrace(traceJson, ignoredKeys) : traceJson;
+        module.exports.filterTrace(traceJson, ignoredKeys, removeIgnoredKeys) : traceJson;
 
     let stringifyTraceJson;
     try {
@@ -423,9 +423,10 @@ function sendCurrentTrace(traceSender) {
  * Filter a trace to exclude all unwanted keys
  * @param {Object} traceObject  the trace to filter
  * @param {Array<String>} ignoredKeys   keys to ignore
+ * @param {Boolean} removeIgnoredKeys Whether to remove keys instead of masking
  * @returns {Object}  filtered trace
  */
-module.exports.filterTrace = function filterTrace(traceObject, ignoredKeys) {
+module.exports.filterTrace = function filterTrace(traceObject, ignoredKeys, removeIgnoredKeys) {
     /**
      * Check if a given param is an object
      * @param {*} x   param to check
@@ -494,7 +495,7 @@ module.exports.filterTrace = function filterTrace(traceObject, ignoredKeys) {
         });
 
         return Object.assign({},
-            maskedKeys.reduce((sum, key) => Object.assign({}, sum, { [key]: '****' }), {}),
+            !removeIgnoredKeys && maskedKeys.reduce((sum, key) => Object.assign({}, sum, { [key]: '****' }), {}),
             primitive.reduce((sum, key) => Object.assign({}, sum, { [key]: obj[key] }), {}),
             objects.reduce((sum, value) => Object.assign({}, sum, value), {}));
     }
