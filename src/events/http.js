@@ -430,7 +430,8 @@ function httpWrapper(wrappedFunction) {
                         res.on('data', chunk => addChunk(chunk, chunks));
                     }
                     res.on('end', () => {
-                        setJsonPayload(httpEvent, 'response_body', Buffer.concat(chunks), res.headers['content-encoding']);
+                        const contentEncoding = res.headers && res.headers['content-encoding'];
+                        setJsonPayload(httpEvent, 'response_body', Buffer.concat(chunks), contentEncoding);
                         resolveHttpPromise(httpEvent, resolve, startTime);
                     });
                 }, 'skip'); // skip is for epsagonMarker

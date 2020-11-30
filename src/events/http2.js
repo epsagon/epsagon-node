@@ -127,7 +127,8 @@ function httpWrapper(wrappedFunction, authority) {
                 });
 
                 clientRequest.once('close', () => {
-                    setJsonPayload(httpEvent, 'response_body', Buffer.concat(chunks), responseHeaders['content-encoding']);
+                    const contentEncoding = responseHeaders && responseHeaders['content-encoding'];
+                    setJsonPayload(httpEvent, 'response_body', Buffer.concat(chunks), contentEncoding);
                     resolveHttpPromise(httpEvent, resolve, startTime);
                 });
 

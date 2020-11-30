@@ -692,7 +692,7 @@ const CloudWatchEventsEventCreator = {
         resource.setType('events');
         switch (operation) {
         case 'putEvents':
-            resource.setName(parameters.EventBusName || 'CloudWatch Events');
+            resource.setName(entry.EventBusName || 'CloudWatch Events');
             eventInterface.addToMetadata(event, {
                 'aws.cloudwatch.detail_type': entry.DetailType,
                 'aws.cloudwatch.resources': entry.Resources,
