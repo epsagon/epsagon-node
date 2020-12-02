@@ -79,6 +79,20 @@ module.exports.addEvent = function addEvent(event, promise) {
     if (!tracerObj) {
         return;
     }
+    this.addPendingEvent(event, promise);
+    tracerObj.trace.addEvent(event);
+};
+
+/**
+ * Add promise event result to pendingEvents map.
+ * @param {proto.event_pb.Event} event The event
+ * @param {Promise} [promise] A promise that resolves when the event handling is Done
+ */
+module.exports.addPendingEvent = function addPendingEvent(event, promise) {
+    const tracerObj = module.exports.getTrace();
+    if (!tracerObj) {
+        return;
+    }
     if (utils.isPromise(promise)) {
         tracerObj.pendingEvents.set(
             event,
@@ -87,8 +101,6 @@ module.exports.addEvent = function addEvent(event, promise) {
             }))
         );
     }
-
-    tracerObj.trace.addEvent(event);
 };
 
 /**
