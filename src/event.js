@@ -132,6 +132,7 @@ module.exports.initializeEvent = function initializeEvent(resourceType, name, op
         errorCode.ErrorCode.OK,
     ]);
     slsEvent.setResource(resource);
+    if (origin === 'runner') this.createTraceIdMetadata(slsEvent);
     return { slsEvent, startTime };
 };
 
