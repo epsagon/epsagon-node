@@ -785,6 +785,7 @@ const specificEventCreators = {
     stepfunctions: stepFunctionsEventCreator,
     batch: batchEventCreator,
     cloudwatchevents: CloudWatchEventsEventCreator,
+    eventbridge: CloudWatchEventsEventCreator,
     cloudwatchlogs: CloudWatchLogsEventCreator,
 };
 
