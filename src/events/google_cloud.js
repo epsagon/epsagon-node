@@ -48,7 +48,9 @@ function bigQueryWrapper(wrappedFunction) {
         let jsonMetadata = {};
 
         if (reqOpts.json !== undefined) {
-            eventName = reqOpts.json.jobReference.jobId;
+            if (reqOpts.json.jobReference) {
+                eventName = reqOpts.json.jobReference.jobId;
+            }
             jsonMetadata = reqOpts.json;
         } else if (reqOpts.uri !== undefined) {
             // eslint-disable-next-line
