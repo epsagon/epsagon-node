@@ -706,6 +706,7 @@ Advanced options can be configured as a parameter to the init() method or as env
 |-                  |EPSAGON_LOGGING_TRACING_ENABLED|Boolean|`true`      |whether to add an Epsagon ID to the logs in order to correlate traces to logs in the dashboard|
 |-                  |EPSAGON_STEPS_ID           |String|-             |The Epsagon step id from the ECS step functions state input     |
 |-                  |EPSAGON_STEPS_NUM          |String|`0`         |The step number of the ECS step functions state     |
+|-                  |EPSAGON_ALLOW_NO_ROUTE|Boolean|`false`      |Whether to capture non-matched route requests in Express.js                                      |
 |-                       |EPSAGON_LAMBDA_TIMEOUT_THRESHOLD_MS          |Integer|`200`      |The threshold in milliseconds to send the trace before a Lambda timeout occurs                                     |
 
 
