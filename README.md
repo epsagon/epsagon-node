@@ -664,6 +664,7 @@ Epsagon provides out-of-the-box instrumentation (tracing) for many popular frame
 |amqp                |`>=0.2.0`                  |
 |redis               |`>=0.12.1`                 |
 |ioredis             |`>=4.0.0`                  |
+|cassandra-driver    |`>=3.3.0`                  |
 |mqtt                |`>=2.13.1`                 |
 |nats                |`>=1.4.0`                  |
 |openwhisk           |`>=3.0.0`                  |
