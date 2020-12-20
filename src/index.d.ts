@@ -10,6 +10,7 @@ declare module 'epsagon' {
     traceCollectorURL?: string
     isEpsagonDisabled?: boolean
     urlPatternsToIgnore?: string[]
+    ignoredKeys?: string[]
     labels?: string[]
     sendOnlyErrors?: boolean
     sendTimeout?: number
