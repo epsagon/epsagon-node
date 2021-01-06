@@ -10,9 +10,7 @@ const { getConfig } = require('../config.js');
 const awsLambdaTrigger = require('../triggers/aws_lambda.js');
 const eventInterface = require('../event.js');
 const lambdaRunner = require('../runners/aws_lambda.js');
-const {
-    STEP_ID_NAME, MAX_VALUE_CHARS, EPSAGON_EVENT_ID_KEY,
-} = require('../consts.js');
+const { STEP_ID_NAME, MAX_VALUE_CHARS, EPSAGON_EVENT_ID_KEY } = require('../consts.js');
 
 const FAILED_TO_SERIALIZE_MESSAGE = 'Unable to stringify response body as json';
 const TIMEOUT_WINDOW = parseInt(process.env.EPSAGON_LAMBDA_TIMEOUT_THRESHOLD_MS || 200, 10);
@@ -98,7 +96,6 @@ function baseLambdaWrapper(
         const runnerSendUpdateHandler = () => {
             runner.setDuration(utils.createDurationTimestamp(startTime));
         };
-
 
         // Hook when the event loop is empty, in case callback is not called.
         // Based on the way AWS Lambda implements it
@@ -309,8 +306,6 @@ function baseLambdaWrapper(
                         return returnValue;
                     });
             }
-
-
             return result;
         } catch (err) {
             patchedContext.fail(err);
