@@ -39,6 +39,8 @@ module.exports.BATCH_SIZE_BYTES_HARD_LIMIT = 10 * 64 * 1024; // 650KB
 
 module.exports.QUEUE_SIZE_BYTES_HARD_LIMIT = 10 * 1024 * 1024; // 10MB
 
+module.exports.MAX_PROCESS_LISTENERS = 0;
+
 
 // Key name to inject epsagon correlation ID
 module.exports.EPSAGON_HEADER = 'epsagon-trace-id';
