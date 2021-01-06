@@ -100,6 +100,7 @@ describe('lambdaWrapper tests', () => {
             done() {},
         };
         consts.COLD_START = true;
+        process.setMaxListeners(0);
     });
 
     afterEach(() => {
