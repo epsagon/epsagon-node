@@ -11,7 +11,7 @@ const awsLambdaTrigger = require('../triggers/aws_lambda.js');
 const eventInterface = require('../event.js');
 const lambdaRunner = require('../runners/aws_lambda.js');
 const {
-    STEP_ID_NAME, MAX_VALUE_CHARS, EPSAGON_EVENT_ID_KEY, MAX_PROCESS_LISTENERS,
+    STEP_ID_NAME, MAX_VALUE_CHARS, EPSAGON_EVENT_ID_KEY,
 } = require('../consts.js');
 
 const FAILED_TO_SERIALIZE_MESSAGE = 'Unable to stringify response body as json';
@@ -99,8 +99,6 @@ function baseLambdaWrapper(
             runner.setDuration(utils.createDurationTimestamp(startTime));
         };
 
-        // Maximum amount of listeners on this single-threaded node process
-        process.setMaxListeners(MAX_PROCESS_LISTENERS);
 
         // Hook when the event loop is empty, in case callback is not called.
         // Based on the way AWS Lambda implements it
