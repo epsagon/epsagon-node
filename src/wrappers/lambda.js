@@ -10,7 +10,9 @@ const { getConfig } = require('../config.js');
 const awsLambdaTrigger = require('../triggers/aws_lambda.js');
 const eventInterface = require('../event.js');
 const lambdaRunner = require('../runners/aws_lambda.js');
-const { STEP_ID_NAME, MAX_VALUE_CHARS, EPSAGON_EVENT_ID_KEY, MAX_PROCESS_LISTENERS } = require('../consts.js');
+const {
+    STEP_ID_NAME, MAX_VALUE_CHARS, EPSAGON_EVENT_ID_KEY, MAX_PROCESS_LISTENERS,
+} = require('../consts.js');
 
 const FAILED_TO_SERIALIZE_MESSAGE = 'Unable to stringify response body as json';
 const TIMEOUT_WINDOW = parseInt(process.env.EPSAGON_LAMBDA_TIMEOUT_THRESHOLD_MS || 200, 10);
