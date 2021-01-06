@@ -10,7 +10,7 @@ const { getConfig } = require('../config.js');
 const awsLambdaTrigger = require('../triggers/aws_lambda.js');
 const eventInterface = require('../event.js');
 const lambdaRunner = require('../runners/aws_lambda.js');
-const { STEP_ID_NAME, MAX_VALUE_CHARS, EPSAGON_EVENT_ID_KEY } = require('../consts.js');
+const { STEP_ID_NAME, MAX_VALUE_CHARS, EPSAGON_EVENT_ID_KEY, MAX_PROCESS_LISTENERS } = require('../consts.js');
 
 const FAILED_TO_SERIALIZE_MESSAGE = 'Unable to stringify response body as json';
 const TIMEOUT_WINDOW = parseInt(process.env.EPSAGON_LAMBDA_TIMEOUT_THRESHOLD_MS || 200, 10);
@@ -97,6 +97,9 @@ function baseLambdaWrapper(
             runner.setDuration(utils.createDurationTimestamp(startTime));
         };
 
+        // Maximum amount of listeners on this single-threaded node process
+        process.setMaxListeners(MAX_PROCESS_LISTENERS);
+
         // Hook when the event loop is empty, in case callback is not called.
         // Based on the way AWS Lambda implements it
         // This is done so we will send a trace even if callback is not called
@@ -111,6 +114,17 @@ function baseLambdaWrapper(
                 process._events.beforeExit = originalBeforeExit;
             });
         };
+        // catch an unhandled promise rejection within the user's code
+        process.once('unhandledRejection', (reason) => {
+            utils.debugLog('Unhandled Promise Rejection caught. Please handle the rejected promise');
+            const rejectedError = {
+                name: 'UnhandledPromiseRejectionError',
+                message: reason || '',
+                stack: '',
+            };
+            eventInterface.setException(runner, rejectedError, false);
+        });
+
 
         const handleUserExecutionDone = (error, result, sendSync) => {
             clearTimeout(timeoutHandler);
@@ -295,6 +309,8 @@ function baseLambdaWrapper(
                         return returnValue;
                     });
             }
+
+
             return result;
         } catch (err) {
             patchedContext.fail(err);
