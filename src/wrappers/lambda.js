@@ -111,6 +111,17 @@ function baseLambdaWrapper(
                 process._events.beforeExit = originalBeforeExit;
             });
         };
+        // catch an unhandled promise rejection within the user's code
+        process.once('unhandledRejection', (reason) => {
+            utils.debugLog('Unhandled Promise Rejection caught. Please handle the rejected promise');
+            const rejectedError = {
+                name: 'UnhandledPromiseRejectionError',
+                message: reason || '',
+                stack: '',
+            };
+            eventInterface.setException(runner, rejectedError, false);
+        });
+
 
         const handleUserExecutionDone = (error, result, sendSync) => {
             clearTimeout(timeoutHandler);
