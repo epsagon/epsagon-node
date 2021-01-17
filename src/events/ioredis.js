@@ -39,24 +39,29 @@ function redisClientWrapper(wrappedFunction) {
 
             dbapiEvent.setResource(resource);
 
+            const commandArgs = Array.isArray(command.args) ? command.args : [];
+
             eventInterface.addToMetadata(dbapiEvent, {
                 'Redis Host': host,
                 'Redis Port': this.options.port,
                 'Redis DB Index': this.options.db || '0',
             }, {
-                'Command Arguments': command.args,
+                'Command Arguments': commandArgs.map(arg => arg.toString()),
             });
 
 
             const responsePromise = new Promise((resolve) => {
-                command.promise.then().catch((err) => {
+                command.promise.then((result) => {
+                    eventInterface.addToMetadata(dbapiEvent, {
+                        'redis.response': result,
+                    });
+                }).catch((err) => {
                     eventInterface.setException(dbapiEvent, err);
                 }).finally(() => {
                     dbapiEvent.setDuration(utils.createDurationTimestamp(startTime));
                     resolve();
                 });
             });
-
             tracer.addEvent(dbapiEvent, responsePromise);
         } catch (error) {
             tracer.addException(error);
