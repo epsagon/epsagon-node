@@ -45,7 +45,7 @@ const config = {
     decodeHTTP: (process.env.EPSAGON_DECODE_HTTP || 'TRUE').toUpperCase() === 'TRUE',
     disableHttpResponseBodyCapture: (process.env.EPSAGON_DISABLE_HTTP_RESPONSE || '').toUpperCase() === 'TRUE',
     loggingTracingEnabled: (process.env.EPSAGON_LOGGING_TRACING_ENABLED || (!utils.isLambdaEnv).toString()).toUpperCase() === 'TRUE',
-    sendBatch: (process.env.EPSAGON_SEND_BATCH || 'FALSE').toUpperCase() === 'TRUE',
+    sendBatch: (process.env.EPSAGON_SEND_BATCH || 'TRUE').toUpperCase() === 'TRUE',
     batchSize: (Number(process.env.EPSAGON_BATCH_SIZE) || consts.DEFAULT_BATCH_SIZE),
     maxTraceWait: (Number(process.env.EPSAGON_MAX_TRACE_WAIT) ||
      consts.MAX_TRACE_WAIT), // miliseconds
