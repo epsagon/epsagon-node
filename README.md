@@ -42,6 +42,7 @@ npm install epsagon
 ```
 
 ## Usage
+**Important: Epsagon is activated and instruments the supported libraries once the module is imported.**
 
 ### Auto-tracing
 
