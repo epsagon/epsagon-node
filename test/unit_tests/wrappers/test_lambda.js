@@ -100,7 +100,6 @@ describe('lambdaWrapper tests', () => {
             done() {},
         };
         consts.COLD_START = true;
-        process.setMaxListeners(0);
     });
 
     afterEach(() => {
@@ -276,17 +275,6 @@ describe('lambdaWrapper tests', () => {
             expect(this.setExceptionStub.callCount).to.equal(1);
             done();
         }, 1);
-    });
-
-    it('lambdaWrapper: catch unhandled rejected promise', (done) => {
-        this.stubFunction = sinon.spy(() => {
-            // eslint-disable-next-line prefer-promise-reject-errors,no-new
-            new Promise((_, reject) => reject('Unauthorized'));
-            return 'success';
-        });
-        this.wrappedStub = lambdaWrapper.lambdaWrapper(this.stubFunction);
-        expect(this.wrappedStub({}, null, this.callbackStub)).to.equal('success');
-        done();
     });
 
     it('lambdaWrapper: update COLD_START value', () => {
