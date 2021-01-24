@@ -27,7 +27,8 @@ module.exports.MAX_LABEL_SIZE = 10 * 1024;
 
 module.exports.MAX_HTTP_VALUE_SIZE = 10 * 1024;
 
-module.exports.MAX_TRACE_SIZE_BYTES = 64 * 1024;
+module.exports.MAX_TRACE_SIZE_BYTES = process.env.EPSAGON_MAX_TRACE_SIZE ?
+    parseInt(process.env.EPSAGON_MAX_TRACE_SIZE, 10) : 64 * 1024;
 
 module.exports.DEFAULT_SAMPLE_RATE = 1;
 

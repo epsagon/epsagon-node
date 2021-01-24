@@ -52,9 +52,11 @@ function redisClientWrapper(wrappedFunction) {
 
             const responsePromise = new Promise((resolve) => {
                 command.promise.then((result) => {
-                    eventInterface.addToMetadata(dbapiEvent, {
-                        'redis.response': result,
-                    });
+                    if (result) {
+                        eventInterface.addToMetadata(dbapiEvent, {
+                            'redis.response': result.toString(),
+                        });
+                    }
                 }).catch((err) => {
                     eventInterface.setException(dbapiEvent, err);
                 }).finally(() => {
