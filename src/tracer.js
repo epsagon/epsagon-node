@@ -569,11 +569,13 @@ module.exports.postTrace = function postTrace(traceObject) {
 /**
  * Sends the trace to epsagon's infrastructure when all pending events are finished.
  * @param {function} runnerUpdateFunc function that sets the duration of the runner.
+ * @param {object} tracerObject Optional tracer object to use for sending.
  * @returns {Promise} a promise that is resolved when the trace transmission ends.
  */
-module.exports.sendTrace = function sendTrace(runnerUpdateFunc) {
-    const tracerObj = module.exports.getTrace();
+module.exports.sendTrace = function sendTrace(runnerUpdateFunc, tracerObject) {
+    const tracerObj = tracerObject || module.exports.getTrace();
     if (!tracerObj || (tracerObj && tracerObj.disabled)) {
+        utils.debugLog('Trace object not found or disabled');
         return Promise.resolve();
     }
 
