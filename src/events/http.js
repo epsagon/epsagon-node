@@ -519,8 +519,16 @@ module.exports = {
             fetchH2Wrapper,
             fetch => fetch.OriginPool.prototype
         );
+        // simple-oauth2 < 4.0
         moduleUtils.patchModule(
             'simple-oauth2/lib/client.js',
+            'request',
+            clientRequestWrapper,
+            client => client.prototype
+        );
+        // simple-oauth2 >= 4.0
+        moduleUtils.patchModule(
+            'simple-oauth2/lib/client/client.js',
             'request',
             clientRequestWrapper,
             client => client.prototype
