@@ -42,6 +42,7 @@ npm install epsagon
 ```
 
 ## Usage
+**Important: Epsagon is activated and instruments the supported libraries once the module is imported.**
 
 ### Auto-tracing
 
@@ -691,9 +692,11 @@ Advanced options can be configured as a parameter to the init() method or as env
 |traceCollectorURL  |EPSAGON_COLLECTOR_URL      |String |-            |The address of the trace collector to send trace to                                |
 |isEpsagonDisabled  |DISABLE_EPSAGON            |Boolean|`false`      |A flag to completely disable Epsagon (can be used for tests or locally)            |
 |ignoredKeys        |EPSAGON_IGNORED_KEYS       |Array  |-            |Array of keys names (can be string or regex) to be removed from the trace          |
-|removeIgnoredKeys  |EPSAGON_REMOVE_IGNORED_KEYS|Boolean|`false`      |Whether to remove ignored keys instead of masking them                                 |
+|removeIgnoredKeys  |EPSAGON_REMOVE_IGNORED_KEYS|Boolean|`false`      |Whether to remove ignored keys instead of masking them                             |
 |urlPatternsToIgnore|EPSAGON_URLS_TO_IGNORE     |Array  |`[]`         |Array of URL patterns to ignore the calls                                          |
 |sendTimeout        |EPSAGON_SEND_TIMEOUT_SEC   |Float  |`1.0`        |The timeout duration in seconds to send the traces to the trace collector          |
+|sendBatch          |EPSAGON_SEND_BATCH         |Boolean|`true `      |Whether to set the traces in batch mode, effective under high scale                |
+|batchSize          |EPSAGON_BATCH_SIZE         |Integer|`5 `         |The traces' batch size, when batch mode is activated                               |
 |decodeHTTP         |EPSAGON_DECODE_HTTP        |Boolean|`true`       |Whether to decode and decompress HTTP responses into the payload                   |
 |httpErrorStatusCode|EPSAGON_HTTP_ERR_CODE      |Integer|`400`        |The minimum number of an HTTP response status code to treat as an error            |
 |-                  |EPSAGON_PROPAGATE_LAMBDA_ID|Boolean|`false`      |Insert Lambda request ID into the response payload                                 |
