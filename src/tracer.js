@@ -301,6 +301,9 @@ function getTrimmedTrace(traceSize, jsTrace) {
  */
 function addLabelsToTrace() {
     const tracerObj = module.exports.getTrace();
+    if (!tracerObj) {
+        return;
+    }
     Object.keys(config.getConfig().labels).forEach((key) => {
         const currLabels = tracerObj.currRunner.getResource().getMetadataMap().get('labels');
         if (!currLabels) {
