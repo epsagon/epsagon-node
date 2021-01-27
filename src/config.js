@@ -21,6 +21,9 @@ module.exports.processIgnoredKey = function processIgnoredKey(key) {
 };
 
 
+const processIgnoredKeys = keys => keys.map(k => (typeof k === 'string' ? module.exports.processIgnoredKey(k) : k));
+
+
 /**
  * The default sendTimeout to send for send operations (both sync and async)
  */
@@ -89,7 +92,7 @@ if (process.env.EPSAGON_URLS_TO_IGNORE) {
 }
 
 if (process.env.EPSAGON_IGNORED_KEYS) {
-    config.ignoredKeys = process.env.EPSAGON_IGNORED_KEYS.split(',');
+    config.ignoredKeys = processIgnoredKeys(process.env.EPSAGON_IGNORED_KEYS.split(','));
 }
 
 if ((process.env.EPSAGON_SSL || 'TRUE').toUpperCase() === 'FALSE') {
@@ -174,8 +177,12 @@ module.exports.setConfig = function setConfig(configData) {
         config.disableHttpResponseBodyCapture = configData.disableHttpResponseBodyCapture;
     }
 
-    if (configData.ignoredKeys) {
-        config.ignoredKeys = configData.ignoredKeys;
+    if (configData.ignoredKeys && Array.isArray(configData.ignoredKeys)) {
+        const filteredIgnoredKeys = configData.ignoredKeys.filter(key => typeof key !== 'function');
+        if (filteredIgnoredKeys.length !== configData.ignoredKeys.length) {
+            console.warn('Epsagon deprecation warning: function ignoredKeys have been deprecated and will be ignored'); // eslint-disable-line no-console
+        }
+        config.ignoredKeys = processIgnoredKeys(filteredIgnoredKeys);
     }
 
     if (configData.removeIgnoredKeys) {
