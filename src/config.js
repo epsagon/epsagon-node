@@ -178,9 +178,13 @@ module.exports.setConfig = function setConfig(configData) {
     }
 
     if (configData.ignoredKeys && Array.isArray(configData.ignoredKeys)) {
-        const filteredIgnoredKeys = configData.ignoredKeys.filter(key => typeof key !== 'function');
+        const filteredIgnoredKeys = configData.ignoredKeys
+            .filter(key => typeof key === 'string' || key instanceof RegExp);
         if (filteredIgnoredKeys.length !== configData.ignoredKeys.length) {
-            console.warn('Epsagon deprecation warning: function ignoredKeys have been deprecated and will be ignored'); // eslint-disable-line no-console
+            utils.printWarning(
+                'Epsagon deprecation warning: ignoredKeys supports only strings and RegExp objects, other values will be ignored. received ignoredKeys:',
+                configData.ignoredKeys
+            );
         }
         config.ignoredKeys = processIgnoredKeys(filteredIgnoredKeys);
     }
