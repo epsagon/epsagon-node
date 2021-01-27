@@ -57,6 +57,7 @@ module.exports.createTracer = function createTracer() {
         trace: tracerObj,
         currRunner: null,
         pendingEvents: new Map(),
+        createdAt: Date.now(),
     };
 };
 
