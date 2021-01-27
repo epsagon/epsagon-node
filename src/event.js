@@ -51,12 +51,13 @@ module.exports.markAsTimeout = function setTimeout(event) {
  *     is False
  */
 module.exports.addToMetadata = function addToMetadata(event, map, fullDataMap = {}) {
+    const metadataMap = event.getResource().getMetadataMap();
     Object.keys(map).forEach((key) => {
-        event.getResource().getMetadataMap().set(key, map[key]);
+        metadataMap.set(key, map[key]);
     });
     if (!config.getConfig().metadataOnly) {
         Object.keys(fullDataMap).forEach((key) => {
-            event.getResource().getMetadataMap().set(key, fullDataMap[key]);
+            metadataMap.set(key, fullDataMap[key]);
         });
     }
 };
