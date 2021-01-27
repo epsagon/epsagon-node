@@ -323,13 +323,15 @@ function addLabelsToTrace() {
  * handled
  * @param {function} traceSender: The function to use to send the trace. Gets the trace object
  *     as a parameter and sends a JSON version of it to epsagon's infrastructure
+ * @param {object} tracerObject Optional tracer object to use for sending.
  * @return {*} traceSender's result
  */
-function sendCurrentTrace(traceSender) {
-    const tracerObj = module.exports.getTrace();
+function sendCurrentTrace(traceSender, tracerObject) {
+    const tracerObj = tracerObject || module.exports.getTrace();
 
     const { sendOnlyErrors, ignoredKeys, removeIgnoredKeys } = config.getConfig();
     if (!tracerObj) {
+        utils.debugLog('Trace object not found for sending');
         return Promise.resolve();
     }
     addLabelsToTrace();
@@ -590,9 +592,9 @@ module.exports.sendTrace = function sendTrace(runnerUpdateFunc, tracerObject) {
         // Setting runner's duration.
         runnerUpdateFunc();
         if (config.getConfig().sendBatch) {
-            return sendCurrentTrace(traceObject => traceQueue.push(traceObject));
+            return sendCurrentTrace(traceObject => traceQueue.push(traceObject), tracerObj);
         }
-        return sendCurrentTrace(traceObject => module.exports.postTrace(traceObject));
+        return sendCurrentTrace(traceObject => module.exports.postTrace(traceObject), tracerObj);
     });
 };
 
