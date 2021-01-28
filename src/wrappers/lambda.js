@@ -111,6 +111,17 @@ function baseLambdaWrapper(
                 process._events.beforeExit = originalBeforeExit;
             });
         };
+        // catch an unhandled promise rejection within the user's code
+        const unhandledRejectionCallback = (reason) => {
+            utils.debugLog('Unhandled Promise Rejection caught. Please handle the rejected promise.');
+            const rejectedError = {
+                name: 'UnhandledPromiseRejectionError',
+                message: reason || '',
+                stack: '',
+            };
+            eventInterface.setException(runner, rejectedError, false);
+        };
+        process.once('unhandledRejection', unhandledRejectionCallback);
 
         const handleUserExecutionDone = (error, result, sendSync) => {
             clearTimeout(timeoutHandler);
@@ -298,6 +309,9 @@ function baseLambdaWrapper(
             return result;
         } catch (err) {
             patchedContext.fail(err);
+        } finally {
+            utils.debugLog(`uncaughtExceptionListeners: ${process.listeners('unhandledRejection')}`);
+            process.removeListener('unhandledRejection', unhandledRejectionCallback);
         }
     };
 }
