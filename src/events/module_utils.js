@@ -108,9 +108,9 @@ module.exports.patchModule = function patchModule(
  * @param {Function} wrapper     the wrapper to apply
  */
 module.exports.patchSingle = function patchSingle(module, methodName, wrapper) {
-    shimmerPatches.push({ id: methodName, methodName, module })
+    shimmerPatches.push({ id: methodName, methodName, module });
     shimmer.wrap(module, methodName, wrapper);
-}
+};
 
 /** Unpatch all modules */
 module.exports.unpatchModules = function unpatchModules() {
