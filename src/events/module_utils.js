@@ -114,12 +114,12 @@ module.exports.patchSingle = function patchSingle(module, methodName, wrapper) {
 
 /** Unpatch all modules */
 module.exports.unpatchModules = function unpatchModules() {
-    utils.debugLog('unpatching all modules');
+    console.log('unpatching all modules');
 
     shimmerPatches.forEach((patch) => {
-        utils.debugLog(`unpatching ${patch.methodName} from ${patch.id}`);
+        console.log(`unpatching ${patch.methodName} from ${patch.id}`);
         shimmer.unwrap(patch.module, patch.methodName);
     });
 
-    utils.debugLog('finished unpatching');
+    console.log('finished unpatching');
 };
