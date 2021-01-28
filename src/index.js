@@ -57,6 +57,7 @@ module.exports.wrapper = lambdaEnvWrapper.wrapper;
 module.exports.init = tracer.initTrace;
 
 module.exports.disable = tracer.disable;
+module.exports.unpatch = moduleUtils.unpatchModules;
 
 module.exports.enable = tracer.enable;
 module.exports.moduleUtils = moduleUtils;
