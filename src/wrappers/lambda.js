@@ -311,7 +311,7 @@ function baseLambdaWrapper(
             patchedContext.fail(err);
         } finally {
             utils.debugLog(`uncaughtExceptionListeners: ${process.listeners('unhandledRejection')}`);
-            process.removeListener('unhandledRejection', unhandledRejectionCallback);
+            process.removeAllListeners('unhandledRejection');
         }
     };
 }
