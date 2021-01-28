@@ -47,10 +47,10 @@ module.exports.loadECSMetadata = function loadECSMetadata(uri) {
  * it will add the task-arn of the current task to the metadata field
  * of the trace, if its not running under ECS the trace will return unchanged
  *
- * @param {Object} runner  runner object to add the metadata
+ * @param {!jspb.Map<string,string>} metadataMap The metadataMap to add to
  */
-module.exports.addECSMetadata = function addECSMetadata(runner) {
-    if (!runner || !currentECSLabels) return;
-    eventInterface.addToMetadata(runner, { ECS: currentECSLabels });
-    eventInterface.addToMetadata(runner, { 'aws.account_id': currentECSAccount });
+module.exports.addECSMetadata = function addECSMetadata(metadataMap) {
+    if (!metadataMap || !currentECSLabels) return;
+    eventInterface.addToMetadata(metadataMap, { ECS: currentECSLabels });
+    eventInterface.addToMetadata(metadataMap, { 'aws.account_id': currentECSAccount });
 };

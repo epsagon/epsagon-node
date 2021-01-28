@@ -345,15 +345,16 @@ function sendCurrentTrace(traceSender, tracerObject) {
         return Promise.resolve();
     }
 
+    const metadataMap = eventInterface.getMetadataMap(tracerObj.currRunner);
     // adding metadata here since it has a better chance of completing in time
-    eventInterface.addToMetadata(
-        tracerObj.currRunner,
+    eventInterface.addToMetadataMap(
+        metadataMap,
         winstonCloudwatch.additionalMetadata()
     );
-    ecs.addECSMetadata(tracerObj.currRunner);
-    k8s.addK8sMetadata(tracerObj.currRunner);
-    azure.addAzureMetadata(tracerObj.currRunner);
-    ec2.addEC2Metadata(tracerObj.currRunner);
+    ecs.addECSMetadata(metadataMap);
+    k8s.addK8sMetadata(metadataMap);
+    azure.addAzureMetadata(metadataMap);
+    ec2.addEC2Metadata(metadataMap);
 
     // Check if got error events
     if (sendOnlyErrors) {

@@ -49,9 +49,9 @@ module.exports.loadEC2Metadata = function loadEC2Metadata() {
  * If the current process is running in EC2 cloud,
  * it will add metadata to trace
  *
- * @param {Object} runner  runner object to add the metadata
+ * @param {!jspb.Map<string,string>} metadataMap The metadataMap to add to
  */
-module.exports.addEC2Metadata = function addEC2Metadata(runner) {
-    if (!runner || !currentEC2Labels) return;
-    eventIterface.addToMetadata(runner, Object.assign({}, currentEC2Labels));
+module.exports.addEC2Metadata = function addEC2Metadata(metadataMap) {
+    if (!metadataMap || !currentEC2Labels) return;
+    eventIterface.addToMetadataMap(metadataMap, Object.assign({}, currentEC2Labels));
 };

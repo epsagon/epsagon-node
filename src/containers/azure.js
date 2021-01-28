@@ -80,9 +80,9 @@ module.exports.loadAzureMetadata = function loadAzureMetadata(cb) {
  * If the current process is running in azure cloud,
  * it will add metadata to trace
  *
- * @param {Object} runner  runner object to add the metadata
+ * @param {!jspb.Map<string,string>} metadataMap The metadataMap to add to
  */
-module.exports.addAzureMetadata = function addAzureMetadata(runner) {
-    if (!runner || !currentAzureLabels) return;
-    eventIterface.addToMetadata(runner, Object.assign({}, currentAzureLabels));
+module.exports.addAzureMetadata = function addAzureMetadata(metadataMap) {
+    if (!metadataMap || !currentAzureLabels) return;
+    eventIterface.addToMetadataMap(metadataMap, Object.assign({}, currentAzureLabels));
 };

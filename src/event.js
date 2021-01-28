@@ -44,19 +44,26 @@ module.exports.markAsTimeout = function setTimeout(event) {
 };
 
 /**
- * Adds items from a map to a resource Metadata
+ * Get the event's metadata map
  * @param {proto.event_pb.Event} event The event to add the items to
+ * @returns {!jspb.Map<string,string>} event's metadata map
+ */
+module.exports.getMetadataMap = function getMetadataMap(event) {
+    const resource = event.getResource();
+    return resource && resource.getMetadataMap();
+};
+
+/**
+ * Adds items from a map to a resource Metadata
+ * @param {!jspb.Map<string,string>} metadataMap The metadataMap to add to
  * @param {object} map The map containing the objects
  * @param {object} [fullDataMap={}] Additional data to add only if {@link config.metadataOnly}
  *     is False
  */
-module.exports.addToMetadata = function addToMetadata(event, map, fullDataMap = {}) {
-    const resource = event.getResource();
-    const metadataMap = resource && resource.getMetadataMap();
+module.exports.addToMetadataMap = function addToMetadataMap(metadataMap, map, fullDataMap = {}) {
     if (!metadataMap) {
         return;
     }
-
     Object.keys(map).forEach((key) => {
         metadataMap.set(key, map[key]);
     });
@@ -65,6 +72,17 @@ module.exports.addToMetadata = function addToMetadata(event, map, fullDataMap = 
             metadataMap.set(key, fullDataMap[key]);
         });
     }
+};
+
+/**
+ * Adds items from a map to a resource Metadata
+ * @param {proto.event_pb.Event} event The event to add the items to
+ * @param {object} map The map containing the objects
+ * @param {object} [fullDataMap={}] Additional data to add only if {@link config.metadataOnly}
+ *     is False
+ */
+module.exports.addToMetadata = function addToMetadata(event, map, fullDataMap = {}) {
+    this.addToMetadataMap(this.getMetadataMap(event), map, fullDataMap);
 };
 
 

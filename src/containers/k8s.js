@@ -38,10 +38,10 @@ module.exports.loadK8sMetadata = function loadK8sMetadata() {
  * it will add the task-arn of the current task to the metadata field
  * of the trace, if its not running under ECS the trace will return unchanged
  *
- * @param {Object} runner  runner object to add the metadata
+ * @param {!jspb.Map<string,string>} metadataMap The metadataMap to add to
  */
-module.exports.addK8sMetadata = function addK8sMetadata(runner) {
-    if (!runner || !k8sHostname) return;
+module.exports.addK8sMetadata = function addK8sMetadata(metadataMap) {
+    if (!metadataMap || !k8sHostname) return;
     const payload = {
         is_k8s: true,
         k8s_pod_name: k8sHostname,
@@ -50,5 +50,5 @@ module.exports.addK8sMetadata = function addK8sMetadata(runner) {
         payload.k8s_container_id = k8sContainerId;
     }
 
-    eventIterface.addToMetadata(runner, payload);
+    eventIterface.addToMetadata(metadataMap, payload);
 };

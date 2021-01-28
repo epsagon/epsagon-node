@@ -260,8 +260,9 @@ function httpWrapper(wrappedFunction) {
 
             const requestUrl = `${protocol}://${hostname}${pathname}`;
             httpEvent.setResource(resource);
+            const metadataMap = eventInterface.getMetadataMap(httpEvent);
 
-            eventInterface.addToMetadata(httpEvent,
+            eventInterface.addToMetadataMap(metadataMap,
                 {
                     url: requestUrl,
                     http_trace_id: epsagonTraceId,
@@ -271,7 +272,7 @@ function httpWrapper(wrappedFunction) {
                 });
             if (body) {
                 utils.debugLog(`Set request body=${body}`);
-                eventInterface.addToMetadata(httpEvent, {}, {
+                eventInterface.addToMetadataMap(metadataMap, {}, {
                     request_body: body,
                 });
             }
@@ -290,19 +291,19 @@ function httpWrapper(wrappedFunction) {
                     // This field is used to identify transaction ID from 'OpenWhisk'
                     metadataFields.request_id = res.headers['x-request-id'];
                 }
-                eventInterface.addToMetadata(httpEvent, { status: res.statusCode });
+                eventInterface.addToMetadataMap(metadataMap, { status: res.statusCode });
                 if (res.statusCode >= config.HTTP_ERR_CODE) {
                     eventInterface.setException(httpEvent, new Error(`Response code: ${res.statusCode}`));
                 }
                 // The complete headers will override metadata only when needed
-                eventInterface.addToMetadata(httpEvent, metadataFields, {
+                eventInterface.addToMetadataMap(metadataMap, metadataFields, {
                     response_headers: res.headers,
                 });
 
                 // Override request headers if they are present here. In some libs they are not
                 // available on `options.headers`
                 if (res.req && res.req.getHeaders()) {
-                    eventInterface.addToMetadata(httpEvent, {}, {
+                    eventInterface.addToMetadataMap(metadataMap, {}, {
                         request_headers: res.req.getHeaders(),
                     });
                 }
