@@ -317,7 +317,7 @@ function baseLambdaWrapper(
         } catch (err) {
             patchedContext.fail(err);
         } finally {
-            utils.debugLog(`uncaughtRejectionListeners: ${process.listeners('unhandledRejection')}`);
+            utils.debugLog(`unhandledRejectionListeners: ${process.listeners('unhandledRejection')}`);
             process.removeAllListeners('unhandledRejection');
 
             utils.debugLog(`uncaughtExceptionListeners: ${process.listeners('uncaughtException')}`);
