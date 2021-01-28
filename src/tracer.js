@@ -456,6 +456,8 @@ module.exports.filterTrace = function filterTrace(traceObject, ignoredKeys, remo
 
     const isString = x => typeof x === 'string';
 
+    const isPossibleStringJSON = v => isString(v) && v.length > 1 && ['[', '{'].includes(v[0]);
+
     /**
      * Tests if a key is to be ignored or not.
      * @param {string} key a key in an object or hash map
@@ -465,18 +467,34 @@ module.exports.filterTrace = function filterTrace(traceObject, ignoredKeys, remo
         for (let i = 0; i < ignoredKeys.length; i += 1) {
             const predicate = ignoredKeys[i];
             if (typeof predicate === 'string' &&
-            config.processIgnoredKey(predicate) === config.processIgnoredKey(key)) {
+            predicate === config.processIgnoredKey(key)) {
                 return false;
             }
             if (predicate instanceof RegExp && predicate.test(key)) {
                 return false;
             }
-            if (typeof predicate === 'function' && predicate(key)) {
-                return false;
-            }
         }
         return true;
     }
+
+    /**
+     * Tests if a string value (which is suspected to be a stringyfied JSON)
+     * contains an ignored key
+     * @param {string} value a value to search ignored keys in
+     * @returns {boolean} true for non-ignored keys
+     */
+    const doesContainIgnoredKey = value => ignoredKeys
+        .some((predicate) => {
+            if (typeof predicate === 'string' &&
+                config.processIgnoredKey(value).includes(predicate)) {
+                return true;
+            }
+            if (predicate instanceof RegExp && predicate.test(value)) {
+                return true;
+            }
+            return false;
+        });
+
 
     /**
      * Recursivly filter object properties
@@ -499,18 +517,23 @@ module.exports.filterTrace = function filterTrace(traceObject, ignoredKeys, remo
             .map(k => ({ [k]: filterObject(obj[k]) }));
 
         // trying to JSON load strings to filter sensitive data
-        unFilteredKeys.filter(k => isString(obj[k])).forEach((k) => {
-            try {
-                const subObj = JSON.parse(obj[k]);
-                if (subObj && isObject(subObj)) {
-                    objects.push({ [k]: filterObject(subObj) });
-                } else {
+        unFilteredKeys
+            .forEach((k) => {
+                if (!isPossibleStringJSON(obj[k]) || !doesContainIgnoredKey(obj[k])) {
+                    primitive.push(k);
+                    return;
+                }
+                try {
+                    const subObj = JSON.parse(obj[k]);
+                    if (subObj && isObject(subObj)) {
+                        objects.push({ [k]: filterObject(subObj) });
+                    } else {
+                        primitive.push(k);
+                    }
+                } catch (e) {
                     primitive.push(k);
                 }
-            } catch (e) {
-                primitive.push(k);
-            }
-        });
+            });
 
         return Object.assign({},
             !removeIgnoredKeys && maskedKeys.reduce((sum, key) => Object.assign({}, sum, { [key]: '****' }), {}),

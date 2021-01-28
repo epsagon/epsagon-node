@@ -87,12 +87,13 @@ describe('filter keys function', () => {
                         field: {
                             studentId: 'personal',
                             message: 'not-personal',
+                            regExpTest: 'test',
                         },
                     },
                 },
             }],
         };
-        const ignoredKeys = ['studentid'];
+        const ignoredKeys = ['studentid', /regExp/];
         const filtered = tracer.filterTrace(traceObject, ignoredKeys);
         const expected = {
             events: [{
@@ -101,6 +102,7 @@ describe('filter keys function', () => {
                         field: {
                             message: 'not-personal',
                             studentId: '****',
+                            regExpTest: '****',
                         },
                     },
                 },
@@ -118,13 +120,14 @@ describe('filter keys function', () => {
                         field: JSON.stringify({
                             studentId: 'personal',
                             message: 'not-personal',
+                            regExpTest: 'test',
                         }),
                         nonFiltered: 'studentid',
                     },
                 },
             }],
         };
-        const ignoredKeys = ['studentid'];
+        const ignoredKeys = ['studentid', /regExp/];
         const filtered = tracer.filterTrace(traceObject, ignoredKeys);
         const expected = {
             events: [{
@@ -133,6 +136,7 @@ describe('filter keys function', () => {
                         field: {
                             message: 'not-personal',
                             studentId: '****',
+                            regExpTest: '****',
                         },
                         nonFiltered: 'studentid',
                     },
