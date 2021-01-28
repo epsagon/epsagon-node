@@ -101,6 +101,17 @@ module.exports.patchModule = function patchModule(
     utils.debugLog('done patching module:', id);
 };
 
+/**
+ * Patch single module
+ * @param {any} module   the module
+ * @param {String} methodName    the method to patch
+ * @param {Function} wrapper     the wrapper to apply
+ */
+module.exports.patchSingle = function patchSingle(module, methodName, wrapper) {
+    shimmerPatches.push({ id: methodName, methodName, module })
+    shimmer.wrap(module, methodName, wrapper);
+}
+
 /** Unpatch all modules */
 module.exports.unpatchModules = function unpatchModules() {
     utils.debugLog('unpatching all modules');

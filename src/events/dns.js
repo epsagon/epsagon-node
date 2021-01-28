@@ -1,7 +1,7 @@
 const dns = require('dns');
-const shimmer = require('shimmer');
 const utils = require('../utils.js');
 const tracer = require('../tracer.js');
+const moduleUtils = require('./module_utils');
 const eventInterface = require('../event.js');
 const { isBlacklistURL } = require('.././helpers/events');
 
@@ -297,13 +297,13 @@ module.exports = {
             const dnsExportedFunctions = Object.keys(dns);
             Object.keys(rrtypesMethods).forEach((functionToTrace) => {
                 if (dnsExportedFunctions.includes(functionToTrace)) {
-                    shimmer.wrap(dns, functionToTrace, wrapDnsResolveFunction);
+                    moduleUtils.patchSingle(dns, functionToTrace, wrapDnsResolveFunction);
                 }
             });
-            shimmer.wrap(dns, 'resolve', () => wrapDnsResolveFunction(dns.resolve));
-            shimmer.wrap(dns, 'reverse', () => wrapDnsReverseFunction(dns.reverse));
-            shimmer.wrap(dns, 'lookup', () => wrapDnsLookupFunction(dns.lookup));
-            shimmer.wrap(dns, 'lookupService', () => wrapDnsLookupServiceFunction(dns.lookupService));
+            moduleUtils.patchSingle(dns, 'resolve', () => wrapDnsResolveFunction(dns.resolve));
+            moduleUtils.patchSingle(dns, 'reverse', () => wrapDnsReverseFunction(dns.reverse));
+            moduleUtils.patchSingle(dns, 'lookup', () => wrapDnsLookupFunction(dns.lookup));
+            moduleUtils.patchSingle(dns, 'lookupService', () => wrapDnsLookupServiceFunction(dns.lookupService));
         }
     },
 };
