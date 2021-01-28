@@ -75,6 +75,8 @@ module.exports.getModules = function getModules(id) {
     return modules;
 };
 
+const shimmerPatches = [];
+
 /**
  * Patches all instances of a module
  * @param {String} id The module id
@@ -92,11 +94,32 @@ module.exports.patchModule = function patchModule(
     const modules = module.exports.getModules(id);
     utils.debugLog('found module copies:', modules.length);
     modules.forEach((module) => {
-        shimmer.wrap(
-            memberExtractor(module),
-            methodName,
-            wrapper
-        );
+        const extracted = memberExtractor(module);
+        shimmerPatches.push({ id, methodName, module: extracted });
+        shimmer.wrap(extracted, methodName, wrapper);
     });
     utils.debugLog('done patching module:', id);
+};
+
+/**
+ * Patch single module
+ * @param {any} module   the module
+ * @param {String} methodName    the method to patch
+ * @param {Function} wrapper     the wrapper to apply
+ */
+module.exports.patchSingle = function patchSingle(module, methodName, wrapper) {
+    shimmerPatches.push({ id: methodName, methodName, module });
+    shimmer.wrap(module, methodName, wrapper);
+};
+
+/** Unpatch all modules */
+module.exports.unpatchModules = function unpatchModules() {
+    utils.debugLog('unpatching all modules');
+
+    shimmerPatches.forEach((patch) => {
+        utils.debugLog(`unpatching ${patch.methodName} from ${patch.id}`);
+        shimmer.unwrap(patch.module, patch.methodName);
+    });
+
+    utils.debugLog('finished unpatching');
 };

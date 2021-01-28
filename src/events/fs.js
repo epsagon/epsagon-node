@@ -1,6 +1,6 @@
 const fs = require('fs');
-const shimmer = require('shimmer');
 const tracer = require('../tracer.js');
+const moduleUtils = require('./module_utils');
 const eventInterface = require('../event.js');
 
 /**
@@ -81,8 +81,8 @@ module.exports = {
      */
     init() {
         if ((process.env.EPSAGON_FS_INSTRUMENTATION || '').toUpperCase() === 'TRUE') {
-            shimmer.wrap(fs, 'writeFile', () => wrapFsWriteFileFunction(fs.writeFile, 'writeFile'));
-            shimmer.wrap(fs, 'writeFileSync', () => wrapFsWriteFileFunction(fs.writeFileSync, 'writeFileSync'));
+            moduleUtils.patchSingle(fs, 'writeFile', () => wrapFsWriteFileFunction(fs.writeFile, 'writeFile'));
+            moduleUtils.patchSingle(fs, 'writeFileSync', () => wrapFsWriteFileFunction(fs.writeFileSync, 'writeFileSync'));
         }
     },
 };
