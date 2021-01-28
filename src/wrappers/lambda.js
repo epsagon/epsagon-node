@@ -112,16 +112,23 @@ function baseLambdaWrapper(
             });
         };
         // catch an unhandled promise rejection within the user's code
-        const unhandledRejectionCallback = (reason) => {
+        const unhandledCallback = (reason, exceptionName) => {
             utils.debugLog('Unhandled Promise Rejection caught. Please handle the rejected promise.');
             const rejectedError = {
-                name: 'UnhandledPromiseRejectionError',
+                name: exceptionName || 'UnknownError',
                 message: reason || '',
                 stack: '',
             };
             eventInterface.setException(runner, rejectedError, false);
         };
-        process.once('unhandledRejection', unhandledRejectionCallback);
+
+        // process.once('unhandledRejection', unhandledRejectionCallback);
+        process.once('unhandledRejection',
+            reason => unhandledCallback(reason, 'UnhandledPromiseRejectionError'));
+
+        process.once('uncaughtException',
+            reason => unhandledCallback(reason, 'UncaughtExceptionError'));
+
 
         const handleUserExecutionDone = (error, result, sendSync) => {
             clearTimeout(timeoutHandler);
@@ -310,8 +317,11 @@ function baseLambdaWrapper(
         } catch (err) {
             patchedContext.fail(err);
         } finally {
-            utils.debugLog(`uncaughtExceptionListeners: ${process.listeners('unhandledRejection')}`);
+            utils.debugLog(`uncaughtRejectionListeners: ${process.listeners('unhandledRejection')}`);
             process.removeAllListeners('unhandledRejection');
+
+            utils.debugLog(`uncaughtExceptionListeners: ${process.listeners('uncaughtException')}`);
+            process.removeAllListeners('uncaughtException');
         }
     };
 }
