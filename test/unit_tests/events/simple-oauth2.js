@@ -9,8 +9,8 @@ const PORT = 8083;
 
 describe('simple-oauth2 tests', () => {
     it('sanity', async () => {
-        if (semver.lt(process.version, '12.0.0')) return
-        const SimpleOAuth2 = require('simple-oauth2');
+        if (semver.lt(process.version, '12.0.0')) return;
+        const SimpleOAuth2 = require('simple-oauth2'); // eslint-disable-line global-require
         epsagon.init();
         const server = app.app.listen(PORT);
         const oauth2Client = new SimpleOAuth2.AuthorizationCode({
