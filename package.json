@@ -49,6 +49,7 @@
     "@commitlint/config-angular": "^7.1.2",
     "@commitlint/config-conventional": "^7.1.2",
     "aws-sdk": "^2.197.0",
+    "body-parser": "^1.19.0",
     "chai": "^4.1.2",
     "chai-as-promised": "^7.1.1",
     "dotenv": "^8.2.0",
@@ -60,6 +61,8 @@
     "eslint-plugin-jsx-a11y": "^6.1.1",
     "eslint-plugin-mocha": "^4.11.0",
     "eslint-plugin-react": "^7.11.0",
+    "express": "^4.17.1",
+    "express-session": "^1.17.1",
     "husky": "^1.1.0",
     "ldap-server-mock": "^3.0.0",
     "ldapjs": "^2.1.0",
@@ -72,6 +75,7 @@
     "pg": "^7.6.0",
     "pg-pool": "^2.0.3",
     "proxyquire": "^2.0.1",
+    "randomstring": "^1.1.5",
     "redis": "^2.8.0",
     "request": "^2.88.2",
     "request-promise-native": "^1.0.7",
@@ -82,8 +86,10 @@
     "rollup-plugin-json": "^3.1.0",
     "rollup-plugin-terser": "^7.0.1",
     "semantic-release": "^15.13.30",
+    "simple-oauth2": "^4.2.0",
     "sinon": "^4.3.0",
-    "uglify-es": "^3.3.9"
+    "uglify-es": "^3.3.9",
+    "underscore": "^1.12.0"
   },
   "dependencies": {
     "axios": "^0.19.0",
