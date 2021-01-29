@@ -55,7 +55,6 @@ const config = {
     maxBatchSizeBytes: consts.BATCH_SIZE_BYTES_HARD_LIMIT,
     maxQueueSizeBytes: consts.QUEUE_SIZE_BYTES_HARD_LIMIT,
 
-
     /**
      * get isEpsagonPatchDisabled
      * @return {boolean} True if DISABLE_EPSAGON or DISABLE_EPSAGON_PATCH are set to TRUE, false
@@ -100,6 +99,11 @@ if ((process.env.EPSAGON_SSL || 'TRUE').toUpperCase() === 'FALSE') {
 }
 if ((process.env.EPSAGON_SSL || 'TRUE').toUpperCase() === 'TRUE') {
     config.traceCollectorURL = config.traceCollectorURL.replace('http:', 'https:');
+}
+
+
+if (process.env.EPSAGON_PATCH_WHITELIST) {
+    config.patchWhitelist = process.env.EPSAGON_PATCH_WHITELIST.split(',');
 }
 
 /**
