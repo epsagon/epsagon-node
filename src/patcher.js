@@ -32,6 +32,35 @@ const cassandraPatcher = require('./events/cassandra-driver.js');
 const fs = require('./events/fs.js');
 
 
+const LIBNAME_TO_PATCHER = {
+    'aws-sdk': awsSDKPatcher,
+    'azure-sdk': azureSdkPatcher,
+    'winston-cw': winstonCloudwatchPatcher,
+    http: httpPatcher,
+    http2: http2Patcher,
+    pg: pgPatcher,
+    mysql: mysqlPatcher,
+    redis: redisPatcher,
+    ioredis: ioredisPatcher,
+    mongo: mongoPatcher,
+    dax: daxPatcher,
+    openwhisk: openWhiskPatcher,
+    google: googlePatcher,
+    dns: dnsPatcher,
+    nats: natsPatcher,
+    myqq: mqttPatcher,
+    kafkajs: kafkajsPatcher,
+    kafkanode: kafkaNodePatcher,
+    bunyan: bunyanPatcher,
+    pino: pinoPatcher,
+    winston: winstonPatcher,
+    amqplib: amqplibPatcher,
+    amqp: amqpPatcher,
+    ldap: ldapPatcher,
+    cassandra: cassandraPatcher,
+    fs,
+};
+
 /**
  * Patches a module
  * @param {Object} patcher module
@@ -46,34 +75,6 @@ function patch(patcher) {
     }
 }
 
-const LIBNAME_TO_PATCHER = {
-    'aws-sdk': awsSDKPatcher,
-    'http': httpPatcher,
-    'http2': http2Patcher,
-    'pg': pgPatcher,
-    'mysql': mysqlPatcher,
-    'redis': redisPatcher,
-    'ioredis': ioredisPatcher,
-    'mongo': mongoPatcher,
-    'dax': daxPatcher,
-    'openwhisk': openWhiskPatcher,
-    'google': googlePatcher,
-    'dns': dnsPatcher,
-    'nats': natsPatcher,
-    'myqq': mqttPatcher,
-    'kafkajs': kafkajsPatcher,
-    'kafkanode': kafkaNodePatcher,
-    'bunyan': bunyanPatcher,
-    'pino': pinoPatcher,
-    'azure-sdk': azureSdkPatcher,
-    'winston-cw': winstonCloudwatchPatcher,
-    'winston': winstonPatcher,
-    'amqplib': amqplibPatcher,
-    'amqp': amqpPatcher,
-    'ldap': ldapPatcher,
-    'cassandra': cassandraPatcher,
-    'fs': fs
-}
 if (!config.getConfig().isEpsagonPatchDisabled) {
     if (!config.getConfig().patchWhitelist) {
         [
@@ -104,13 +105,14 @@ if (!config.getConfig().isEpsagonPatchDisabled) {
             cassandraPatcher,
             fs,
         ].forEach(patch);
-    }
-    else {
+    } else {
         config.getConfig().patchWhitelist.forEach(
-            lib => { 
-                if (!(LIBNAME_TO_PATCHER[lib])) { utils.debugLog(`[PATCHER] Unable to find lib to patch: ${lib}`); }
-                else {
-                     patch(LIBNAME_TO_PATCHER[lib]);
+            (lib) => {
+                if (!(LIBNAME_TO_PATCHER[lib])) {
+                    utils.debugLog(`[PATCHER] Unable to find lib to patch: ${lib}`);
+                } else {
+                    utils.debugLog(`[PATCHER] Whitelisting ${lib}`);
+                    patch(LIBNAME_TO_PATCHER[lib]);
                 }
             }
         );
