@@ -8,6 +8,7 @@
         "json"
     ],
     "rules": {
+        "no-console": "off",
         "indent": ["error", 4],
         "function-paren-newline": ["error", "consistent"],
         "require-jsdoc": ["error", {

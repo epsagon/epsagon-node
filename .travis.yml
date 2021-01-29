@@ -38,4 +38,4 @@ stages:
   - name: acceptance
     if: branch = master AND type = pull_request
   - name: build-and-deploy
-    if: branch = master AND type = push
+    if: false
