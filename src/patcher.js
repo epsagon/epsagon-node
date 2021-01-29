@@ -46,34 +46,73 @@ function patch(patcher) {
     }
 }
 
-
+const LIBNAME_TO_PATCHER = {
+    'aws-sdk': awsSDKPatcher,
+    'http': httpPatcher,
+    'http2': http2Patcher,
+    'pg': pgPatcher,
+    'mysql': mysqlPatcher,
+    'redis': redisPatcher,
+    'ioredis': ioredisPatcher,
+    'mongo': mongoPatcher,
+    'dax': daxPatcher,
+    'openwhisk': openWhiskPatcher,
+    'google': googlePatcher,
+    'dns': dnsPatcher,
+    'nats': natsPatcher,
+    'myqq': mqttPatcher,
+    'kafkajs': kafkajsPatcher,
+    'kafkanode': kafkaNodePatcher,
+    'bunyan': bunyanPatcher,
+    'pino': pinoPatcher,
+    'azure-sdk': azureSdkPatcher,
+    'winston-cw': winstonCloudwatchPatcher,
+    'winston': winstonPatcher,
+    'amqplib': amqplibPatcher,
+    'amqp': amqpPatcher,
+    'ldap': ldapPatcher,
+    'cassandra': cassandraPatcher,
+    'fs': fs
+}
 if (!config.getConfig().isEpsagonPatchDisabled) {
-    [
-        awsSDKPatcher,
-        httpPatcher,
-        http2Patcher,
-        pgPatcher,
-        mysqlPatcher,
-        redisPatcher,
-        ioredisPatcher,
-        mongoPatcher,
-        daxPatcher,
-        openWhiskPatcher,
-        googlePatcher,
-        dnsPatcher,
-        natsPatcher,
-        mqttPatcher,
-        kafkajsPatcher,
-        kafkaNodePatcher,
-        bunyanPatcher,
-        pinoPatcher,
-        azureSdkPatcher,
-        winstonCloudwatchPatcher,
-        winstonPatcher,
-        amqplibPatcher,
-        amqpPatcher,
-        ldapPatcher,
-        cassandraPatcher,
-        fs,
-    ].forEach(patch);
+    if (!config.getConfig().patchWhitelist) {
+        [
+            awsSDKPatcher,
+            httpPatcher,
+            http2Patcher,
+            pgPatcher,
+            mysqlPatcher,
+            redisPatcher,
+            ioredisPatcher,
+            mongoPatcher,
+            daxPatcher,
+            openWhiskPatcher,
+            googlePatcher,
+            dnsPatcher,
+            natsPatcher,
+            mqttPatcher,
+            kafkajsPatcher,
+            kafkaNodePatcher,
+            bunyanPatcher,
+            pinoPatcher,
+            azureSdkPatcher,
+            winstonCloudwatchPatcher,
+            winstonPatcher,
+            amqplibPatcher,
+            amqpPatcher,
+            ldapPatcher,
+            cassandraPatcher,
+            fs,
+        ].forEach(patch);
+    }
+    else {
+        config.getConfig().patchWhitelist.forEach(
+            lib => { 
+                if (!(LIBNAME_TO_PATCHER[lib])) { utils.debugLog(`[PATCHER] Unable to find lib to patch: ${lib}`); }
+                else {
+                     patch(LIBNAME_TO_PATCHER[lib]);
+                }
+            }
+        );
+    }
 }
