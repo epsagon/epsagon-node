@@ -52,20 +52,16 @@ function validateTestTrace(mytrace) {
         });
     }
 
-    if (!(trigger && mysql && redis && myhttp && express)) {
-        isValid = false;
-        express.resource.metadata.failed_because = 'event_null';
-    }
-
-    if (trace && trace.events && trace.events.length > 5) {
-        isValid = false;
-        express.resource.metadata.failed_because = 'many_events';
-    }
-
     const expressLabels = JSON.parse(express.resource.metadata.labels || '{}');
     const testId = expressLabels.test_id;
 
-    if (myhttp && myhttp.resource.metadata.request_headers['test-id'] !== testId) {
+    if (!(trigger && mysql && redis && myhttp && express)) {
+        isValid = false;
+        express.resource.metadata.failed_because = 'event_null';
+    } else if (trace && trace.events && trace.events.length > 5) {
+        isValid = false;
+        express.resource.metadata.failed_because = 'many_events';
+    } else if (myhttp && myhttp.resource.metadata.request_headers['test-id'] !== testId) {
         isValid = false;
         express.resource.metadata.failed_because = 'http';
     } else if (mysql && mysql.resource.metadata.Query.indexOf(testId) === -1) {
