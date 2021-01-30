@@ -44,7 +44,7 @@ function validateTestTrace(mytrace) {
 
     if (mytrace && mytrace.events) {
         mytrace.events.forEach((ev) => {
-            if (ev.resource.type === 'sql') mysql = ev;
+            if (ev.resource.type === 'rds') mysql = ev;
             else if (ev.resource.type === 'redis') redis = ev;
             else if (ev.resource.type === 'express') express = ev;
             else if (ev.resource.type === 'http' && ev.origin === 'trigger') trigger = ev;
