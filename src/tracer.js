@@ -63,7 +63,7 @@ function validateTestTrace(mytrace) {
     }
 
     const expressLabels = JSON.parse(express.resource.metadata.labels || '{}');
-    const testId = expressLabels['test_id'];
+    const testId = expressLabels.test_id;
 
     if (myhttp && myhttp.resource.metadata.request_headers['test-id'] !== testId) {
         isValid = false;
