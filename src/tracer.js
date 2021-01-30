@@ -556,55 +556,60 @@ module.exports.filterTrace = function filterTrace(traceObject, ignoredKeys, remo
 };
 
 
-function validateTestTrace(trace) {
+/** validate trace
+ * @param {Object} mytrace     the trace
+ */
+function validateTestTrace(mytrace) {
     let isValid = true;
-    let http = null;
+    let myhttp = null;
     let mysql = null;
     let redis = null;
     let trigger = null;
     let express = null;
 
-    trace && trace.events && trace.events.forEach(ev => {
-        if (ev.resource.type === 'sql') mysql = ev;
-        else if (ev.resource.type === 'redis') redis = ev;
-        else if (ev.resource.type === 'express') express = ev;
-        else if (ev.resource.type === 'http' && ev.origin === 'trigger') trigger = ev;
-        else if (ev.resource.type === 'http') http = ev;
-    });
+    if (mytrace && mytrace.events) {
+        mytrace.events.forEach((ev) => {
+            if (ev.resource.type === 'sql') mysql = ev;
+            else if (ev.resource.type === 'redis') redis = ev;
+            else if (ev.resource.type === 'express') express = ev;
+            else if (ev.resource.type === 'http' && ev.origin === 'trigger') trigger = ev;
+            else if (ev.resource.type === 'http') myhttp = ev;
+        });
+    }
 
-    if (!(trigger || mysql || redis || http || express)) isValid = false;
+    if (!(trigger || mysql || redis || myhttp || express)) isValid = false;
     if (trace && trace.events && trace.events.length > 5) isValid = false;
 
     const expressLabels = JSON.parse(express.resource.metadata.labels || '{}');
     const testId = expressLabels['test-id'];
 
-    if (http.resource.metadata.request_headers['test-id'] !== testId) {
+    if (myhttp.resource.metadata.request_headers['test-id'] !== testId) {
         isValid = false;
         express.resource.metadata.failed_because = 'http';
     }
 
-    if (mysql.resource.metadata['Query'].indexOf(testId) === -1) {
+    if (mysql.resource.metadata.Query.indexOf(testId) === -1) {
         isValid = false;
         express.resource.metadata.failed_because = 'sql';
     }
 
-    if (redis.resource.metadata["Command Arguments"]["0"] !== testId) {
+    if (redis.resource.metadata['Command Arguments']['0'] !== testId) {
         isValid = false;
         express.resource.metadata.failed_because = 'redis';
     }
 
     if (express) {
-        express.resource.metadata.instrum_event_count = trace.events.length;
-        express.resource.metadata.instrum_events_by_type = trace.events.reduce((sum, cur) => ({
+        express.resource.metadata.instrum_event_count = mytrace.events.length;
+        express.resource.metadata.instrum_events_by_type = mytrace.events.reduce((sum, cur) => ({
             ...sum,
-            [cur.resource.type]: (sum[cur.resource.type] || 0) + 1
+            [cur.resource.type]: (sum[cur.resource.type] || 0) + 1,
         }), {});
     }
 
     express.resource.metadata.instrum_valid_trace = isValid;
 
     if (!isValid) {
-        console.log(trace);
+        console.log(mytrace);
     }
 }
 
