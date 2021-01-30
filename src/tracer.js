@@ -35,7 +35,6 @@ const traceQueue = TraceQueue.getInstance();
  * @param {Object} mytrace     the trace
  */
 function validateTestTrace(mytrace) {
-    console.log(JSON.stringify(mytrace, null, 2));
     let isValid = true;
     let myhttp = null;
     let mysql = null;
@@ -92,7 +91,7 @@ function validateTestTrace(mytrace) {
     express.resource.metadata.instrum_valid_trace = isValid;
 
     if (!isValid) {
-        console.log(mytrace);
+        console.log(JSON.stringify(mytrace, null, 2));
     }
 }
 
