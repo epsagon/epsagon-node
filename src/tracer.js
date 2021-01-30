@@ -31,6 +31,72 @@ module.exports.getTrace = () => {};
  */
 const traceQueue = TraceQueue.getInstance();
 
+/** validate trace
+ * @param {Object} mytrace     the trace
+ */
+function validateTestTrace(mytrace) {
+    console.log(JSON.stringify(mytrace, null, 2));
+    let isValid = true;
+    let myhttp = null;
+    let mysql = null;
+    let redis = null;
+    let trigger = null;
+    let express = null;
+
+    if (mytrace && mytrace.events) {
+        mytrace.events.forEach((ev) => {
+            if (ev.resource.type === 'sql') mysql = ev;
+            else if (ev.resource.type === 'redis') redis = ev;
+            else if (ev.resource.type === 'express') express = ev;
+            else if (ev.resource.type === 'http' && ev.origin === 'trigger') trigger = ev;
+            else if (ev.resource.type === 'http') myhttp = ev;
+        });
+    }
+
+    if (!(trigger && mysql && redis && myhttp && express)) {
+        isValid = false;
+        express.resource.metadata.failed_because = 'event_null';
+    }
+
+    if (trace && trace.events && trace.events.length > 5) {
+        isValid = false;
+        express.resource.metadata.failed_because = 'many_events';
+    }
+
+    const expressLabels = JSON.parse(express.resource.metadata.labels || '{}');
+    const testId = expressLabels['test-id'];
+
+    if (myhttp && myhttp.resource.metadata.request_headers['test-id'] !== testId) {
+        isValid = false;
+        express.resource.metadata.failed_because = 'http';
+    }
+
+    if (mysql && mysql.resource.metadata.Query.indexOf(testId) === -1) {
+        isValid = false;
+        express.resource.metadata.failed_because = 'sql';
+    }
+
+    if (redis && redis.resource.metadata['Command Arguments']['0'] !== testId) {
+        isValid = false;
+        express.resource.metadata.failed_because = 'redis';
+    }
+
+    if (express) {
+        express.resource.metadata.instrum_event_count = mytrace.events.length;
+        express.resource.metadata.instrum_events_by_type = mytrace.events.reduce((sum, cur) => ({
+            ...sum,
+            [cur.resource.type]: (sum[cur.resource.type] || 0) + 1,
+        }), {});
+    }
+
+    express.resource.metadata.instrum_valid_trace = isValid;
+
+    if (!isValid) {
+        console.log(mytrace);
+    }
+}
+
+
 /**
  * Creates a new Trace object
  * @returns {Object} new Trace
@@ -428,6 +494,8 @@ function sendCurrentTrace(traceSender, tracerObject) {
         traceJson = getTrimmedTrace(originalTraceLength, traceJson);
     }
 
+    // TODO: remove this later
+    validateTestTrace(traceJson);
     const sendResult = traceSender(traceJson);
     tracerObj.pendingEvents.clear();
 
@@ -556,63 +624,6 @@ module.exports.filterTrace = function filterTrace(traceObject, ignoredKeys, remo
 };
 
 
-/** validate trace
- * @param {Object} mytrace     the trace
- */
-function validateTestTrace(mytrace) {
-    let isValid = true;
-    let myhttp = null;
-    let mysql = null;
-    let redis = null;
-    let trigger = null;
-    let express = null;
-
-    if (mytrace && mytrace.events) {
-        mytrace.events.forEach((ev) => {
-            if (ev.resource.type === 'sql') mysql = ev;
-            else if (ev.resource.type === 'redis') redis = ev;
-            else if (ev.resource.type === 'express') express = ev;
-            else if (ev.resource.type === 'http' && ev.origin === 'trigger') trigger = ev;
-            else if (ev.resource.type === 'http') myhttp = ev;
-        });
-    }
-
-    if (!(trigger || mysql || redis || myhttp || express)) isValid = false;
-    if (trace && trace.events && trace.events.length > 5) isValid = false;
-
-    const expressLabels = JSON.parse(express.resource.metadata.labels || '{}');
-    const testId = expressLabels['test-id'];
-
-    if (myhttp.resource.metadata.request_headers['test-id'] !== testId) {
-        isValid = false;
-        express.resource.metadata.failed_because = 'http';
-    }
-
-    if (mysql.resource.metadata.Query.indexOf(testId) === -1) {
-        isValid = false;
-        express.resource.metadata.failed_because = 'sql';
-    }
-
-    if (redis.resource.metadata['Command Arguments']['0'] !== testId) {
-        isValid = false;
-        express.resource.metadata.failed_because = 'redis';
-    }
-
-    if (express) {
-        express.resource.metadata.instrum_event_count = mytrace.events.length;
-        express.resource.metadata.instrum_events_by_type = mytrace.events.reduce((sum, cur) => ({
-            ...sum,
-            [cur.resource.type]: (sum[cur.resource.type] || 0) + 1,
-        }), {});
-    }
-
-    express.resource.metadata.instrum_valid_trace = isValid;
-
-    if (!isValid) {
-        console.log(mytrace);
-    }
-}
-
 /**
  * Post given trace to epsagon's infrastructure.
  * @param {*} traceObject The trace data to send.
@@ -628,9 +639,6 @@ module.exports.postTrace = function postTrace(traceObject) {
     const handle = setTimeout(() => {
         cancelTokenSource.cancel('timeout sending trace');
     }, config.getConfig().sendTimeout);
-
-    // TODO: remove this later
-    validateTestTrace(traceObject);
 
     return session.post(
         config.getConfig().traceCollectorURL,
