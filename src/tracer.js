@@ -39,7 +39,6 @@ function validateTestTrace(mytrace) {
     let myhttp = null;
     let mysql = null;
     let redis = null;
-    let trigger = null;
     let express = null;
 
     if (mytrace && mytrace.events) {
@@ -47,7 +46,6 @@ function validateTestTrace(mytrace) {
             if (ev.resource.type === 'rds') mysql = ev;
             else if (ev.resource.type === 'redis') redis = ev;
             else if (ev.resource.type === 'express') express = ev;
-            else if (ev.resource.type === 'http' && ev.origin === 'trigger') trigger = ev;
             else if (ev.resource.type === 'http') myhttp = ev;
         });
     }
@@ -55,10 +53,10 @@ function validateTestTrace(mytrace) {
     const expressLabels = JSON.parse(express.resource.metadata.labels || '{}');
     const testId = expressLabels.test_id;
 
-    if (!(trigger && mysql && redis && myhttp && express)) {
+    if (!(mysql && redis && myhttp && express)) {
         isValid = false;
         express.resource.metadata.failed_because = 'event_null';
-    } else if (trace && trace.events && trace.events.length > 5) {
+    } else if (trace && trace.events && trace.events.length > 4) {
         isValid = false;
         express.resource.metadata.failed_because = 'many_events';
     } else if (myhttp && myhttp.resource.metadata.request_headers['test-id'] !== testId) {
