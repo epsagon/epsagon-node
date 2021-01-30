@@ -63,19 +63,15 @@ function validateTestTrace(mytrace) {
     }
 
     const expressLabels = JSON.parse(express.resource.metadata.labels || '{}');
-    const testId = expressLabels['test-id'];
+    const testId = expressLabels['test_id'];
 
     if (myhttp && myhttp.resource.metadata.request_headers['test-id'] !== testId) {
         isValid = false;
         express.resource.metadata.failed_because = 'http';
-    }
-
-    if (mysql && mysql.resource.metadata.Query.indexOf(testId) === -1) {
+    } else if (mysql && mysql.resource.metadata.Query.indexOf(testId) === -1) {
         isValid = false;
         express.resource.metadata.failed_because = 'sql';
-    }
-
-    if (redis && redis.resource.metadata['Command Arguments']['0'] !== testId) {
+    } else if (redis && redis.resource.metadata['Command Arguments']['0'] !== testId) {
         isValid = false;
         express.resource.metadata.failed_because = 'redis';
     }
