@@ -166,7 +166,8 @@ function httpWrapper(wrappedFunction) {
             );
             utils.debugLog(`[http] captured call ${hostname}`);
 
-            if (callback && callback.__epsagonCallback) { // eslint-disable-line no-underscore-dangle
+             // eslint-disable-next-line no-underscore-dangle
+            if (callback && callback.__epsagonCallback) {
                 // we are already tracing this request. can happen in
                 // https->http cases
                 utils.debugLog(`[http] filtered patched callback ${hostname}`);
