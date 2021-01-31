@@ -148,11 +148,6 @@ function httpWrapper(wrappedFunction) {
         const { url, options, callback } = parseArgs(a, b, c);
         const chunks = [];
 
-        if (callback && callback.__epsagonCallback) { // eslint-disable-line no-underscore-dangle
-            // we are already tracing this request. can happen in
-            // https->http cases
-            return wrappedFunction.apply(this, [a, b, c]);
-        }
         let clientRequest = null;
         try {
             let parsedUrl = url;
@@ -169,8 +164,18 @@ function httpWrapper(wrappedFunction) {
                 (options && options.uri && options.uri.hostname) ||
                 'localhost'
             );
+            utils.debugLog(`[http] captured call ${hostname}`);
+
+            // eslint-disable-next-line no-underscore-dangle
+            if (callback && callback.__epsagonCallback) {
+                // we are already tracing this request. can happen in
+                // https->http cases
+                utils.debugLog(`[http] filtered patched callback ${hostname}`);
+                return wrappedFunction.apply(this, [a, b, c]);
+            }
+
             // Capture the port if provided and is different than standard 80 and 443
-            if (options.port && !['80', '443'].includes(options.port)) {
+            if (options.port && !['80', '443', 80, 443].includes(options.port)) {
                 hostname = `${hostname}:${options.port}`;
             }
 
@@ -191,11 +196,11 @@ function httpWrapper(wrappedFunction) {
             );
 
             if (isBlacklistURL(hostname, URL_BLACKLIST, path) || isURLIgnoredByUser(hostname)) {
-                utils.debugLog(`filtered blacklist hostname ${hostname}`);
+                utils.debugLog(`[http] filtered ignored hostname ${hostname}`);
                 return wrappedFunction.apply(this, [a, b, c]);
             }
             if (isBlacklistHeader(headers, USER_AGENTS_BLACKLIST)) {
-                utils.debugLog('filtered blacklist headers headers');
+                utils.debugLog('[http] filtered ignored headers');
                 return wrappedFunction.apply(this, [a, b, c]);
             }
 
@@ -277,6 +282,7 @@ function httpWrapper(wrappedFunction) {
             }
 
             const patchedCallback = (res) => {
+                utils.debugLog(`[http] patched callback called for ${hostname}`);
                 const metadataFields = {};
                 if ('x-openwhisk-activation-id' in res.headers) {
                     // This field is used to identify activation ID from 'OpenWhisk'
@@ -316,6 +322,7 @@ function httpWrapper(wrappedFunction) {
             clientRequest = wrappedFunction.apply(
                 this, buildParams(url, options, patchedCallback)
             );
+            utils.debugLog(`[http] request sent ${hostname}`);
 
             if (
                 options &&
@@ -425,6 +432,7 @@ function httpWrapper(wrappedFunction) {
                 };
 
                 clientRequest.on('response', (res) => {
+                    utils.debugLog(`[http] response arrived for ${hostname}`);
                     // Listening to data only if options.epsagonSkipResponseData!=true or no options
                     if (!checkIfOmitData()) {
                         res.on('data', chunk => addChunk(chunk, chunks));
@@ -440,14 +448,17 @@ function httpWrapper(wrappedFunction) {
             });
 
             tracer.addEvent(httpEvent, responsePromise);
+            utils.debugLog(`[http] event added ${hostname}`);
         } catch (error) {
             tracer.addException(error);
         }
 
         if (!clientRequest) {
+            utils.debugLog('[http] not client request set');
             clientRequest = wrappedFunction.apply(this, [a, b, c]);
         }
 
+        utils.debugLog('[http] done handling call');
         return clientRequest;
     };
 }
