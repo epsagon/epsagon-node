@@ -56,7 +56,7 @@ function validateTestTrace(mytrace) {
     if (!(mysql && redis && myhttp && express)) {
         isValid = false;
         express.resource.metadata.failed_because = 'event_null';
-    } else if (trace && trace.events && trace.events.length > 4) {
+    } else if (mytrace && mytrace.events && mytrace.events.length > 4) {
         isValid = false;
         express.resource.metadata.failed_because = 'many_events';
     } else if (myhttp && myhttp.resource.metadata.request_headers['test-id'] !== testId) {
