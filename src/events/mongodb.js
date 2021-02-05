@@ -1,105 +1,116 @@
 const uuid4 = require('uuid4');
-const serverlessEvent = require('../proto/event_pb.js');
+const moduleUtils = require('./module_utils.js');
+const eventInterface = require('../event.js');
 const utils = require('../utils.js');
-
+const serverlessEvent = require('../proto/event_pb.js');
 const tracer = require('../tracer.js');
 const errorCode = require('../proto/error_code_pb.js');
-const eventInterface = require('../event.js');
-const moduleUtils = require('./module_utils.js');
 
-const requestsResolvers = {};
-const MAX_DATA_LENGTH = 4096;
 
 /**
- * Stringify given obejct (and shorten if needed)
- * @param {Object} obj The data to stringify
- * @returns {string} The stringified data
- * @note A better shortening approach should be added as a general feature
- */
-function stringifyData(obj) {
-    if (!obj) {
-        return undefined;
+  * Gets command's metadata
+  * @param {*} cmd original command that passed to mongodb function
+  * @returns {Object} json with command's metadata
+  */
+function getCommandMetadata(cmd) {
+    const result = {};
+    if (!cmd || (typeof cmd !== 'object' && !Array.isArray(cmd))) return result;
+    let filter = '';
+    let query = '';
+    if (typeof cmd === 'object') {
+        filter = JSON.stringify(cmd.filter);
+        query = JSON.stringify(cmd.query);
     }
-    const data = (typeof obj === 'string') ? obj : JSON.stringify(obj);
-    return data.substring(0, MAX_DATA_LENGTH);
+    if (filter) {
+        result.filter = filter;
+    }
+    if (query) {
+        result.query = query;
+    }
+    if (Object.keys(result).length === 0) {
+        result.criteria = JSON.stringify(cmd);
+    }
+
+    return result;
 }
 
 /**
- * Extract MongoDB metadata from response.
- * @param {Object} event MongoDB event.
- * @return {Object} response metadata.
+ * Gets the post and the host of the mongodb server
+ * @param {Objecy} server original server arg that provided to function
+ * @returns {Object} json with host and port
  */
-const getMongodbMetadata = (event) => {
-    const { commandName, reply } = event;
-    let metaData = {};
-    switch (commandName) {
+function getHostAndPort(server) {
+    let port = '27017';
+    let host = 'mongodb';
+    if (server && server.s && server.s.options) {
+        const { options } = server.s;
+        port = options.port ? options.port : port;
+        host = options.host ? options.host : host;
+    }
+
+    return { port, host };
+}
+
+/**
+ * Gets the number of documents that mongodb operation affected
+ * @param {String} operationName mongodb operation name
+ * @param {Object} response response of the mongodb operation
+ * @returns {Number} the number of documents that mongodb operation affected
+ */
+function getItemsCount(operationName, response) {
+    let itemsCount;
+    switch (operationName) {
     case 'find':
-        if (reply.cursor && Array.isArray(reply.cursor.firstBatch)) {
-            metaData = { items_count: reply.cursor.firstBatch.length };
-        }
+        itemsCount = response.result.cursor.firstBatch.length;
+        break;
+    case 'insert':
+    case 'update':
+    case 'delete':
+        itemsCount = response.result.n;
         break;
     case 'getMore':
-        if (reply.cursor && Array.isArray(reply.cursor.nextBatch)) {
-            metaData = { items_count: reply.cursor.nextBatch.length };
-        }
-        break;
-    case 'count':
-        if (reply.ok) {
-            metaData = { items_count: reply.n };
-        }
+        itemsCount = response.cursor.nextBatch.length;
         break;
     default:
         break;
     }
 
-    return metaData;
-};
-
-/**
- * Extracts connection details from a conenction
- * @param {Object} connId The connectionId object of the instrumented event
- * @return {{port: *, host: *}} extracted connection details
- */
-function getConnectionDetails(connId) {
-    let host;
-    let port;
-    utils.debugLog('Epsagon - MongoDB - inspecting connectionId', connId);
-    if (connId) {
-        if (typeof connId === 'string') {
-            const parts = connId.split(':');
-            if (parts.length && parts[0][0] === '/') {
-                host = 'localhost';
-                [port] = parts;
-            } else {
-                [host, port] = parts;
-            }
-        } else if (connId.domainSocket) {
-            [host, port] = ['localhost', connId.host]; // host for domainSocket is the identifier
-        } else {
-            // eslint-disable-next-line prefer-destructuring
-            host = connId.host;
-            // eslint-disable-next-line prefer-destructuring
-            port = connId.port;
-        }
-    }
-    return { host, port };
+    return itemsCount;
 }
 
 /**
- * Hook for mongodb requests starting
- * @param {Object} event The request event
+ * Extracts the relevant arguments from provided arguments
+ * @returns {Object} Object of the extracted arguments
  */
-function onStartHook(event) {
+function getArgsFromFunction(...args) {
+    return {
+        server: args[0],
+        namespace: args[1],
+        cmd: args[args.length - 2] === 'getMore' ? {} : args[2],
+        callback: args[args.length - 3],
+        operationName: args[args.length - 2],
+        wrappedFunction: args[args.length - 1],
+    };
+}
+
+/**
+ * Wrap Mongodb operations call with tracing
+ * @returns {Array} Execiton of the called function
+ */
+function internalMongodbOperationWrapper(...args) {
+    const relevantArgs = getArgsFromFunction(...args);
+    const {
+        server, namespace, cmd, callback, operationName, wrappedFunction,
+    } = relevantArgs;
+    let patchedCallback = callback;
     try {
         const startTime = Date.now();
-        utils.debugLog('Epsagon - MongoDB - handling event', event);
-
-        const { host, port } = getConnectionDetails(event ? event.connectionId : null);
-
+        const criteria = getCommandMetadata(cmd);
+        const { host, port } = getHostAndPort(server);
         const resource = new serverlessEvent.Resource([
-            host || 'mongodb',
+            host,
             'mongodb',
-            event.commandName,
+            operationName,
         ]);
         const dbapiEvent = new serverlessEvent.Event([
             `mongodb-${uuid4()}`,
@@ -111,90 +122,152 @@ function onStartHook(event) {
         ]);
         dbapiEvent.setResource(resource);
 
-        let collection = event.command.collection || event.command[event.commandName];
-        if (typeof collection !== 'string') {
-            collection = '';
-        }
         eventInterface.addToMetadata(dbapiEvent, {
-            namespace: `${event.databaseName}.${collection}`,
+            namespace,
         }, {
-            filter: stringifyData(event.command.filter),
-            query: stringifyData(event.command.query),
+            ...criteria,
+            port,
         });
-        if (port) {
-            eventInterface.addToMetadata(dbapiEvent, { port });
-        }
 
         const responsePromise = new Promise((resolve) => {
-            requestsResolvers[event.requestId] = { resolve, dbapiEvent };
+            patchedCallback = (err, response) => {
+                utils.debugLog('MongoDb Patched callback was called.');
+                dbapiEvent.setDuration(utils.createDurationTimestamp(startTime));
+
+                if (err) {
+                    eventInterface.setException(dbapiEvent, err);
+                } else {
+                    eventInterface.addToMetadata(dbapiEvent,
+                        { items_count: getItemsCount(operationName, response) });
+                }
+
+                resolve();
+
+                if (callback) {
+                    callback(err, response);
+                }
+            };
         });
 
         tracer.addEvent(dbapiEvent, responsePromise);
     } catch (error) {
         tracer.addException(error);
     }
+
+    arguments[args.length - 3] = patchedCallback; // eslint-disable-line prefer-rest-params
+    return wrappedFunction.apply(this, arguments); // eslint-disable-line prefer-rest-params
 }
 
 /**
- * Handle a mongodb response
- * @param {Object} event The response  event
- * @param {boolean} hasError True if the request failed
+ * Wraps insert function with tracing
+ * @param {Function} wrappedFunction The function to wrap from mongodb
+ * @returns {Function} The wrapped function
  */
-function handleEventResponse(event, hasError) {
-    try {
-        const { resolve, dbapiEvent } = requestsResolvers[event.requestId];
-        eventInterface.addToMetadata(dbapiEvent, getMongodbMetadata(event));
-        dbapiEvent.setDuration(utils.createTimestampFromTime(event.duration));
-        if (hasError) {
-            eventInterface.setException(
-                dbapiEvent,
-                {
-                    name: 'Mongodb Error',
-                    message: '',
-                    stack: [],
-                }
-            );
+function mongodbInsertWrapper(wrappedFunction) {
+    return function internalMongodbInsertWrapper(...args) {
+        return internalMongodbOperationWrapper(...args, 'insert', wrappedFunction);
+    };
+}
+
+/**
+ * Wraps update function with tracing
+ * @param {Function} wrappedFunction The function to wrap from mongodb
+ * @returns {Function} The wrapped function
+ */
+function mongodbUpdateWrapper(wrappedFunction) {
+    return function internalMongodbUpdateWrapper(...args) {
+        return internalMongodbOperationWrapper(...args, 'update', wrappedFunction);
+    };
+}
+
+/**
+ * Wraps remove function with tracing
+ * @param {Function} wrappedFunction The function to wrap from mongodb
+ * @returns {Function} The wrapped function
+ */
+function mongodbRemoveWrapper(wrappedFunction) {
+    return function internalMongodbRemoveWrapper(...args) {
+        return internalMongodbOperationWrapper(...args, 'delete', wrappedFunction);
+    };
+}
+
+/**
+ * Wraps getMore function with tracing
+ * @param {Function} wrappedFunction The function to wrap from mongodb
+ * @returns {Function} The wrapped function
+ */
+function mongodbGetMoreWrapper(wrappedFunction) {
+    return function internalMongodbGetMoreWrapper(...args) {
+        return internalMongodbOperationWrapper(...args, 'getMore', wrappedFunction);
+    };
+}
+
+/**
+ * Wraps query/find function with tracing
+ * @param {Function} wrappedFunction The function to wrap from mongodb
+ * @returns {Function} The wrapped function
+ */
+function mongodbQueryWrapper(wrappedFunction) {
+    return function internalMongodbQueryWrapper(...args) {
+        return internalMongodbOperationWrapper(...args, 'find', wrappedFunction);
+    };
+}
+
+/**
+ * Wraps command (count for example) function with tracing
+ * @param {Function} wrappedFunction The function to wrap from mongodb
+ * @returns {Function} The wrapped function
+ */
+function mongodbCommandWrapper(wrappedFunction) {
+    return function internalMongodbCommandWrapper(...args) {
+        const cmd = args[2];
+        if (cmd && cmd.ismaster) {
+            return wrappedFunction.apply(this, args);
         }
-
-        delete requestsResolvers[event.requestId];
-        resolve();
-    } catch (error) {
-        tracer.addException(error);
-    }
-}
-
-/**
- * Hook for mongodb requests ending successfully
- * @param {Object} event The response event
- */
-function onSuccessHook(event) {
-    handleEventResponse(event);
-}
-
-/**
- * Hook for mongodb requests ending with failure
- * @param {Object} event The response event
- */
-function onFailureHook(event) {
-    handleEventResponse(event, true);
+        return internalMongodbOperationWrapper(...args, cmd && typeof cmd === 'object' ? Object.keys(cmd)[0] : '', wrappedFunction);
+    };
 }
 
 module.exports = {
     /**
-     * Initializes mongodb instrumentation
+     * Initializes the mongodb tracer
      */
     init() {
-        utils.debugLog('Epsagon mongodb - starting');
-        const modules = moduleUtils.getModules('mongodb');
-        utils.debugLog('Epsagon mongodb - found', modules.length, 'modules');
-        modules.forEach((mongodb) => {
-            const listener = mongodb.instrument({}, (error) => {
-                if (error) { utils.debugLog('Epsagon mongodb instrumentation failed', error); }
-            });
-            listener.on('started', onStartHook);
-            listener.on('succeeded', onSuccessHook);
-            listener.on('failed', onFailureHook);
-        });
-        utils.debugLog('Epsagon mongodb - done');
+        moduleUtils.patchModule(
+            'mongodb/lib/core/wireprotocol/index.js',
+            'insert',
+            mongodbInsertWrapper,
+            mongodb => mongodb
+        );
+        moduleUtils.patchModule(
+            'mongodb/lib/core/wireprotocol/index.js',
+            'update',
+            mongodbUpdateWrapper,
+            mongodb => mongodb
+        );
+        moduleUtils.patchModule(
+            'mongodb/lib/core/wireprotocol/index.js',
+            'remove',
+            mongodbRemoveWrapper,
+            mongodb => mongodb
+        );
+        moduleUtils.patchModule(
+            'mongodb/lib/core/wireprotocol/index.js',
+            'query',
+            mongodbQueryWrapper,
+            mongodb => mongodb
+        );
+        moduleUtils.patchModule(
+            'mongodb/lib/core/wireprotocol/index.js',
+            'getMore',
+            mongodbGetMoreWrapper,
+            mongodb => mongodb
+        );
+        moduleUtils.patchModule(
+            'mongodb/lib/core/wireprotocol/index.js',
+            'command',
+            mongodbCommandWrapper,
+            mongodb => mongodb
+        );
     },
 };
