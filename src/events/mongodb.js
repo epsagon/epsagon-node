@@ -98,11 +98,11 @@ function getArgsFromFunction(...args) {
  * @returns {Array} Execiton of the called function
  */
 function internalMongodbOperationWrapper(...args) {
-    let patchedCallback;
     const relevantArgs = getArgsFromFunction(...args);
     const {
         server, namespace, cmd, callback, operationName, wrappedFunction,
     } = relevantArgs;
+    let patchedCallback = callback;
     try {
         const startTime = Date.now();
         const criteria = getCommandMetadata(cmd);
