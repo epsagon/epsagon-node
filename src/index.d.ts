@@ -11,7 +11,7 @@ declare module 'epsagon' {
     isEpsagonDisabled?: boolean
     urlPatternsToIgnore?: string[]
     ignoredKeys?: string[]
-    labels?: string[]
+    labels?: string[][]
     sendOnlyErrors?: boolean
     sendTimeout?: number
     decodeHTTP?: boolean
