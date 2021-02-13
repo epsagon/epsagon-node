@@ -33,7 +33,7 @@ function bindWrapper(bindFunction) {
             }
             utils.debugLog(`LDAP.js bind() wrapper - name: ${name}`);
             const resource = new serverlessEvent.Resource([
-              this.url.hostname,
+                this.url.hostname,
                 'ldap',
                 'bind',
             ]);
