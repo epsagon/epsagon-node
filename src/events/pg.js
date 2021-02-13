@@ -39,7 +39,6 @@ function pgClientWrapper(wrappedFunction) {
             'pg'
         );
 
-
         if (callback) {
             // it's safe to use callback, user not expecting a Promise.
             return wrappedFunction.apply(this, [queryString, params, patchedCallback]);
@@ -82,13 +81,13 @@ module.exports = {
             pgPath,
             'query',
             pgClientWrapper,
-            pg => pg.Client.prototype
+            (pg) => pg.Client.prototype
         );
         moduleUtils.patchModule(
             'pg-pool',
             'query',
             pgClientWrapper,
-            Pool => Pool.prototype
+            (Pool) => Pool.prototype
         );
     },
 };

@@ -14,7 +14,7 @@ describe('trace queue tests', () => {
     beforeEach(() => {
         traceQueue.initQueue();
         traceQueue.batchSender = function batchSender(batch) {
-            console.log(`Sending batch: ${batch.map(trace => trace)}`);
+            console.log(`Sending batch: ${batch.map((trace) => trace)}`);
             return batch;
         };
     });
@@ -33,7 +33,7 @@ describe('trace queue tests', () => {
         traceQueue.push(traces[2]);
         traceQueue.push(traces[3]);
         expect(traceQueue.currentSize).to.equal(4);
-        expect(traceQueue.queue.map(trace => trace.json)).to.eql(traces);
+        expect(traceQueue.queue.map((trace) => trace.json)).to.eql(traces);
     });
 
     it('push traces with reaching batch size', () => {
@@ -53,7 +53,7 @@ describe('trace queue tests', () => {
         const traces = ['trace_1', 'trace_2', 'trace_3', 'trace_4', 'trace_5'];
         traceQueue.on('batchReleased', (batch) => {
             expect(traceQueue.currentSize).to.equal(0);
-            expect(batch.map(trace => trace.json)).to.eql(traces);
+            expect(batch.map((trace) => trace.json)).to.eql(traces);
             done();
         });
 
@@ -68,7 +68,7 @@ describe('trace queue tests', () => {
         const traces = ['trace_1', 'trace_2', 'trace_3', 'trace_4', 'trace_5'];
         traceQueue.on('batchReleased', (batch) => {
             expect(traceQueue.currentSize).to.equal(0);
-            expect(batch.map(trace => trace.json)).to.eql(traces);
+            expect(batch.map((trace) => trace.json)).to.eql(traces);
             done();
         });
         traceQueue.push(traces[0]);
@@ -96,7 +96,7 @@ describe('trace queue tests', () => {
         traceQueue.push(traces[4]);
         traceQueue.push(traces[5]);
         expect(traceQueue.currentSize).to.equal(3);
-        expect(traceQueue.queue.map(trace => trace.json)).to.eql(['trace_4', 'trace_5', 'trace_6']);
+        expect(traceQueue.queue.map((trace) => trace.json)).to.eql(['trace_4', 'trace_5', 'trace_6']);
     });
     it('push traces while reaching no more than byte size limit', () => {
         traceQueue.batchSize = 5;

@@ -6,7 +6,6 @@ const serverlessEvent = require('../proto/event_pb.js');
 const tracer = require('../tracer.js');
 const errorCode = require('../proto/error_code_pb.js');
 
-
 /**
   * Gets command's metadata
   * @param {*} cmd original command that passed to mongodb function
@@ -237,37 +236,37 @@ module.exports = {
             'mongodb/lib/core/wireprotocol/index.js',
             'insert',
             mongodbInsertWrapper,
-            mongodb => mongodb
+            (mongodb) => mongodb
         );
         moduleUtils.patchModule(
             'mongodb/lib/core/wireprotocol/index.js',
             'update',
             mongodbUpdateWrapper,
-            mongodb => mongodb
+            (mongodb) => mongodb
         );
         moduleUtils.patchModule(
             'mongodb/lib/core/wireprotocol/index.js',
             'remove',
             mongodbRemoveWrapper,
-            mongodb => mongodb
+            (mongodb) => mongodb
         );
         moduleUtils.patchModule(
             'mongodb/lib/core/wireprotocol/index.js',
             'query',
             mongodbQueryWrapper,
-            mongodb => mongodb
+            (mongodb) => mongodb
         );
         moduleUtils.patchModule(
             'mongodb/lib/core/wireprotocol/index.js',
             'getMore',
             mongodbGetMoreWrapper,
-            mongodb => mongodb
+            (mongodb) => mongodb
         );
         moduleUtils.patchModule(
             'mongodb/lib/core/wireprotocol/index.js',
             'command',
             mongodbCommandWrapper,
-            mongodb => mongodb
+            (mongodb) => mongodb
         );
     },
 };

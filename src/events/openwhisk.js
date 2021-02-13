@@ -48,7 +48,7 @@ function openWhiskWrapper(wrappedFunction) {
             };
             request = wrappedFunction.apply(this, [opts, callback]);
             // ensure we return the originally requested form
-            response = request.then(res => res.response.result);
+            response = request.then((res) => res.response.result);
         } else {
             request = wrappedFunction.apply(this, [options, callback]);
             response = request;
@@ -59,8 +59,8 @@ function openWhiskWrapper(wrappedFunction) {
                 let resp = res.response;
                 if (resp && resp.result && resp.result.body && resp.result.body.length > 100) {
                     // create copy so we can trim the long response body
-                    resp = Object.assign({}, resp);
-                    resp.result = Object.assign({}, resp.result);
+                    resp = { ...resp };
+                    resp.result = { ...resp.result };
                     resp.result.body = `${resp.result.body.substring(0, 100)}...(truncated)`;
                 }
                 const lastActivationId = resp.result && resp.result.headers && resp.result.headers['x-last-activation-id'];
@@ -98,7 +98,7 @@ module.exports = {
             'openwhisk/lib/actions.js',
             'invoke',
             openWhiskWrapper,
-            actions => actions.prototype
+            (actions) => actions.prototype
         );
     },
 };

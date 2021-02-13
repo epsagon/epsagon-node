@@ -10,7 +10,6 @@ const tracerModule = require('./tracer.js');
  */
 let tracer = null;
 
-
 /**
  * The tracer singleton getter function
  * @returns {Object} tracer object

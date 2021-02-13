@@ -8,7 +8,6 @@ const moduleUtils = require('./module_utils.js');
 const { EPSAGON_HEADER } = require('../consts.js');
 const { generateEpsagonTraceId } = require('../helpers/http');
 
-
 /**
  * Wraps the amqplib producer creation and wrapping send function.
  * @param {Function} sendFunction The amqplib producer function
@@ -73,7 +72,7 @@ module.exports = {
             'amqplib/lib/channel.js',
             'sendMessage',
             amqplibProducerWrapper,
-            amqplib => amqplib.Channel.prototype
+            (amqplib) => amqplib.Channel.prototype
         );
     },
 };

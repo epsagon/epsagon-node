@@ -26,7 +26,6 @@ const {
     addChunk,
 } = require('../helpers/http');
 
-
 /**
  * Builds the HTTP Params array
  * @param {string} url The URL, if exists
@@ -46,7 +45,6 @@ function buildParams(url, options, callback) {
     // url is missing - returning options and callback
     return [options, callback];
 }
-
 
 /**
  * Parses arguments for http wrapper
@@ -83,7 +81,6 @@ function parseArgs(a, b, c) {
     return { url, options, callback };
 }
 
-
 /**
  * Wraps 'on' method in a response to capture data event.
  * @param {Function} wrappedResFunction The wrapped end function
@@ -106,7 +103,6 @@ function responseOnWrapper(wrappedResFunction, chunks) {
     };
 }
 
-
 /**
  * Wraps 'on' method in a request to capture response event.
  * @param {Function} wrappedReqFunction The wrapped end function
@@ -128,7 +124,7 @@ function requestOnWrapper(wrappedReqFunction, chunks) {
                 return reqCallback(res);
             }
             res.EPSAGON_PATCH = true;
-            shimmer.wrap(res, 'on', wrapped => responseOnWrapper(wrapped, chunks));
+            shimmer.wrap(res, 'on', (wrapped) => responseOnWrapper(wrapped, chunks));
             return reqCallback(res);
         };
         return wrappedReqFunction.apply(
@@ -332,7 +328,7 @@ function httpWrapper(wrappedFunction) {
                 shimmer.wrap(
                     clientRequest,
                     'on',
-                    wrapped => requestOnWrapper(wrapped, chunks)
+                    (wrapped) => requestOnWrapper(wrapped, chunks)
                 );
             }
 
@@ -387,7 +383,6 @@ function httpWrapper(wrappedFunction) {
                 // In some libs it might not be possible to hook on write
             }
 
-
             const responsePromise = new Promise((resolve) => {
                 let isTimeout = false;
                 clientRequest.on('timeout', () => {
@@ -435,7 +430,7 @@ function httpWrapper(wrappedFunction) {
                     utils.debugLog(`[http] response arrived for ${hostname}`);
                     // Listening to data only if options.epsagonSkipResponseData!=true or no options
                     if (!checkIfOmitData()) {
-                        res.on('data', chunk => addChunk(chunk, chunks));
+                        res.on('data', (chunk) => addChunk(chunk, chunks));
                     }
                     res.on('end', () => {
                         const contentEncoding = res.headers && res.headers['content-encoding'];
@@ -477,7 +472,6 @@ function httpGetWrapper(module) {
     };
 }
 
-
 /**
  * Flagging fetch-h2 http1 requests with a flag to omit our response.on('data') because of collision
  * @param {Function} wrappedFunc connect function
@@ -512,7 +506,6 @@ function clientRequestWrapper(wrappedFunc) {
     };
 }
 
-
 module.exports = {
     /**
      * Initializes the http tracer
@@ -528,21 +521,21 @@ module.exports = {
             'fetch-h2/dist/lib/context-http1',
             'connect',
             fetchH2Wrapper,
-            fetch => fetch.OriginPool.prototype
+            (fetch) => fetch.OriginPool.prototype
         );
         // simple-oauth2 < 4.0
         moduleUtils.patchModule(
             'simple-oauth2/lib/client.js',
             'request',
             clientRequestWrapper,
-            client => client.prototype
+            (client) => client.prototype
         );
         // simple-oauth2 >= 4.0
         moduleUtils.patchModule(
             'simple-oauth2/lib/client/client.js',
             'request',
             clientRequestWrapper,
-            client => client.prototype
+            (client) => client.prototype
         );
     },
 };

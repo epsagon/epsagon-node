@@ -20,7 +20,6 @@ const winstonCloudwatch = require('./events/winston_cloudwatch');
 const TraceQueue = require('./trace_queue.js');
 const { isStrongId } = require('./helpers/events');
 
-
 /**
  * Returns a function to get the relevant tracer.
  */
@@ -146,7 +145,7 @@ module.exports.initTrace = function initTrace(
         if (!utils.isLambdaEnv) {
             const ecsMetaUri = ecs.hasECSMetadata();
             if (ecsMetaUri) {
-                ecs.loadECSMetadata(ecsMetaUri).catch(err => utils.debugLog(err));
+                ecs.loadECSMetadata(ecsMetaUri).catch((err) => utils.debugLog(err));
             }
             if (k8s.hasK8sMetadata()) {
                 k8s.loadK8sMetadata();
@@ -154,7 +153,7 @@ module.exports.initTrace = function initTrace(
             azure.loadAzureMetadata((azureAdditionalConfig) => {
                 config.setConfig(Object.assign(azureAdditionalConfig, configData));
             });
-            ec2.loadEC2Metadata().catch(err => utils.debugLog(err));
+            ec2.loadEC2Metadata().catch((err) => utils.debugLog(err));
         }
     } catch (err) {
         utils.debugLog('Could not extract container env data');
@@ -162,7 +161,6 @@ module.exports.initTrace = function initTrace(
     config.setConfig(configData);
     traceQueue.updateConfig();
 };
-
 
 /**
  * Adds a runner to the current trace.
@@ -195,7 +193,6 @@ module.exports.restart = function restart() {
     tracerObj.trace.setToken(config.getConfig().token);
 };
 
-
 /**
  * Keeps only strong IDs in event metadata.
  * @param {array} eventMetadata Event metadata.
@@ -215,7 +212,6 @@ function getTrimmedMetadata(eventMetadata, isRunner) {
     });
     return trimmedEventMetadata;
 }
-
 
 /**
  * Trimming trace exceptions.
@@ -239,7 +235,7 @@ function trimTraceExceptions(traceExceptions) {
  */
 function getTrimmedTrace(traceSize, jsTrace) {
     let currentTraceSize = traceSize;
-    const trimmedTrace = Object.assign({}, jsTrace);
+    const trimmedTrace = { ...jsTrace };
     let totalTrimmedExceptions = 0;
     let totalTrimmedEvents = 0;
     // Trimming trace exceptions.
@@ -254,7 +250,7 @@ function getTrimmedTrace(traceSize, jsTrace) {
     utils.debugLog(`Epsagon - Pre metadata trim: current trace size ${currentTraceSize}`);
     // Trimming trace events metadata.
     if (currentTraceSize >= consts.MAX_TRACE_SIZE_BYTES) {
-        trimmedTrace.events = jsTrace.events.sort(event => (['runner', 'trigger'].includes(event.origin) ? -1 : 1));
+        trimmedTrace.events = jsTrace.events.sort((event) => (['runner', 'trigger'].includes(event.origin) ? -1 : 1));
         for (let i = jsTrace.events.length - 1; i >= 0; i -= 1) {
             const currentEvent = trimmedTrace.events[i];
             let eventMetadata = currentEvent.resource.metadata;
@@ -357,7 +353,7 @@ function sendCurrentTrace(traceSender, tracerObject) {
 
     // Check if got error events
     if (sendOnlyErrors) {
-        const errorEvents = tracerObj.trace.getEventList().filter(event => event.getErrorCode());
+        const errorEvents = tracerObj.trace.getEventList().filter((event) => event.getErrorCode());
         if (errorEvents.length === 0) {
             utils.debugLog('Epsagon - no trace was sent since no error events found.');
             tracerObj.pendingEvents.clear();
@@ -367,7 +363,7 @@ function sendCurrentTrace(traceSender, tracerObject) {
     let traceJson = {
         app_name: tracerObj.trace.getAppName(),
         token: tracerObj.trace.getToken(),
-        events: tracerObj.trace.getEventList().map(entry => ({
+        events: tracerObj.trace.getEventList().map((entry) => ({
             id: entry.getId(),
             start_time: entry.getStartTime(),
             resource: entry.hasResource() ? {
@@ -396,7 +392,7 @@ function sendCurrentTrace(traceSender, tracerObject) {
                     }, {}),
             } : {},
         })),
-        exceptions: tracerObj.trace.getExceptionList().map(entry => ({
+        exceptions: tracerObj.trace.getExceptionList().map((entry) => ({
             type: entry.getType(),
             message: entry.getMessage(),
             traceback: entry.getTraceback(),
@@ -454,9 +450,9 @@ module.exports.filterTrace = function filterTrace(traceObject, ignoredKeys, remo
         return (typeof x === 'object') && x !== null;
     }
 
-    const isString = x => typeof x === 'string';
+    const isString = (x) => typeof x === 'string';
 
-    const isPossibleStringJSON = v => isString(v) && v.length > 1 && ['[', '{'].includes(v[0]);
+    const isPossibleStringJSON = (v) => isString(v) && v.length > 1 && ['[', '{'].includes(v[0]);
 
     /**
      * Tests if a key is to be ignored or not.
@@ -483,7 +479,7 @@ module.exports.filterTrace = function filterTrace(traceObject, ignoredKeys, remo
      * @param {string} value a value to search ignored keys in
      * @returns {boolean} true for non-ignored keys
      */
-    const doesContainIgnoredKey = value => ignoredKeys
+    const doesContainIgnoredKey = (value) => ignoredKeys
         .some((predicate) => {
             if (typeof predicate === 'string' &&
                 config.processIgnoredKey(value).includes(predicate)) {
@@ -494,7 +490,6 @@ module.exports.filterTrace = function filterTrace(traceObject, ignoredKeys, remo
             }
             return false;
         });
-
 
     /**
      * Recursivly filter object properties
@@ -509,12 +504,12 @@ module.exports.filterTrace = function filterTrace(traceObject, ignoredKeys, remo
         const unFilteredKeys = Object
             .keys(obj)
             .filter(isNotIgnored);
-        const maskedKeys = Object.keys(obj).filter(k => !isNotIgnored(k));
+        const maskedKeys = Object.keys(obj).filter((k) => !isNotIgnored(k));
 
-        const primitive = unFilteredKeys.filter(k => !isObject(obj[k]) && !isString(obj[k]));
+        const primitive = unFilteredKeys.filter((k) => !isObject(obj[k]) && !isString(obj[k]));
         const objects = unFilteredKeys
-            .filter(k => isObject(obj[k]))
-            .map(k => ({ [k]: filterObject(obj[k]) }));
+            .filter((k) => isObject(obj[k]))
+            .map((k) => ({ [k]: filterObject(obj[k]) }));
 
         // trying to JSON load strings to filter sensitive data
         unFilteredKeys
@@ -535,10 +530,11 @@ module.exports.filterTrace = function filterTrace(traceObject, ignoredKeys, remo
                 }
             });
 
-        return Object.assign({},
-            !removeIgnoredKeys && maskedKeys.reduce((sum, key) => Object.assign({}, sum, { [key]: '****' }), {}),
-            primitive.reduce((sum, key) => Object.assign({}, sum, { [key]: obj[key] }), {}),
-            objects.reduce((sum, value) => Object.assign({}, sum, value), {}));
+        return {
+            ...!removeIgnoredKeys && maskedKeys.reduce((sum, key) => ({ ...sum, [key]: '****' }), {}),
+            ...primitive.reduce((sum, key) => ({ ...sum, [key]: obj[key] }), {}),
+            ...objects.reduce((sum, value) => ({ ...sum, ...value }), {}),
+        };
     }
 
     utils.debugLog('Trace was filtered with ignored keys');
@@ -547,12 +543,12 @@ module.exports.filterTrace = function filterTrace(traceObject, ignoredKeys, remo
             return event;
         }
 
-        const filteredEvent = Object.assign({}, event);
+        const filteredEvent = { ...event };
         filteredEvent.resource.metadata = filterObject(event.resource.metadata);
         return filteredEvent;
     });
 
-    return Object.assign({}, traceObject, { events });
+    return { ...traceObject, events };
 };
 
 /**
@@ -619,9 +615,9 @@ module.exports.sendTrace = function sendTrace(runnerUpdateFunc, tracerObject) {
         // Setting runner's duration.
         runnerUpdateFunc();
         if (config.getConfig().sendBatch) {
-            return sendCurrentTrace(traceObject => traceQueue.push(traceObject), tracerObj);
+            return sendCurrentTrace((traceObject) => traceQueue.push(traceObject), tracerObj);
         }
-        return sendCurrentTrace(traceObject => module.exports.postTrace(traceObject), tracerObj);
+        return sendCurrentTrace((traceObject) => module.exports.postTrace(traceObject), tracerObj);
     });
 };
 
@@ -661,7 +657,7 @@ module.exports.sendTraceSync = function sendTraceSync() {
         }
     });
 
-    return sendCurrentTrace(traceObject => module.exports.postTrace(traceObject));
+    return sendCurrentTrace((traceObject) => module.exports.postTrace(traceObject));
 };
 
 /**
@@ -746,7 +742,6 @@ module.exports.disable = function disable() {
     tracerObj.disabled = true;
 };
 
-
 /**
  * Enable tracer
  */
@@ -778,7 +773,6 @@ module.exports.getTraceId = function getTraceId() {
     }
     return null;
 };
-
 
 /**
  * Adds `logging_tracing_enabled: true` to the current runner's Metadata iff it is enabled

@@ -20,7 +20,6 @@ module.exports.epsagonWrapped = epsagonWrapped;
 module.exports.TIMEOUT_WINDOW = TIMEOUT_WINDOW;
 module.exports.FAILED_TO_SERIALIZE_MESSAGE = FAILED_TO_SERIALIZE_MESSAGE;
 
-
 /**
  * Appends the Epsagon ID (runner request ID) for distributed tracing connection
  * @param {Event} runner event
@@ -42,7 +41,6 @@ function propagateEpsagonId(runner, returnValue) {
     }
     return returnValue;
 }
-
 
 /**
  * The epsagon's base lambda wrapper, wrap a lambda function with it to trace it
@@ -204,7 +202,8 @@ function baseLambdaWrapper(
         };
 
         let waitForContextResultHandlersPromise = Promise.resolve();
-        const patchedContext = Object.assign({}, originalContext, {
+        const patchedContext = {
+            ...originalContext,
             succeed: (res) => {
                 utils.debugLog('wrapped succeed called');
                 if (callbackCalled) {
@@ -244,7 +243,7 @@ function baseLambdaWrapper(
                         .then(() => resolve());
                 });
             },
-        });
+        };
 
         // Adding wrappers to original setter and getter
         Object.defineProperty(patchedContext, 'callbackWaitsForEmptyEventLoop', {
@@ -321,7 +320,6 @@ module.exports.lambdaWrapper = function lambdaWrapper(functionToWrap) {
     return wrapped;
 };
 
-
 /**
  * Extract the step data from the event, and updates the runner and the response.
  * @param {object} originalEvent Lambda function event data
@@ -334,7 +332,7 @@ function extractAndAppendStepData(originalEvent, runner, response) {
     if (typeof response === 'object') {
         if (!step) {
             if (originalEvent && originalEvent[STEP_ID_NAME]) {
-                step = Object.assign({}, originalEvent[STEP_ID_NAME]);
+                step = { ...originalEvent[STEP_ID_NAME] };
                 step.step_num += 1;
             } else {
                 step = { id: uuid4(), step_num: 0 };
@@ -351,7 +349,6 @@ function extractAndAppendStepData(originalEvent, runner, response) {
     return response;
 }
 
-
 /**
  * Creates a wrapper that adds a step id to the result of a step machine.
  * @param {function} functionToWrap The function to wrap
@@ -359,7 +356,7 @@ function extractAndAppendStepData(originalEvent, runner, response) {
  */
 function createStepIdAddWrapper(functionToWrap) {
     return (originalEvent, originalContext, originalCallback, runner) => {
-        const updateStepResult = response => extractAndAppendStepData(
+        const updateStepResult = (response) => extractAndAppendStepData(
             originalEvent,
             runner,
             response
@@ -380,7 +377,7 @@ function createStepIdAddWrapper(functionToWrap) {
 
         if (result && typeof result.then === 'function') {
             utils.debugLog('Step function response is async');
-            result = result.then(response => extractAndAppendStepData(
+            result = result.then((response) => extractAndAppendStepData(
                 originalEvent,
                 runner,
                 response

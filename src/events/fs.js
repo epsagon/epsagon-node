@@ -73,7 +73,6 @@ function wrapFsWriteFileFunction(original, originalName) {
     };
 }
 
-
 module.exports = {
     /**
      * Patch Node fs methods.

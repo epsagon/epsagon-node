@@ -59,7 +59,7 @@ module.exports = {
             'winston/lib/winston/logger',
             'write',
             writeWrapper,
-            Logger => Logger.prototype
+            (Logger) => Logger.prototype
         );
     },
 };

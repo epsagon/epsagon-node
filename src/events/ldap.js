@@ -27,7 +27,7 @@ function bindWrapper(bindFunction) {
                 callback = d;
                 controls = c;
             }
-          
+
             if (this.urls.length > 0) {
                 this.url = this.urls[0];
             }
@@ -94,7 +94,6 @@ function bindWrapper(bindFunction) {
     };
 }
 
-
 module.exports = {
     /**
    * Initializes the ldap.js tracer
@@ -104,7 +103,7 @@ module.exports = {
             'ldapjs',
             'bind',
             bindWrapper,
-            ldapjs => ldapjs.Client.prototype
+            (ldapjs) => ldapjs.Client.prototype
         );
     },
 };

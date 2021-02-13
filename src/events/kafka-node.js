@@ -9,7 +9,6 @@ const moduleUtils = require('./module_utils.js');
 const { EPSAGON_HEADER } = require('../consts.js');
 const { generateEpsagonTraceId } = require('../helpers/http');
 
-
 /**
  * Wrap kafka-node producer send function
  * @param {Function} sendFunction kafka producer send function.
@@ -121,7 +120,7 @@ module.exports = {
             'kafka-node',
             'send',
             wrapKafkaSendFunction,
-            kafka => kafka.Producer.prototype
+            (kafka) => kafka.Producer.prototype
         );
     },
 };

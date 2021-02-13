@@ -5,7 +5,6 @@ const eventInterface = require('../event');
 let currentECSLabels = null;
 let currentECSAccount = null;
 
-
 /**
  * Check if the current process is running inside
  * an ECS container, if so return the ECS_CONTAINER_METADATA_URI
@@ -25,7 +24,7 @@ module.exports.loadECSMetadata = function loadECSMetadata(uri) {
 
     utils.debugLog(`loading ecs meta, url: (${uri})`);
     const promises = [];
-    const labelsPromise = axios.get(uri).then(res => res.data).then((metadata) => {
+    const labelsPromise = axios.get(uri).then((res) => res.data).then((metadata) => {
         utils.debugLog(`Received metadata: ${JSON.stringify(metadata)}`);
         currentECSLabels = metadata && metadata.Labels;
         const cluster = currentECSLabels && currentECSLabels['com.amazonaws.ecs.cluster'];

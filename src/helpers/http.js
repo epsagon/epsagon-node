@@ -21,7 +21,6 @@ const URL_BLACKLIST = {
     '169.254.169.254': 'startsWith', // EC2 document ip. Have better filtering in the future
 };
 
-
 // Brotli decompression exists since Node v10
 const ENCODING_FUNCTIONS = {
     br: zlib.brotliDecompressSync,
@@ -38,9 +37,8 @@ const USER_AGENTS_BLACKLIST = ['openwhisk-client-js'];
  * @returns {boolean} True if it is in the user-defined blacklist, False otherwise.
  */
 function isURLIgnoredByUser(url) {
-    return config.getConfig().urlPatternsToIgnore.some(pattern => url.includes(pattern));
+    return config.getConfig().urlPatternsToIgnore.some((pattern) => url.includes(pattern));
 }
-
 
 /**
  * Set the duration of the event, and resolves the promise using the given function.
@@ -52,7 +50,6 @@ function resolveHttpPromise(httpEvent, resolveFunction, startTime) {
     httpEvent.setDuration(utils.createDurationTimestamp(startTime));
     resolveFunction();
 }
-
 
 /**
  * Attempts to json parse the data and set it at key on the event's metadata.
@@ -91,7 +88,6 @@ function setJsonPayload(httpEvent, key, data, encoding) {
     }
 }
 
-
 /**
  * Return UUID in hex string.
  * @param {string} uuid uuid object.
@@ -102,7 +98,6 @@ function UUIDToHex(uuid) {
     uuidParse.parse(uuid, uuidBuffer);
     return uuidBuffer.toString('hex');
 }
-
 
 /**
  * Return an Epsagon trace ID to put in the request headers.
@@ -115,7 +110,6 @@ function generateEpsagonTraceId() {
 
     return `${hexTraceId}:${spanId}:${parentSpanId}:1`;
 }
-
 
 /**
  * Checks if API Gateway details appear in the headers, and update event accordingly
@@ -131,7 +125,6 @@ function updateAPIGateway(headers, httpEvent) {
         });
     }
 }
-
 
 /**
  * Adding HTTP response chunks into the array, according to the constraints

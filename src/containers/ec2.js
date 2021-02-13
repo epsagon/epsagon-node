@@ -8,14 +8,12 @@ const URL = 'http://169.254.169.254/latest/meta-data/';
 const attributeToGet = ['instance-id', 'instance-type', 'local-ipv4', 'public-hostname', 'public-ipv4'];
 const EPSAGON_EC2_REQUEST_TIMEOUT = process.env.EPSAGON_EC2_REQUEST_TIMEOUT || 3000;
 
-
 /**
  * Load EC2 metadata and store it
  * @returns {Promise} when resolved will contain the EC2 metadata
  */
 module.exports.loadEC2Metadata = function loadEC2Metadata() {
     if (currentEC2Labels) return Promise.resolve(currentEC2Labels);
-
 
     const promises = [];
     utils.debugLog('Loading EC2 metadata');
@@ -53,5 +51,5 @@ module.exports.loadEC2Metadata = function loadEC2Metadata() {
  */
 module.exports.addEC2Metadata = function addEC2Metadata(runner) {
     if (!runner || !currentEC2Labels) return;
-    eventIterface.addToMetadata(runner, Object.assign({}, currentEC2Labels));
+    eventIterface.addToMetadata(runner, { ...currentEC2Labels });
 };

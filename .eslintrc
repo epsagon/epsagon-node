@@ -8,6 +8,13 @@
         "json"
     ],
     "rules": {
+        "prefer-destructuring": [
+          "error",
+          {
+            "object": true,
+            "array": false
+          }
+        ],
         "no-console": "off",
         "indent": ["error", 4],
         "function-paren-newline": ["error", "consistent"],

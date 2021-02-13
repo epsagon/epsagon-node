@@ -3,7 +3,7 @@ const utils = require('../utils.js');
 const tracer = require('../tracer.js');
 const moduleUtils = require('./module_utils');
 const eventInterface = require('../event.js');
-const { isBlacklistURL } = require('.././helpers/events');
+const { isBlacklistURL } = require('../helpers/events');
 
 const URL_BLACKLIST = {
     'tc.epsagon.com': 'endsWith',
@@ -39,7 +39,7 @@ const getRrtypeArguments = (arg1, arg2, arg3, functionName) => {
     // in case of arg3 doesn't exist or arg2 is options.
     if (!arg3 || typeof arg2 === 'object') {
         if (functionName) {
-            rrtype = Object.values(rrtypesMethods).find(type => functionName.toLocaleLowerCase().includes((`query${type}`.toLocaleLowerCase())));
+            rrtype = Object.values(rrtypesMethods).find((type) => functionName.toLocaleLowerCase().includes((`query${type}`.toLocaleLowerCase())));
         }
         if (!arg3) {
             callback = arg2;

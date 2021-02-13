@@ -23,7 +23,6 @@ const tryRequire = require('../try_require');
 
 const http2 = tryRequire('http2');
 
-
 /**
  * http2 module adds in the request and response headers also extra fields with a ':' prefix.
  * For example :path, :method, etc. When we want to record just the headers, we want to clear
@@ -33,7 +32,7 @@ const http2 = tryRequire('http2');
  */
 function extractHeaders(headers) {
     return Object.entries(headers) // Iterate over key-value pairs
-        .filter(header => !header[0].startsWith(':')) // Filter out keys that start with ':'
+        .filter((header) => !header[0].startsWith(':')) // Filter out keys that start with ':'
         .reduce((obj, header) => { // Rebuild key-value into object using reduce
             const [key, value] = header;
             obj[key] = value; // eslint-disable-line no-param-reassign
@@ -163,14 +162,13 @@ function wrapHttp2Connect(connectFunction) {
     return function innerWrapHttp2Connect(authority, options, listener) {
         const clientSession = connectFunction.apply(this, [authority, options, listener]);
         try {
-            shimmer.wrap(clientSession, 'request', wrappedFunction => httpWrapper(wrappedFunction, authority));
+            shimmer.wrap(clientSession, 'request', (wrappedFunction) => httpWrapper(wrappedFunction, authority));
         } catch (err) {
             utils.debugLog(`Could not instrument http2 session request ${err}`);
         }
         return clientSession;
     };
 }
-
 
 module.exports = {
     /**

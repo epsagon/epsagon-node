@@ -56,8 +56,8 @@ function createDurationTimestamp(startTime) {
  */
 function reflectPromise(promise) {
     return promise
-        .then(value => ({ value, status: 'resolved' }))
-        .catch(error => ({ error, status: 'rejected' }));
+        .then((value) => ({ value, status: 'resolved' }))
+        .catch((error) => ({ error, status: 'rejected' }));
 }
 
 /**
@@ -166,7 +166,6 @@ function flatten(target) {
     return output;
 }
 
-
 /**
  * Function to split string into array, which return the last element of the array.
  * @param {string} string String to be split.
@@ -180,7 +179,6 @@ const getLastSplittedItem = (string, seperator) => {
 
 const isLambdaEnv = !!process.env.AWS_LAMBDA_FUNCTION_NAME;
 
-
 /**
  * Function to truncate a long string to a maximum length.
  * @param {string} message to be trancated.
@@ -193,7 +191,6 @@ function truncateMessage(message, maxSize) {
     }
     return message.slice(0, maxSize);
 }
-
 
 module.exports.createTimestampFromTime = createTimestampFromTime;
 module.exports.createTimestamp = createTimestamp;

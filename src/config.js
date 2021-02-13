@@ -20,9 +20,7 @@ module.exports.processIgnoredKey = function processIgnoredKey(key) {
         .replace(/\s/g, '');
 };
 
-
-const processIgnoredKeys = keys => keys.map(k => (typeof k === 'string' ? module.exports.processIgnoredKey(k) : k));
-
+const processIgnoredKeys = (keys) => keys.map((k) => (typeof k === 'string' ? module.exports.processIgnoredKey(k) : k));
 
 /**
  * The default sendTimeout to send for send operations (both sync and async)
@@ -101,7 +99,6 @@ if ((process.env.EPSAGON_SSL || 'TRUE').toUpperCase() === 'TRUE') {
     config.traceCollectorURL = config.traceCollectorURL.replace('http:', 'https:');
 }
 
-
 if (process.env.EPSAGON_PATCH_WHITELIST) {
     config.patchWhitelist = process.env.EPSAGON_PATCH_WHITELIST.split(',');
 }
@@ -112,7 +109,6 @@ if (process.env.EPSAGON_PATCH_WHITELIST) {
 module.exports.getConfig = function getConfig() {
     return config;
 };
-
 
 /**
  * Initializes the configuration
@@ -183,7 +179,7 @@ module.exports.setConfig = function setConfig(configData) {
 
     if (configData.ignoredKeys && Array.isArray(configData.ignoredKeys)) {
         const filteredIgnoredKeys = configData.ignoredKeys
-            .filter(key => typeof key === 'string' || key instanceof RegExp);
+            .filter((key) => typeof key === 'string' || key instanceof RegExp);
         if (filteredIgnoredKeys.length !== configData.ignoredKeys.length) {
             utils.printWarning(
                 'Epsagon deprecation warning: ignoredKeys supports only strings and RegExp objects, other values will be ignored. received ignoredKeys:',
@@ -230,7 +226,6 @@ module.exports.setConfig = function setConfig(configData) {
             config.maxQueueSizeBytes = Number(configData.maxQueueSizeBytes);
         }
     }
-
 
     if (configData.labels) {
         config.labels = utils.flatten([...configData.labels].reduce((labels, label) => {

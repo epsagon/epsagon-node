@@ -46,9 +46,8 @@ function redisClientWrapper(wrappedFunction) {
                 'Redis Port': this.options.port,
                 'Redis DB Index': this.options.db || '0',
             }, {
-                'Command Arguments': commandArgs.map(arg => arg.toString()),
+                'Command Arguments': commandArgs.map((arg) => arg.toString()),
             });
-
 
             const responsePromise = new Promise((resolve) => {
                 command.promise.then((result) => {
@@ -82,13 +81,13 @@ module.exports = {
             'ioredis',
             'sendCommand',
             redisClientWrapper,
-            redis => redis.prototype
+            (redis) => redis.prototype
         );
         moduleUtils.patchModule(
             'dy-ioredis/lib/redis.js',
             'sendCommand',
             redisClientWrapper,
-            redis => redis.prototype
+            (redis) => redis.prototype
         );
     },
 };

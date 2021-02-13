@@ -10,7 +10,6 @@ const moduleUtils = require('./module_utils.js');
 const { EPSAGON_HEADER } = require('../consts.js');
 const { generateEpsagonTraceId } = require('../helpers/http');
 
-
 /**
  * Wrap kafka producer send function
  * @param {Function} sendFunction kafka producer send function.
@@ -186,13 +185,13 @@ module.exports = {
             'kafkajs',
             'producer',
             kafkaProducerWrapper,
-            kafka => kafka.Kafka.prototype
+            (kafka) => kafka.Kafka.prototype
         );
         moduleUtils.patchModule(
             'kafkajs/src/cluster/index.js',
             'connect',
             kafkaConnectWrapper,
-            cluster => cluster.prototype
+            (cluster) => cluster.prototype
         );
     },
 };

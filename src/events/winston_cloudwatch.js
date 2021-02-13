@@ -7,7 +7,6 @@ const AWS = tryRequire('aws-sdk');
 
 const logDestinations = [];
 
-
 /**
  * loads data from aws metadata to additional tags
  * @param {Object} options options cloudwatch winston was initialized with
@@ -35,7 +34,6 @@ function loadAWSLogDestination(options) {
     });
 }
 
-
 /**
  * Capture winston-cloudwatch require
  * @param {Function} exports returned from requiring the module
@@ -59,8 +57,8 @@ function onWinstonCloudwatchRequire(exports) {
         try {
             utils.debugLog('winston-cloudwatch instance created');
             loadAWSLogDestination(options)
-                .then(dest => logDestinations.push(dest))
-                .catch(err => tracer.addException(err));
+                .then((dest) => logDestinations.push(dest))
+                .catch((err) => tracer.addException(err));
         } catch (e) {
             utils.debugLog('failed to set cloudwatch-winston log parameters', e);
             tracer.addException(e);

@@ -233,17 +233,17 @@ function mqttClientWrapper(originalConstructorFunc) {
             shimmer.wrap(
                 mqttClient,
                 'publish',
-                func => publishWrapper(func)
+                (func) => publishWrapper(func)
             );
             shimmer.wrap(
                 mqttClient,
                 'subscribe',
-                func => subscribeWrapper(func)
+                (func) => subscribeWrapper(func)
             );
             shimmer.wrap(
                 mqttClient,
                 'on',
-                func => onWrapper(func)
+                (func) => onWrapper(func)
             );
         } catch (error) {
             tracer.addException(error);
@@ -261,7 +261,7 @@ module.exports = {
             'mqtt',
             'MqttClient',
             mqttClientWrapper,
-            mqttModule => mqttModule
+            (mqttModule) => mqttModule
         );
     },
 };

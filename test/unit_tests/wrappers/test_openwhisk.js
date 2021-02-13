@@ -11,7 +11,7 @@ const owpromise = () => Promise.resolve({
     hello: 'world',
 });
 
-const owrequest = () => request.get('http://www.example.com').then(response => ({
+const owrequest = () => request.get('http://www.example.com').then((response) => ({
     body: response,
 }));
 

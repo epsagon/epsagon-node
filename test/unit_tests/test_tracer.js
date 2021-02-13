@@ -819,7 +819,6 @@ describe('sendTraceSync function tests', () => {
         this.baseConfig.sendOnlyErrors = false;
     });
 
-
     it('sendCurrentTrace: trace not sent when epsagon disabled', () => {
         this.getConfigStub.returns(this.baseConfig);
         tracer.restart();

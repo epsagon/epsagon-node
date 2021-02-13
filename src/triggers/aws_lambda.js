@@ -278,7 +278,6 @@ function createElbTrigger(event, trigger) {
     });
 }
 
-
 /**
  * Initializes an event representing a trigger to the lambda caused by Cognito
  * @param {object} event The event the lambda was triggered with
@@ -313,7 +312,6 @@ const resourceTypeToFactoryMap = {
     elastic_load_balancer: createElbTrigger,
     cognito: createCognitoTrigger,
 };
-
 
 /**
  * Creates an {@link proto.event_pb.Event} describing the lambda trigger

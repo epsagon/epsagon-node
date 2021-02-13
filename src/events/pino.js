@@ -1,7 +1,6 @@
 const tracer = require('../tracer.js');
 const moduleUtils = require('./module_utils.js');
 
-
 /**
  * Wrap pino logs
  * @param {Function} wrappedFunction The function to wrap from winston

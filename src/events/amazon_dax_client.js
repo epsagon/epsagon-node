@@ -108,14 +108,14 @@ module.exports = {
             'amazon-dax-client',
             '_makeWriteRequestWithRetries',
             DAXWrapper,
-            AmazonDaxClient => AmazonDaxClient.prototype
+            (AmazonDaxClient) => AmazonDaxClient.prototype
         );
 
         moduleUtils.patchModule(
             'amazon-dax-client',
             '_makeReadRequestWithRetries',
             DAXWrapper,
-            AmazonDaxClient => AmazonDaxClient.prototype
+            (AmazonDaxClient) => AmazonDaxClient.prototype
         );
     },
 };

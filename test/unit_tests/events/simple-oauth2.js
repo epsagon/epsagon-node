@@ -3,9 +3,7 @@ const semver = require('semver');
 const app = require('./oauth2-server-mock/server');
 const epsagon = require('../../../src/index');
 
-
 const PORT = 8083;
-
 
 describe('simple-oauth2 tests', () => {
     it('sanity', async () => {

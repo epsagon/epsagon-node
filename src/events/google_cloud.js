@@ -158,7 +158,6 @@ const getMessagesFromResponse = (res) => {
     return {};
 };
 
-
 /**
  * Wrap pubsub request function.
  * @param {Function} original pubsub request function.
@@ -331,19 +330,19 @@ module.exports = {
             '@google-cloud/common/',
             'makeRequest',
             bigQueryWrapper,
-            common => common.util
+            (common) => common.util
         );
         moduleUtils.patchModule(
             '@google-cloud/pubsub/',
             'request',
             wrapPubSubRequestFunction,
-            pubsub => pubsub.PubSub.prototype
+            (pubsub) => pubsub.PubSub.prototype
         );
         moduleUtils.patchModule(
             '@google-cloud/pubsub/',
             'pull',
             wrapPubSubPullFunction,
-            pubsub => pubsub.v1.SubscriberClient.prototype
+            (pubsub) => pubsub.v1.SubscriberClient.prototype
         );
     },
 };

@@ -5,9 +5,8 @@ const EventEmitter = require('events');
 const axios = require('axios');
 const https = require('https');
 const http = require('http');
-const utils = require('../src/utils.js');
+const utils = require('./utils.js');
 const config = require('./config.js');
-
 
 /**
  * Session for the post requests to the collector
@@ -109,7 +108,7 @@ class TraceQueue extends EventEmitter.EventEmitter {
 
         this.on('batchReleased', async function batchReleased(batch) {
             utils.debugLog('[QUEUE] Sending batch...');
-            const batchJSON = batch.map(trace => trace.json);
+            const batchJSON = batch.map((trace) => trace.json);
             this.batchSender(batchJSON);
         });
         process.on('exit', function releaseAndClearQueue() {
@@ -175,7 +174,6 @@ class TraceQueue extends EventEmitter.EventEmitter {
     get currentSize() {
         return this.queue.length;
     }
-
 
     /**
    * Checks if queue size reached batch size

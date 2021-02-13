@@ -46,7 +46,7 @@ module.exports.getModules = function getModules(id) {
 
     const searchPaths = require.resolve.paths(id);
     if (process.env.EPSAGON_ADD_NODE_PATH) {
-        searchPaths.push(...process.env.EPSAGON_ADD_NODE_PATH.split(':').map(item => item.trim()));
+        searchPaths.push(...process.env.EPSAGON_ADD_NODE_PATH.split(':').map((item) => item.trim()));
     }
     if (process.env.EPSAGON_AUTO_ADD_NODE_PATHS &&
         process.env.EPSAGON_AUTO_ADD_NODE_PATHS.toUpperCase() === 'TRUE'
@@ -88,7 +88,7 @@ module.exports.patchModule = function patchModule(
     id,
     methodName,
     wrapper,
-    memberExtractor = (mod => mod)
+    memberExtractor = ((mod) => mod)
 ) {
     utils.debugLog('patching module:', id);
     const modules = module.exports.getModules(id);

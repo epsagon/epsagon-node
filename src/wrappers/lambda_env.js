@@ -7,7 +7,7 @@ const config = require('../config.js');
  *     error occurred.
  */
 function getUserHandler() {
-    const createErrorHandler = err => ((event, context) => {
+    const createErrorHandler = (err) => ((event, context) => {
         context.fail(err);
     });
 

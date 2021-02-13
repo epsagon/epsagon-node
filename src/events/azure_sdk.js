@@ -72,7 +72,6 @@ function blobDownloadWrapper(wrappedFunction) {
     };
 }
 
-
 /**
  * Wraps the CosmosDB Item create method.
  * @param {Function} wrappedFunction The function to wrap
@@ -119,19 +118,19 @@ module.exports = {
             '@azure/storage-blob',
             'upload',
             blobUploadWrapper,
-            Clients => Clients.BlockBlobClient.prototype
+            (Clients) => Clients.BlockBlobClient.prototype
         );
         moduleUtils.patchModule(
             '@azure/storage-blob',
             'download',
             blobDownloadWrapper,
-            Clients => Clients.BlockBlobClient.prototype
+            (Clients) => Clients.BlockBlobClient.prototype
         );
         moduleUtils.patchModule(
             '@azure/cosmos',
             'create',
             cosmosCreateItemWrapper,
-            index => index.Items.prototype
+            (index) => index.Items.prototype
         );
     },
 };

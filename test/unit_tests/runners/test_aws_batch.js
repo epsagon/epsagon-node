@@ -14,11 +14,11 @@ describe('AWS Batch createRunner tests', () => {
         this.getStub = sinon.stub(axios, 'get').returns(Promise.resolve({ data: JSON.stringify({ region: 'test-reg' }) }));
         this.addExceptionStub = sinon.stub(tracer, 'addException');
         this.getConfigStub = sinon.stub(config, 'getConfig').returns(
-            Object.assign(
-                {},
-                this.baseConfig,
-                { metadataOnly: false }
-            )
+            {
+
+                ...this.baseConfig,
+                metadataOnly: false,
+            }
         );
     });
     afterEach(() => {

@@ -10,7 +10,6 @@ const MAX_QUERY_SIZE = 2048;
 const MAX_PARAMS_LENGTH = 5;
 const MAX_QUERY_ELEMENTS = 100;
 
-
 /**
  * Parse query arguments - get the callback and params
  * @param {Array|Function} arg1 First argument

@@ -15,7 +15,7 @@ const NATS_TYPES = {
     badMessage: 'NATS_BAD_JSON_MSG',
 };
 
-const getServerHostname = currentServer => (
+const getServerHostname = (currentServer) => (
     (currentServer.url && currentServer.url.hostname) ?
         currentServer.url.hostname :
         NATS_TYPES.serverDefaultHostname

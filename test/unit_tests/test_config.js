@@ -2,7 +2,6 @@ const { expect } = require('chai');
 const consts = require('../../src/consts.js');
 const config = require('../../src/config.js');
 
-
 describe('tracer config tests', () => {
     const DEFAULT_CONFIG = {
         token: '',
@@ -16,7 +15,6 @@ describe('tracer config tests', () => {
         maxBatchSizeBytes: consts.BATCH_SIZE_BYTES_HARD_LIMIT,
         maxQueueSizeBytes: consts.QUEUE_SIZE_BYTES_HARD_LIMIT,
     };
-
 
     function resetConfig() {
         Object.assign(config.getConfig(), DEFAULT_CONFIG);
@@ -105,7 +103,6 @@ describe('tracer config tests', () => {
         });
     });
 
-
     it('setConfig: set custom maxBatchSizeBytes', () => {
         const maxBatchSizeBytes = 10;
         config.setConfig({ maxBatchSizeBytes });
@@ -158,7 +155,6 @@ describe('tracer config tests', () => {
             expect(config.getConfig().batchSize).to.be.equal(Number(batchSizeString));
         });
     });
-
 
     it('setConfig: set custom batch send', () => {
         const sendBatch = true;

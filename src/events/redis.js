@@ -88,7 +88,7 @@ module.exports = {
             'redis',
             'internal_send_command',
             redisClientWrapper,
-            redis => redis.RedisClient.prototype
+            (redis) => redis.RedisClient.prototype
         );
     },
 };

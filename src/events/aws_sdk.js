@@ -62,7 +62,7 @@ const s3EventCreator = {
             resource.getMetadataMap().set(
                 'files',
                 response.data.Contents.map(
-                    entry => [`${entry.Key}`, entry.Size, entry.Etag]
+                    (entry) => [`${entry.Key}`, entry.Size, entry.Etag]
                 ).toString()
             );
             break;
@@ -635,7 +635,6 @@ const batchEventCreator = {
         const { operation } = request;
         const resource = event.getResource();
 
-
         switch (operation) {
         case 'submitJob': {
             resource.setName(`${parameters.jobName}`);
@@ -724,7 +723,6 @@ const CloudWatchEventsEventCreator = {
         }
     },
 };
-
 
 const CloudWatchLogsEventCreator = {
     /**
@@ -906,7 +904,7 @@ function wrapPromiseOnAdd(wrappedFunction) {
                 'aws-sdk',
                 'promise',
                 AWSSDKWrapper,
-                AWSmod => AWSmod.Request.prototype
+                (AWSmod) => AWSmod.Request.prototype
             );
         } catch (err) {
             utils.debugLog('Failed to re-instrument aws-sdk\'s promise method', err);
@@ -924,13 +922,13 @@ module.exports = {
             'aws-sdk',
             'send',
             AWSSDKWrapper,
-            AWSmod => AWSmod.Request.prototype
+            (AWSmod) => AWSmod.Request.prototype
         );
         moduleUtils.patchModule(
             'aws-sdk',
             'promise',
             AWSSDKWrapper,
-            AWSmod => AWSmod.Request.prototype
+            (AWSmod) => AWSmod.Request.prototype
         );
 
         // This method is static - not in prototype
@@ -938,7 +936,7 @@ module.exports = {
             'aws-sdk',
             'addPromisesToClass',
             wrapPromiseOnAdd,
-            AWSmod => AWSmod.Request
+            (AWSmod) => AWSmod.Request
         );
     },
 

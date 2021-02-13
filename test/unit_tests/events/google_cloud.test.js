@@ -79,7 +79,6 @@ describe('Google cloud events tests', () => {
             }],
         };
 
-
         const expectedOutput = {
             messages: [{ message: 'test', messageId: '1027170925339701' }, { messageId: '1027170925339702' }],
             messageIdsArray: ['1027170925339701', '1027170925339702'],

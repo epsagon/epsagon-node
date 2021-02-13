@@ -114,7 +114,7 @@ module.exports = {
             'cassandra-driver/lib/client',
             'execute',
             cassandraClientWrapper,
-            cassandra => cassandra.prototype
+            (cassandra) => cassandra.prototype
         );
     },
 };

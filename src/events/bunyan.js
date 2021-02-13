@@ -1,7 +1,6 @@
 const tracer = require('../tracer.js');
 const moduleUtils = require('./module_utils.js');
 
-
 /**
  * Wrap bunyan logs
  * @param {Function} wrappedFunction The function to wrap from bunyan
@@ -51,7 +50,7 @@ module.exports = {
             'bunyan',
             '_emit',
             emitWrapper,
-            bunyan => bunyan.prototype
+            (bunyan) => bunyan.prototype
         );
     },
 };

@@ -31,7 +31,6 @@ const ldapPatcher = require('./events/ldap.js');
 const cassandraPatcher = require('./events/cassandra-driver.js');
 const fs = require('./events/fs.js');
 
-
 const LIBNAME_TO_PATCHER = {
     'aws-sdk': awsSDKPatcher,
     'azure-sdk': azureSdkPatcher,

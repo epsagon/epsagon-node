@@ -32,7 +32,7 @@ module.exports.wrapBatchJob = function wrapBatchJob() {
         });
 
         const processExitWrapper = (
-            wrappedFunction => function internalProcessExitWrapper(errorCode) {
+            (wrappedFunction) => function internalProcessExitWrapper(errorCode) {
                 runnerSendUpdateHandler();
                 tracer.sendTraceSync();
                 wrappedFunction.apply(this, [errorCode]);
