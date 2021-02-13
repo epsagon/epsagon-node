@@ -5,7 +5,7 @@ const EventEmitter = require('events');
 const axios = require('axios');
 const https = require('https');
 const http = require('http');
-const utils = require('../src/utils.js');
+const utils = require('./utils.js');
 const config = require('./config.js');
 
 
