@@ -29,7 +29,7 @@ function bindWrapper(bindFunction) {
             }
             utils.debugLog(`LDAP.js bind() wrapper - name: ${name}`);
             if (this.urls.length > 0) {
-              this.url = this.urls[0];
+                this.url = this.urls[0];
             }
             const resource = new serverlessEvent.Resource([
                 this.url.hostname,

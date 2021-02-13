@@ -11,6 +11,13 @@
         "no-console": "off",
         "indent": ["error", 4],
         "function-paren-newline": ["error", "consistent"],
+        "prefer-destructuring": [
+          "error",
+          {
+            "object": true,
+            "array": false
+          }
+        ],
         "require-jsdoc": ["error", {
             "require": {
                 "FunctionDeclaration": true,
