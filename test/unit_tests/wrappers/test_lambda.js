@@ -1,6 +1,6 @@
 const { expect } = require('chai');
 const sinon = require('sinon');
-const lolex = require('lolex');
+const lolex = require('@sinonjs/fake-timers');
 const proxyquire = require('proxyquire').noPreserveCache();
 const tracer = require('../../../src/tracer.js');
 const eventInterface = require('../../../src/event.js');
