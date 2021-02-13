@@ -17,6 +17,7 @@
   "scripts": {
     "pretest": "./scripts/build_peg.sh",
     "test": "./scripts/run_tests.sh",
+    "test-with-coverage": "nyc --reporter=text npm run test",
     "lint:js": "eslint --max-warnings=0 ./src/ ./test/unit_tests -f table --ext .js --ext .jsx",
     "lint:js:fix": "eslint --max-warnings=0 ./src/ ./test/unit_tests -f table --ext .js --ext .jsx --fix",
     "lint": "npm run lint:js",
@@ -71,6 +72,7 @@
     "mongodb": "^3.6.4",
     "mysql": "^2.18.1",
     "mysql2": "^2.2.5",
+    "nyc": "^15.1.0",
     "pegjs": "^0.10.0",
     "pg": "^8.5.1",
     "pg-pool": "^3.2.2",
