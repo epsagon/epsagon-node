@@ -9,3 +9,4 @@ src/resource_utils/sql_utils.js
 .pytest_cache
 *.cpuprofile
 tenna_releases
+.nyc_output/*
