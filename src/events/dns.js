@@ -3,7 +3,7 @@ const utils = require('../utils.js');
 const tracer = require('../tracer.js');
 const moduleUtils = require('./module_utils');
 const eventInterface = require('../event.js');
-const { isBlacklistURL } = require('.././helpers/events');
+const { isBlacklistURL } = require('../helpers/events');
 
 const URL_BLACKLIST = {
     'tc.epsagon.com': 'endsWith',
