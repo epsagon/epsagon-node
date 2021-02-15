@@ -16,7 +16,7 @@
   "license": "MIT",
   "scripts": {
     "pretest": "./scripts/build_peg.sh",
-    "test": "./scripts/run_tests.sh",
+    "test": "nyc --reporter=text ./scripts/run_tests.sh",
     "lint:js": "eslint --max-warnings=0 ./src/ ./examples/ ./test/unit_tests ./index.js -f table --ext .js --ext .jsx",
     "lint:js:fix": "eslint --max-warnings=0 ./src/ ./examples/ ./test/unit_tests ./index.js -f table --ext .js --ext .jsx --fix",
     "lint": "npm run lint:js",
@@ -71,6 +71,7 @@
     "mongodb": "^3.1.13",
     "mysql": "^2.16.0",
     "mysql2": "^1.6.4",
+    "nyc": "^15.1.0",
     "pegjs": "^0.10.0",
     "pg": "^7.6.0",
     "pg-pool": "^2.0.3",
