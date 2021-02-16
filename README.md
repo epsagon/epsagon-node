@@ -293,7 +293,7 @@ module.exports.main = epsagon.openWhiskWrapper(
 
 ### AWS Batch
 
-Tracing batch jobs running in AWS Batch can be done by wrapping the main handler/entrypoint of the code:
+Tracing batch jobs running in AWS Batch can be done by calling `epsagon.wrapBatchJob()` at the main handler/entrypoint of the code:
 
 ```javascript
 const epsagon = require('epsagon');
@@ -303,12 +303,12 @@ epsagon.init({
   metadataOnly: false,
 });
 
+epsagon.wrapBatchJob();
+
 
 function process(params) {
   // Your code is here
 }
-
-const wrappedProcess = epsagon.wrapBatchJob(process);
 ```
 
 ### Express
