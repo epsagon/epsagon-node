@@ -434,6 +434,14 @@ const dynamoDBEventCreator = {
                 Item: JSON.stringify(response.data.Item),
             });
             break;
+        case 'updateItem':
+            // To capture the hash correctly ReturnValues=ALL_NEW in the request params
+            if (response.data.Attributes) {
+                eventInterface.addToMetadata(event, {
+                    item_hash: this.generateItemHash(response.data.Attributes),
+                }, {});
+            }
+            break;
 
         case 'listTables':
             eventInterface.addToMetadata(event, {
