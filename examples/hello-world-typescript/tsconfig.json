@@ -1,0 +1,22 @@
+{
+  "compileOnSave": true,
+  "compilerOptions": {
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "declaration": false,
+    "noImplicitAny": false,
+    "noImplicitThis": false,
+    "inlineSourceMap": true,
+    "esModuleInterop": true,
+    "sourceMap": false,
+    "target": "es2019",
+    "baseUrl": "src"
+  },
+  "include": [
+    "src/**/*.ts"
+  ],
+  "exclude": [
+    "tests/**/*.ts",
+    "node_modules"
+  ]
+}
