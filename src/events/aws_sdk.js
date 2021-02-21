@@ -733,7 +733,6 @@ const CloudWatchEventsEventCreator = {
     },
 };
 
-
 const CloudWatchLogsEventCreator = {
     /**
      * Updates an event with the appropriate fields from an AWS CloudWatch Logs request
@@ -778,6 +777,47 @@ const CloudWatchLogsEventCreator = {
     },
 };
 
+const SSMEventCreator = {
+    /**
+    * Updates an event with the appropriate fields from an AWS SSM request
+    * @param {object} request The AWS.Request object
+    * @param {proto.event_pb.Event} event The event to update the data on
+    */
+    requestHandler(request, event) {
+        const parameters = request.params || {};
+        const resource = event.getResource();
+        const { operation } = request;
+
+        resource.setName(parameters.Name || 'SSM');
+        switch (operation) {
+        case 'getParameter':
+            eventInterface.addToMetadata(event, {}, {
+                WithDecryption: parameters.WithDecryption,
+            });
+            break;
+        default:
+            break;
+        }
+    },
+
+    /**
+     * Updates an event with the appropriate fields from an AWS SSM response
+     * @param {object} response The AWS.Response object
+     * @param {proto.event_pb.Event} event The event to update the data on
+     */
+    responseHandler(response, event) {
+        switch (response.request.operation) {
+        case 'getParameter':
+            eventInterface.addToMetadata(event, {
+                value: (response.data.Parameter || { Value: '' }).Value || '',
+            });
+            break;
+        default:
+            break;
+        }
+    },
+};
+
 /**
  * a map between AWS resource names and their appropriate creator object.
  */
@@ -795,6 +835,7 @@ const specificEventCreators = {
     cloudwatchevents: CloudWatchEventsEventCreator,
     eventbridge: CloudWatchEventsEventCreator,
     cloudwatchlogs: CloudWatchLogsEventCreator,
+    ssm: SSMEventCreator,
 };
 
 /**
