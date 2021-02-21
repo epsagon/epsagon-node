@@ -25,9 +25,7 @@ function getSNSTrigger(messages) {
                 'MessageId' in body &&
                 'TopicArn' in body &&
                 'Message' in body &&
-                'Timestamp' in body &&
-                'SignatureVersion' in body &&
-                'Signature' in body) {
+                'Timestamp' in body) {
                 foundSnsEvent = body;
                 return true;
             }
