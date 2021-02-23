@@ -301,6 +301,8 @@ epsagon.init({
   token: 'epsagon-token',
   appName: 'app-name-stage',
   metadataOnly: false,
+  labels: [["key", "value"]],
+  traceCollectorURL: "https://eu-central-1.tc.epsagon.com" // default region is us-east-1
 });
 
 epsagon.wrapBatchJob();
