@@ -1,6 +1,7 @@
 const { expect } = require('chai');
 const sinon = require('sinon');
 const lolex = require('lolex');
+const fs = require('fs');
 const proxyquire = require('proxyquire').noPreserveCache();
 const tracer = require('../../../src/tracer.js');
 const eventInterface = require('../../../src/event.js');
@@ -275,6 +276,38 @@ describe('lambdaWrapper tests', () => {
             expect(this.setExceptionStub.callCount).to.equal(1);
             done();
         }, 1);
+    });
+
+    it('lambdaWrapper: catch unhandled rejected promise', (done) => {
+        this.stubFunction = sinon.spy(() => {
+            // eslint-disable-next-line prefer-promise-reject-errors,no-new
+            new Promise((_, reject) => reject('Unauthorized'));
+            return 'success';
+        });
+        this.wrappedStub = lambdaWrapper.lambdaWrapper(this.stubFunction);
+        expect(this.wrappedStub({}, null, this.callbackStub)).to.equal('success');
+        setTimeout(() => {
+            expect(this.setExceptionStub.called).to.be.true;
+            expect(this.sendTraceSyncStub.callCount).to.equal(1);
+        }, 1);
+        done();
+    });
+
+    it('lambdaWrapper: catch unhandled exception', (done) => {
+        this.stubFunction = sinon.spy(() => {
+            fs.writeFile('/inv/a/lid/path', 'Hello content!', (err) => {
+                if (err) throw err;
+                console.log('Saved!');
+            });
+            return 'success';
+        });
+        this.wrappedStub = lambdaWrapper.lambdaWrapper(this.stubFunction);
+        expect(this.wrappedStub({}, null, this.callbackStub)).to.equal('success');
+        setTimeout(() => {
+            expect(this.setExceptionStub.called).to.be.true;
+            expect(this.sendTraceSyncStub.callCount).to.equal(1);
+        }, 1);
+        done();
     });
 
     it('lambdaWrapper: update COLD_START value', () => {
