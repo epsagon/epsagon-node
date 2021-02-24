@@ -294,6 +294,13 @@ describe('lambdaWrapper tests', () => {
     });
 
     it('lambdaWrapper: catch unhandled exception', (done) => {
+        // eslint-disable-next-line no-underscore-dangle
+        const originalUncaughtException = process._events.uncaughtException;
+        // eslint-disable-next-line no-underscore-dangle
+        process._events.uncaughtException = () => {
+            // eslint-disable-next-line no-underscore-dangle
+            process._events.uncaughtException = originalUncaughtException;
+        };
         this.stubFunction = sinon.spy(() => {
             fs.writeFile('/inv/a/lid/path', 'Hello content!', (err) => {
                 if (err) throw err;
