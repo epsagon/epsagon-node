@@ -46,6 +46,35 @@ function propagateEpsagonId(runner, returnValue) {
 
 
 /**
+ * Patch node's UncaughtException and UnhandledRejection handlers
+ * @param {function} handleUserExecutionDone handler for user execution done
+ * @param {object} runner the runner object
+ */
+function patchErrorHandlers(handleUserExecutionDone, runner) {
+    const originalUncaughtException = process._events.uncaughtException;
+    process._events.uncaughtException = (err, original) => {
+        process._events.uncaughtException = originalUncaughtException;
+        eventInterface.setException(runner, err, false);
+        handleUserExecutionDone(err, null, true).then(() => {
+            if (originalUncaughtException && typeof originalUncaughtException === 'function') {
+                originalUncaughtException(err, original);
+            }
+        });
+    };
+    const originalUnhandledRejection = process._events.unhandledRejection;
+    process._events.unhandledRejection = (reason, promise) => {
+        process._events.unhandledRejection = originalUnhandledRejection;
+        const err = Error(reason);
+        eventInterface.setException(runner, err, false);
+        handleUserExecutionDone(err, null, true).then(() => {
+            if (originalUnhandledRejection && typeof originalUnhandledRejection === 'function') {
+                originalUnhandledRejection(reason, promise);
+            }
+        });
+    };
+}
+
+/**
  * The epsagon's base lambda wrapper, wrap a lambda function with it to trace it
  * @param {function} functionToWrap The function to wrap and trace
  * @param {string} [runnerResourceType='lambda'] The resource type to set for the runner
@@ -181,28 +210,7 @@ function baseLambdaWrapper(
             runnerSendUpdateHandler();
             return tracer.sendTraceSync();
         };
-
-        const originalUncaughtException = process._events.uncaughtException;
-        process._events.uncaughtException = (err, original) => {
-            process._events.uncaughtException = originalUncaughtException;
-            eventInterface.setException(runner, err, false);
-            handleUserExecutionDone(err, null, true).then(() => {
-                if (originalUncaughtException && typeof originalUncaughtException === 'function') {
-                    originalUncaughtException(err, original);
-                }
-            });
-        };
-        const originalUnhandledRejection = process._events.unhandledRejection;
-        process._events.unhandledRejection = (reason, promise) => {
-            process._events.unhandledRejection = originalUnhandledRejection;
-            const err = Error(reason);
-            eventInterface.setException(runner, err, false);
-            handleUserExecutionDone(err, null, true).then(() => {
-                if (originalUnhandledRejection && typeof originalUnhandledRejection === 'function') {
-                    originalUnhandledRejection(reason, promise);
-                }
-            });
-        };
+        patchErrorHandlers(handleUserExecutionDone, runner);
 
         let waitForOriginalCallbackPromise = Promise.resolve();
         const wrappedCallback = (error, result) => {
