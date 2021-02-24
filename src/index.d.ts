@@ -32,4 +32,6 @@ declare module 'epsagon' {
   export function openWhiskWrapper<T extends Function>(f: T): T
   export function nodeWrapper<T extends Function>(f: T): T
   export function wrapBatchJob(): void
+  export function enable(): void
+  export function disable(): void
 }
