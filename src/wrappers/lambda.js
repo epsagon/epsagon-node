@@ -1,6 +1,7 @@
 /**
  * @fileoverview Epsagon's lambda wrapper, for tracing lambda invocations.
  */
+/* eslint-disable no-underscore-dangle */
 const uuid4 = require('uuid4');
 const util = require('util');
 const tracer = require('../tracer.js');
@@ -43,6 +44,35 @@ function propagateEpsagonId(runner, returnValue) {
     return returnValue;
 }
 
+
+/**
+ * Patch node's UncaughtException and UnhandledRejection handlers
+ * @param {function} handleUserExecutionDone handler for user execution done
+ * @param {object} runner the runner object
+ */
+function patchErrorHandlers(handleUserExecutionDone, runner) {
+    const originalUncaughtException = process._events.uncaughtException;
+    process._events.uncaughtException = (err, original) => {
+        process._events.uncaughtException = originalUncaughtException;
+        eventInterface.setException(runner, err, false);
+        handleUserExecutionDone(err, null, true).then(() => {
+            if (originalUncaughtException && typeof originalUncaughtException === 'function') {
+                originalUncaughtException(err, original);
+            }
+        });
+    };
+    const originalUnhandledRejection = process._events.unhandledRejection;
+    process._events.unhandledRejection = (reason, promise) => {
+        process._events.unhandledRejection = originalUnhandledRejection;
+        const err = Error(reason);
+        eventInterface.setException(runner, err, false);
+        handleUserExecutionDone(err, null, true).then(() => {
+            if (originalUnhandledRejection && typeof originalUnhandledRejection === 'function') {
+                originalUnhandledRejection(reason, promise);
+            }
+        });
+    };
+}
 
 /**
  * The epsagon's base lambda wrapper, wrap a lambda function with it to trace it
@@ -101,13 +131,10 @@ function baseLambdaWrapper(
         // Based on the way AWS Lambda implements it
         // This is done so we will send a trace even if callback is not called
         // This is relevant only for sync functions (async functions node > 8 will never use this)
-        // eslint-disable-next-line no-underscore-dangle
         const originalBeforeExit = process._events.beforeExit;
-        // eslint-disable-next-line no-underscore-dangle
         process._events.beforeExit = () => {
             tracer.sendTrace(runnerSendUpdateHandler).then(() => {
                 // Restore to original and exit, the event loop will take care of the rest
-                // eslint-disable-next-line no-underscore-dangle
                 process._events.beforeExit = originalBeforeExit;
             });
         };
@@ -183,6 +210,7 @@ function baseLambdaWrapper(
             runnerSendUpdateHandler();
             return tracer.sendTraceSync();
         };
+        patchErrorHandlers(handleUserExecutionDone, runner);
 
         let waitForOriginalCallbackPromise = Promise.resolve();
         const wrappedCallback = (error, result) => {
