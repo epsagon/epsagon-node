@@ -575,14 +575,18 @@ const stepFunctionsEventCreator = {
      */
     patchInput(request, event) {
         switch (request.operation) {
-        case 'startExecution': {
+        case 'startExecution':
             initializeStepsDict(request, 'input', event);
             break;
-        }
-        case 'sendTaskSuccess': {
+        case 'stopExecution':
+            initializeStepsDict(request, 'input', event);
+            break;
+        case 'sendTaskSuccess':
             initializeStepsDict(request, 'output', event);
             break;
-        }
+        case 'sendTaskFailure':
+            initializeStepsDict(request, 'output', event);
+            break;
         default:
             break;
         }
