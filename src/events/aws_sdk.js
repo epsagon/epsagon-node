@@ -755,8 +755,8 @@ const CloudWatchLogsEventCreator = {
         case 'getMetricData':
             resource.setName(parameters.logGroupName);
             eventInterface.addToMetadata(event, {
-              'aws.cloudwatch.start_time': request.startTime,
-              'aws.cloudwatch.end_time': request.endTime,
+                'aws.cloudwatch.start_time': request.startTime,
+                'aws.cloudwatch.end_time': request.endTime,
             });
             break;
         default:
