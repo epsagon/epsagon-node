@@ -307,9 +307,13 @@ epsagon.init({
 
 epsagon.wrapBatchJob();
 
-
 function process(params) {
-  // Your code is here
+  try {
+    // your code here
+  } catch (error) {
+    // some other code here
+    process.exitCode = 1; //exits gracefully
+  }
 }
 ```
 
