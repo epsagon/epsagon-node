@@ -129,11 +129,11 @@ function baseOpenWhiskWrapper(functionToWrap, options) {
                     eventInterface.setException(runner, err);
                     runnerSendUpdateHandler();
                     throw err;
-                }).finally(() => {
+                }).finally(() => (
                     tracer.sendTrace(runnerSendUpdateHandler).catch(
                         () => {}
-                    ).finally(unregisterTracer);
-                });
+                    ).finally(unregisterTracer)
+                ));
             }
             tracer.sendTrace(runnerSendUpdateHandler).catch(() => {}).finally(unregisterTracer);
             return result;
