@@ -255,6 +255,8 @@ function createDynamoDBTrigger(event, trigger) {
         region: record.awsRegion,
         sequence_number: record.dynamodb.SequenceNumber,
         item_hash: itemHash,
+    }, {
+        data: JSON.stringify(event.Records),
     });
 }
 
