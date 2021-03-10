@@ -179,7 +179,7 @@ const SNSEventCreator = {
 const SQSEventCreator = {
     /**
      * Updates an event with the appropriate fields from a SQS request
-     * @param {object} request The WS.Request object
+     * @param {object} request The AWS.Request object
      * @param {proto.event_pb.Event} event The event to update the data on
      */
     requestHandler(request, event) {
