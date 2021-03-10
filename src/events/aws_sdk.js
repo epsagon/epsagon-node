@@ -117,6 +117,7 @@ const kinesisEventCreator = {
      */
     responseHandler(response, event) {
         let errorMessages = '';
+        let errorMessagesCount = 0;
         switch (response.request.operation) {
         case 'putRecord':
             eventInterface.addToMetadata(event, {
@@ -125,13 +126,14 @@ const kinesisEventCreator = {
             });
             break;
         case 'putRecords':
-            if (response.data?.FailedRecordCount > 0) {
+            if (response.data.FailedRecordCount && response.data.FailedRecordCount > 0) {
                 errorMessages = JSON.stringify(response.data.Records
                     .map(item => item.ErrorMessage));
+                errorMessagesCount = response.data.FailedRecordCount;
             }
             eventInterface.addToMetadata(event, {
                 total_record_count: `${response.data.Records.length}`,
-                failed_record_count: `${response.data?.FailedRecordCount || 0}`,
+                failed_record_count: `${errorMessagesCount}`,
                 kinesis_error_messages: errorMessages,
             });
             break;
