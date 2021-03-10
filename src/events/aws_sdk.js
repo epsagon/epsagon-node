@@ -347,6 +347,7 @@ const dynamoDBEventCreator = {
         case 'updateItem':
             eventInterface.addToMetadata(event, {
                 Key: parameters.Key,
+            }, {
                 'Update Expression': JSON.stringify(
                     parameters.UpdateExpression
                 ),
