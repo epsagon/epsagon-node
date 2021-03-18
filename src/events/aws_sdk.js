@@ -16,13 +16,6 @@ const tryRequire = require('../try_require');
 
 const AWS = tryRequire('aws-sdk');
 
-const AWS_TYPES = {
-    kinesis: {
-        putRecord: 'putRecord',
-        putRecords: 'putRecords',
-    },
-};
-
 const s3EventCreator = {
     /**
      * Updates an event with the appropriate fields from a S3 request
@@ -94,15 +87,26 @@ const kinesisEventCreator = {
      */
     requestHandler(request, event) {
         const parameters = request.params || {};
+        const { operation } = request;
         const resource = event.getResource();
-
-        resource.setName(`${parameters.StreamName}`);
-        if (request.operation !== AWS_TYPES.kinesis.putRecords) {
+        resource.setName(`${parameters.StreamName}` || 'Kinesis');
+        switch (operation) {
+        case 'putRecord':
             eventInterface.addToMetadata(event, {
                 partition_key: `${parameters.PartitionKey}`,
             }, {
                 data: `${parameters.Data}`,
             });
+            break;
+        case 'putRecords':
+            eventInterface.addToMetadata(event, {
+                total_record_count: `${parameters.Records.length}`,
+            }, {
+                data: JSON.stringify(parameters.Records),
+            });
+            break;
+        default:
+            break;
         }
     },
 
@@ -112,18 +116,25 @@ const kinesisEventCreator = {
      * @param {proto.event_pb.Event} event The event to update the data on
      */
     responseHandler(response, event) {
+        let errorMessages = '';
+        let errorMessagesCount = 0;
         switch (response.request.operation) {
-        case AWS_TYPES.kinesis.putRecord:
+        case 'putRecord':
             eventInterface.addToMetadata(event, {
                 shard_id: `${response.data.ShardId}`,
                 sequence_number: `${response.data.SequenceNumber}`,
             });
             break;
-        case AWS_TYPES.kinesis.putRecords:
+        case 'putRecords':
+            if (response.data.FailedRecordCount && response.data.FailedRecordCount > 0) {
+                errorMessages = JSON.stringify(response.data.Records
+                    .map(item => item.ErrorMessage));
+                errorMessagesCount = response.data.FailedRecordCount;
+            }
             eventInterface.addToMetadata(event, {
-                failed_record_count: `${response.data.FailedRecordCount}`,
-                shard_id: `${response.data.Records[0].ShardId}`,
-                sequence_number: `${response.data.Records[0].SequenceNumber}`,
+                total_record_count: `${response.data.Records.length}`,
+                failed_record_count: `${errorMessagesCount}`,
+                kinesis_error_messages: errorMessages,
             });
             break;
         default:

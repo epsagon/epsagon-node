@@ -79,6 +79,7 @@ function createKinesisTrigger(event, trigger) {
         invoke_identity: event.Records[0].invokeIdentityArn,
         sequence_number: event.Records[0].kinesis.sequenceNumber,
         partition_key: event.Records[0].kinesis.partitionKey,
+        total_record_count: event.Records.length,
     });
 }
 
