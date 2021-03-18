@@ -126,6 +126,7 @@ function createSQSTrigger(event, trigger) {
             }
             return record;
         }),
+        total_record_count: event.Records.length,
     });
     try {
         const messageBody = JSON.parse(sqsMessageBody);

@@ -214,11 +214,37 @@ const SQSEventCreator = {
      * @param {proto.event_pb.Event} event The event to update the data on
      */
     responseHandler(response, event) {
+        let errorMessages = '';
+        let errorMessagesCount = 0;
         switch (response.request.operation) {
         case 'sendMessage':
             eventInterface.addToMetadata(event, {
                 'Message ID': `${response.data.MessageId}`,
                 'MD5 Of Message Body': `${response.data.MD5OfMessageBody}`,
+            });
+            break;
+        case 'sendMessageBatch':
+            if (response.data.Failed && response.data.Failed > 0) {
+                errorMessages = JSON.stringify(response.data.Failed
+                    .map(item => item));
+                errorMessagesCount = response.data.FailedRecordCount;
+            }
+            eventInterface.addToMetadata(event, {
+                successful_record_count: `${response.data.Successful.length}`,
+                failed_record_count: `${errorMessagesCount}`,
+                sqs_error_messages: errorMessages,
+            });
+            break;
+        case 'deleteMessageBatch':
+            if (response.data.Failed && response.data.Failed > 0) {
+                errorMessages = JSON.stringify(response.data.Failed
+                    .map(item => item));
+                errorMessagesCount = response.data.FailedRecordCount;
+            }
+            eventInterface.addToMetadata(event, {
+                successful_record_count: `${response.data.Successful.length}`,
+                failed_record_count: `${errorMessagesCount}`,
+                sqs_error_messages: errorMessages,
             });
             break;
         case 'receiveMessage': {
