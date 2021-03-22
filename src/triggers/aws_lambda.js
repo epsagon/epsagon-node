@@ -169,6 +169,29 @@ function createAPIGatewayTrigger(event, trigger) {
 }
 
 /**
+ * Initializes an event representing a trigger to the lambda caused by HTTP API v2 Trigger
+ * @param {object} event The event the lambda was triggered with
+ * @param {proto.event_pb.Event} trigger An Event to initialize as the trigger
+ */
+function createAPIGatewayHTTPV2Trigger(event, trigger) {
+    const resource = trigger.getResource();
+    trigger.setId(event.requestContext.requestId);
+    resource.setName(event.headers.Host || event.requestContext.domainName);
+    resource.setOperation(event.requestContext.http.method);
+    eventInterface.addToMetadata(trigger, {
+        stage: event.requestContext.stage,
+        query_string_parameters: event.queryStringParameters,
+        path_parameters: event.pathParameters,
+        path: event.requestContext.http.path,
+        'aws.api_gateway.api_id': event.requestContext.apiId,
+    }, {
+        body: event.body,
+        headers: event.headers,
+        requestContext: event.requestContext,
+    });
+}
+
+/**
  * Initializes an event representing a trigger to the lambda caused by No-Proxy API Trigger
  * @param {object} event The event the lambda was triggered with
  * @param {proto.event_pb.Event} trigger An Event to initialize as the trigger
@@ -314,6 +337,7 @@ const resourceTypeToFactoryMap = {
     api_gateway: createAPIGatewayTrigger,
     api_gateway_no_proxy: createNoProxyAPIGatewayTrigger,
     api_gateway_websocket: createWebSocketTrigger,
+    api_gateway_http2: createAPIGatewayHTTPV2Trigger,
     dynamodb: createDynamoDBTrigger,
     elastic_load_balancer: createElbTrigger,
     cognito: createCognitoTrigger,
@@ -351,6 +375,12 @@ module.exports.createFromEvent = function createFromEvent(event, context) {
             triggerService = 'dynamodb';
         } else if ('userPoolId' in event) {
             triggerService = 'cognito';
+        } else if (
+            ('requestContext' in event) &&
+            ('apiId' in event.requestContext) &&
+            ('http' in event.requestContext)
+        ) {
+            triggerService = 'api_gateway_http2';
         } else if (('requestContext' in event) && ('apiId' in event.requestContext)) {
             triggerService = 'api_gateway_websocket';
         }
