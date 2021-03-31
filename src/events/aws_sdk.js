@@ -136,6 +136,12 @@ const kinesisEventCreator = {
                 failed_record_count: `${errorMessagesCount}`,
                 kinesis_error_messages: errorMessages,
             });
+            // Adding sequence number for the first event
+            if (response.data.Records.length > 0) {
+                eventInterface.addToMetadata(event, {
+                    sequence_number: `${response.data.Records[0].SequenceNumber}`,
+                });
+            }
             break;
         default:
             break;
