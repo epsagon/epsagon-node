@@ -14,7 +14,7 @@ const resourceUtils = require('../resource_utils/sqs_utils.js');
 const moduleUtils = require('./module_utils');
 const tryRequire = require('../try_require');
 
-const AWS = tryRequire('aws-sdk');
+const DynamoDB = tryRequire('aws-sdk/clients/dynamodb');
 
 const s3EventCreator = {
     /**
@@ -345,7 +345,7 @@ const dynamoDBEventCreator = {
      * @return {string} The hash of the item
      */
     generateItemHash(item) {
-        const unmarshalledItem = AWS.DynamoDB.Converter.unmarshall(item);
+        const unmarshalledItem = DynamoDB.Converter.unmarshall(item);
         return md5(JSON.sortify(unmarshalledItem));
     },
 
@@ -1001,7 +1001,7 @@ function wrapPromiseOnAdd(wrappedFunction) {
             // it is OK to just re-wrap, as the original function overrides
             // `promise` anyway
             moduleUtils.patchModule(
-                'aws-sdk',
+                'aws-sdk/global',
                 'promise',
                 AWSSDKWrapper,
                 AWSmod => AWSmod.Request.prototype
@@ -1019,13 +1019,13 @@ module.exports = {
      */
     init() {
         moduleUtils.patchModule(
-            'aws-sdk',
+            'aws-sdk/global',
             'send',
             AWSSDKWrapper,
             AWSmod => AWSmod.Request.prototype
         );
         moduleUtils.patchModule(
-            'aws-sdk',
+            'aws-sdk/global',
             'promise',
             AWSSDKWrapper,
             AWSmod => AWSmod.Request.prototype
@@ -1033,7 +1033,7 @@ module.exports = {
 
         // This method is static - not in prototype
         moduleUtils.patchModule(
-            'aws-sdk',
+            'aws-sdk/global',
             'addPromisesToClass',
             wrapPromiseOnAdd,
             AWSmod => AWSmod.Request

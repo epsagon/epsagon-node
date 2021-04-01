@@ -12,7 +12,7 @@ const utils = require('../utils');
 const resourceUtils = require('../resource_utils/sqs_utils.js');
 const config = require('../config.js');
 
-const AWS = tryRequire('aws-sdk');
+const DynamoDB = tryRequire('aws-sdk/clients/dynamodb');
 
 /**
  * Fills the common fields for a trigger event
@@ -264,12 +264,12 @@ function createDynamoDBTrigger(event, trigger) {
     const resource = trigger.getResource();
     const record = event.Records[0];
     let itemHash = '';
-    if (AWS) {
+    if (DynamoDB) {
         // in case of a delete - hash only the key.
         const item = (
             record.eventName === 'REMOVE' ?
-                AWS.DynamoDB.Converter.unmarshall(record.dynamodb.Keys) :
-                AWS.DynamoDB.Converter.unmarshall(record.dynamodb.NewImage)
+                DynamoDB.Converter.unmarshall(record.dynamodb.Keys) :
+                DynamoDB.Converter.unmarshall(record.dynamodb.NewImage)
         );
         itemHash = md5(JSON.sortify(item));
     }

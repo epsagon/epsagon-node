@@ -3,7 +3,8 @@ const utils = require('../utils');
 const tracer = require('../tracer');
 const tryRequire = require('../try_require');
 
-const AWS = tryRequire('aws-sdk');
+const AWS = tryRequire('aws-sdk/global');
+const STS = tryRequire('aws-sdk/clients/sts');
 
 const logDestinations = [];
 
@@ -21,7 +22,7 @@ function loadAWSLogDestination(options) {
     const destination = {};
     destination.log_group_name = options.logGroupName;
     destination.log_stream_name = options.logStreamName;
-    const sts = new AWS.STS();
+    const sts = new STS();
     const cwConfig = (options.cloudWatchLogs && options.cloudWatchLogs.config) || {};
     destination.region = (
         options.awsRegion ||

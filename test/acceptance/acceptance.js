@@ -3,7 +3,7 @@
 const chai = require('chai');
 const chaiAsPromised = require('chai-as-promised');
 const { expect } = require('chai');
-const AWS = require('aws-sdk');
+const Lambda = require('aws-sdk/clients/lambda');
 
 chai.use(chaiAsPromised);
 
@@ -17,7 +17,7 @@ const RUNTIME = process.env.RUNTIME || 'nodejs8.10';
  * @returns {hash} The functions output
  */
 function invoke(name, payload) {
-    const lambda = new AWS.Lambda({ region: 'us-east-2' });
+    const lambda = new Lambda({ region: 'us-east-2' });
     const params = {
         FunctionName: SERVICE_PREFIX + name,
         Payload: JSON.stringify(payload),
