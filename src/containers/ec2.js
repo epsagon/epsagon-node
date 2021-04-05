@@ -5,6 +5,7 @@ const eventIterface = require('../event');
 let currentEC2Labels = null;
 
 const URL = 'http://169.254.169.254/latest/meta-data/';
+const RESPONSE_LEN_THRESHOLD = 100;
 const attributeToGet = ['instance-id', 'instance-type', 'local-ipv4', 'public-hostname', 'public-ipv4'];
 const EPSAGON_EC2_REQUEST_TIMEOUT = process.env.EPSAGON_EC2_REQUEST_TIMEOUT || 3000;
 
@@ -15,7 +16,6 @@ const EPSAGON_EC2_REQUEST_TIMEOUT = process.env.EPSAGON_EC2_REQUEST_TIMEOUT || 3
  */
 module.exports.loadEC2Metadata = function loadEC2Metadata() {
     if (currentEC2Labels) return Promise.resolve(currentEC2Labels);
-
 
     const promises = [];
     utils.debugLog('Loading EC2 metadata');
@@ -29,7 +29,8 @@ module.exports.loadEC2Metadata = function loadEC2Metadata() {
             cancelToken: source.token,
         }).then((response) => {
             utils.debugLog(`Received response for ${attribute}`);
-            if (response.status === 200) {
+            // In some cases a long, irrelevant HTML response is being returned
+            if (response.status === 200 && response.data.length < RESPONSE_LEN_THRESHOLD) {
                 const attributeKey = attribute.replace('-', '_');
                 const attributeData = response.data;
                 if (!currentEC2Labels) currentEC2Labels = {};
