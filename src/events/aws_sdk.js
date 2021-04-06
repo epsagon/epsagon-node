@@ -781,6 +781,37 @@ const CloudWatchEventsEventCreator = {
     },
 };
 
+
+const CognitoIDPEventsEventCreator = {
+    /**
+     * Updates an event with the appropriate fields from an AWS Cognito IDP Events request
+     * @param {object} request The AWS.Request object
+     * @param {proto.event_pb.Event} event The event to update the data on
+     */
+    requestHandler(request, event) {
+        const parameters = request.params || {};
+        const resource = event.getResource();
+        if (parameters.UserPoolId) {
+            resource.setName(parameters.UserPoolId);
+        }
+        resource.setType('cognito-idp');
+        eventInterface.addToMetadata(event, {}, {
+            'aws.cognito.request': parameters,
+        });
+    },
+
+    /**
+     * Updates an event with the appropriate fields from an AWS Cognito IDP Events response
+     * @param {object} response The AWS.Response object
+     * @param {proto.event_pb.Event} event The event to update the data on
+     */
+    responseHandler(response, event) {
+        eventInterface.addToMetadata(event, {}, {
+            'aws.cognito.response': response.data,
+        });
+    },
+};
+
 const CloudWatchLogsEventCreator = {
     /**
      * Updates an event with the appropriate fields from an AWS CloudWatch Logs request
@@ -888,6 +919,7 @@ const specificEventCreators = {
     stepfunctions: stepFunctionsEventCreator,
     batch: batchEventCreator,
     cloudwatchevents: CloudWatchEventsEventCreator,
+    cognitoidentityserviceprovider: CognitoIDPEventsEventCreator,
     eventbridge: CloudWatchEventsEventCreator,
     cloudwatchlogs: CloudWatchLogsEventCreator,
     ssm: SSMEventCreator,
@@ -905,6 +937,7 @@ function AWSSDKWrapper(wrappedFunction) {
             const { serviceIdentifier } = (
                 request.service.constructor.prototype
             );
+
             if (!(serviceIdentifier in specificEventCreators)) {
                 // resource is not supported yet
                 return wrappedFunction.apply(this, [callback]);
