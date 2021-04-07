@@ -5,6 +5,7 @@ const uuid4 = require('uuid4');
 const axios = require('axios');
 const http = require('http');
 const https = require('https');
+const stringify = require('json-stringify-safe');
 const trace = require('./proto/trace_pb.js');
 const exception = require('./proto/exception_pb.js');
 const errorCode = require('./proto/error_code_pb.js');
@@ -548,7 +549,11 @@ module.exports.filterTrace = function filterTrace(traceObject, ignoredKeys, remo
         }
 
         const filteredEvent = Object.assign({}, event);
-        filteredEvent.resource.metadata = filterObject(event.resource.metadata);
+
+        // remove all circular references from the metadata object
+        // before recursively ignoring keys to avoid an endless recursion
+        const metadata = JSON.parse(stringify(event.resource.metadata, null, 0, () => {}));
+        filteredEvent.resource.metadata = filterObject(metadata);
         return filteredEvent;
     });
 
