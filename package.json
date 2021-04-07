@@ -96,6 +96,7 @@
   "dependencies": {
     "axios": "^0.21.1",
     "google-protobuf": "^3.5.0",
+    "json-stringify-safe": "^5.0.1",
     "json.sortify": "^2.2.2",
     "md5": "^2.2.1",
     "require-in-the-middle": "^5.0.3",
