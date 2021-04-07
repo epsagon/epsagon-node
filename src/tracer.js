@@ -552,8 +552,8 @@ module.exports.filterTrace = function filterTrace(traceObject, ignoredKeys, remo
 
         // remove all circular references from the metadata object
         // before recursively ignoring keys to avoid an endless recursion
-        const prunedMetadata = JSON.parse(stringify(event.resource.metadata, null, 0, function () {}))
-        filteredEvent.resource.metadata = filterObject(prunedMetadata);
+        const metadata = JSON.parse(stringify(event.resource.metadata, null, 0, () => {}));
+        filteredEvent.resource.metadata = filterObject(metadata);
         return filteredEvent;
     });
 
