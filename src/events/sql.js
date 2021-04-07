@@ -92,7 +92,7 @@ module.exports.wrapSqlQuery = function wrapSqlQuery(queryString, params, callbac
 
         const responsePromise = new Promise((resolve) => {
             patchedCallback = (err, res, fields) => {
-                utils.debugLog('SQL Patched callback was called.');
+                utils.debugLog('SQL Patched callback was called');
                 dbapiEvent.setDuration(utils.createDurationTimestamp(startTime));
 
                 if (err) {
