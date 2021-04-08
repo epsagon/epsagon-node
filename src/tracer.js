@@ -536,7 +536,7 @@ module.exports.filterTrace = function filterTrace(traceObject, ignoredKeys, remo
                     const subObj = JSON.parse(obj[k]);
                     if (subObj && isObject(subObj)) {
                         objects.push({
-                            [k]: maxDepth > 0 ? filterObject(subObj, maxDepth - 1) : null
+                            [k]: maxDepth > 0 ? filterObject(subObj, maxDepth - 1) : null,
                         });
                     } else {
                         primitive.push(k);
