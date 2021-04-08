@@ -21,6 +21,8 @@ const winstonCloudwatch = require('./events/winston_cloudwatch');
 const TraceQueue = require('./trace_queue.js');
 const { isStrongId } = require('./helpers/events');
 
+const FILTER_TRACE_MAX_DEPTH = 50;
+
 
 /**
  * Returns a function to get the relevant tracer.
@@ -412,10 +414,15 @@ function sendCurrentTrace(traceSender, tracerObject) {
         platform: tracerObj.trace.getPlatform(),
     };
 
-    traceJson = ignoredKeys &&
-        Array.isArray(ignoredKeys) &&
-        ignoredKeys.length > 0 ?
-        module.exports.filterTrace(traceJson, ignoredKeys, removeIgnoredKeys) : traceJson;
+    try {
+        traceJson = ignoredKeys &&
+            Array.isArray(ignoredKeys) &&
+            ignoredKeys.length > 0 ?
+            module.exports.filterTrace(traceJson, ignoredKeys, removeIgnoredKeys) : traceJson;
+    } catch (err) {
+        utils.printWarning('Epsagon - failed to filter trace, cancelling send', err);
+        return Promise.resolve({});
+    }
 
     let stringifyTraceJson;
     try {
@@ -500,9 +507,10 @@ module.exports.filterTrace = function filterTrace(traceObject, ignoredKeys, remo
     /**
      * Recursivly filter object properties
      * @param {Object} obj  object to filter
+     * @param {Number} maxDepth  the maximum depth for the recursion
      * @returns {Object} filtered object
      */
-    function filterObject(obj) {
+    function filterObject(obj, maxDepth) {
         if (!isObject(obj)) {
             return obj;
         }
@@ -515,7 +523,7 @@ module.exports.filterTrace = function filterTrace(traceObject, ignoredKeys, remo
         const primitive = unFilteredKeys.filter(k => !isObject(obj[k]) && !isString(obj[k]));
         const objects = unFilteredKeys
             .filter(k => isObject(obj[k]))
-            .map(k => ({ [k]: filterObject(obj[k]) }));
+            .map(k => ({ [k]: maxDepth > 0 ? filterObject(obj[k], maxDepth - 1) : null }));
 
         // trying to JSON load strings to filter sensitive data
         unFilteredKeys
@@ -527,7 +535,9 @@ module.exports.filterTrace = function filterTrace(traceObject, ignoredKeys, remo
                 try {
                     const subObj = JSON.parse(obj[k]);
                     if (subObj && isObject(subObj)) {
-                        objects.push({ [k]: filterObject(subObj) });
+                        objects.push({
+                            [k]: maxDepth > 0 ? filterObject(subObj, maxDepth - 1) : null,
+                        });
                     } else {
                         primitive.push(k);
                     }
@@ -553,7 +563,7 @@ module.exports.filterTrace = function filterTrace(traceObject, ignoredKeys, remo
         // remove all circular references from the metadata object
         // before recursively ignoring keys to avoid an endless recursion
         const metadata = JSON.parse(stringify(event.resource.metadata, null, 0, () => {}));
-        filteredEvent.resource.metadata = filterObject(metadata);
+        filteredEvent.resource.metadata = filterObject(metadata, FILTER_TRACE_MAX_DEPTH);
         return filteredEvent;
     });
 
