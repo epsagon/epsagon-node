@@ -507,6 +507,7 @@ module.exports.filterTrace = function filterTrace(traceObject, ignoredKeys, remo
     /**
      * Recursivly filter object properties
      * @param {Object} obj  object to filter
+     * @param {Number} maxDepth  the maximum depth for the recursion
      * @returns {Object} filtered object
      */
     function filterObject(obj, maxDepth) {
@@ -534,7 +535,9 @@ module.exports.filterTrace = function filterTrace(traceObject, ignoredKeys, remo
                 try {
                     const subObj = JSON.parse(obj[k]);
                     if (subObj && isObject(subObj)) {
-                        objects.push({ [k]: maxDepth > 0 ? filterObject(subObj, maxDepth - 1) : null });
+                        objects.push({
+                            [k]: maxDepth > 0 ? filterObject(subObj, maxDepth - 1) : null
+                        });
                     } else {
                         primitive.push(k);
                     }
