@@ -421,7 +421,7 @@ function sendCurrentTrace(traceSender, tracerObject) {
             module.exports.filterTrace(traceJson, ignoredKeys, removeIgnoredKeys) : traceJson;
     } catch (err) {
         utils.printWarning('Epsagon - failed to filter trace, cancelling send', err);
-        return Promise.resolve();
+        return Promise.resolve({});
     }
 
     let stringifyTraceJson;
