@@ -123,13 +123,13 @@ function createKafkaTrigger(event, trigger) {
  */
 function createAPIGatewayTrigger(event, trigger) {
     const resource = trigger.getResource();
-    trigger.setId(event.requestContext.requestId);
-    resource.setName(event.headers.Host);
+    trigger.setId(event.requestContext.requestId || event.headers['x-api-requestid']);
+    resource.setName(event.headers.Host || event.headers.host);
     resource.setOperation(event.httpMethod);
     eventInterface.addToMetadata(trigger, {
         'http.route': event.requestContext.path,
         'http.request.path': event.path,
-        'tencent.api_gateway.request_id': event.requestContext.requestId,
+        'tencent.api_gateway.request_id': event.headers['x-api-requestid'],
         'tencent.api_gateway.stage': event.requestContext.stage,
     }, {
         'http.request.headers': event.headers,
