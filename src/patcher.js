@@ -29,6 +29,7 @@ const amqplibPatcher = require('./events/amqplib.js');
 const amqpPatcher = require('./events/amqp.js');
 const ldapPatcher = require('./events/ldap.js');
 const cassandraPatcher = require('./events/cassandra-driver.js');
+const tencentCOSPatcher = require('./events/tencent-cos.js');
 const fs = require('./events/fs.js');
 
 
@@ -36,6 +37,7 @@ const LIBNAME_TO_PATCHER = {
     'aws-sdk': awsSDKPatcher,
     'azure-sdk': azureSdkPatcher,
     'winston-cw': winstonCloudwatchPatcher,
+    'cos-nodejs-sdk-v5': tencentCOSPatcher,
     http: httpPatcher,
     http2: http2Patcher,
     pg: pgPatcher,
@@ -103,6 +105,7 @@ if (!config.getConfig().isEpsagonPatchDisabled) {
             amqpPatcher,
             ldapPatcher,
             cassandraPatcher,
+            tencentCOSPatcher,
             fs,
         ].forEach(patch);
     } else {

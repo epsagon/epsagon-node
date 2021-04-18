@@ -16,6 +16,7 @@ const URL_BLACKLIST = {
             (url.indexOf('.elb.') === -1) &&
             (url.indexOf('.appsync-api.') === -1),
     'blob.core.windows.net': 'endsWith',
+    'myqcloud.com': 'endsWith',
     'documents.azure.com': 'endsWith',
     '127.0.0.1': (url, pattern, path) => (url === pattern) && path.startsWith('/2018-06-01/runtime/invocation/'),
     '169.254.169.254': 'startsWith', // EC2 document ip. Have better filtering in the future

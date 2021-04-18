@@ -1,4 +1,5 @@
 const lambdaWrapper = require('./wrappers/lambda.js');
+const tencentFunctionWrapper = require('./wrappers/tencent.js');
 const lambdaEnvWrapper = require('./wrappers/lambda_env');
 const openWhiskWrapper = require('./wrappers/openwhisk');
 const nodeWrapper = require('./wrappers/node.js');
@@ -20,6 +21,7 @@ const patcher = require('./patcher.js'); // eslint-disable-line no-unused-vars
 
 module.exports = {
     lambdaWrapper: f => f,
+    tencentFunctionWrapper: f => f,
     stepLambdaWrapper: f => f,
     openWhiskWrapper: f => f,
     nodeWrapper: f => f,
@@ -42,6 +44,7 @@ module.exports = {
 
 if (!config.getConfig().isEpsagonDisabled) {
     module.exports.lambdaWrapper = lambdaWrapper.lambdaWrapper;
+    module.exports.tencentFunctionWrapper = tencentFunctionWrapper.tencentFunctionWrapper;
     module.exports.stepLambdaWrapper = lambdaWrapper.stepLambdaWrapper;
     module.exports.nodeWrapper = nodeWrapper.nodeWrapper;
     module.exports.openWhiskWrapper = openWhiskWrapper.openWhiskWrapper;
