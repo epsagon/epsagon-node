@@ -14,7 +14,7 @@ function createTimestampFromTime(time) {
 /**
  * Returns a time (according to epsagon-protocol timestamp format) from a given epsagon timestamp
  * @param {double} time the time in epsagon's format
- * @returns {number} the time in miliseconds that was used to generate the initial timestamp
+ * @returns {number} the time in miliseconds that was used to generate the original timestamp
  */
 function createTimeFromTimestamp(time) {
     return time * 1000;
