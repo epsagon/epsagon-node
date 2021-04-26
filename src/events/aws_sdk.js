@@ -77,6 +77,35 @@ const s3EventCreator = {
             break;
         }
     },
+
+    /**
+     * Handles local S3 events. All offline functions which do not require an HTTP call
+     * @param {proto.event_pb.Event} event The event to update the data on
+     * @param {string} operation The name of the local operation
+     * @param {Object} args any additional info pertaining to the call
+     */
+    localHandler(event, operation, args) {
+        console.log('in local handler');
+        const resource = event.getResource();
+        console.log(event, operation, args);
+
+        switch (operation) {
+            case 'getSignedUrl':
+                const {
+                    callback, Bucket, Key, Body, Expires
+                } = args
+                resource.setName(Bucket);
+                eventInterface.addToMetadata(event, {
+                    method: callback,
+                    key: Key,
+                    body: Body,
+                    expires: Expires || 15 * 60,
+                })
+                break;
+            default:
+                break;
+        }
+    },
 };
 
 const kinesisEventCreator = {
@@ -925,6 +954,48 @@ const specificEventCreators = {
     ssm: SSMEventCreator,
 };
 
+
+function createAWSEvent(request) {
+    const {
+        serviceIdentifier
+        // } = request.constructor.prototype;
+    } = (request.service ? request.service : request).constructor.prototype;
+
+    if (! (serviceIdentifier in specificEventCreators)) {
+        console.log('serviceId', serviceIdentifier, ' not in specificEvents');
+        return { earlyReturn: true };
+    }
+
+    const resource = new serverlessEvent.Resource([
+        '',
+        serviceIdentifier,
+        `${request.operation}`,
+    ]);
+
+    // const startTime = Date.now();
+    const awsEvent = new serverlessEvent.Event([
+        '',
+        // utils.createTimestampFromTime(startTime),
+        utils.createTimestamp(),
+        null,
+        'aws-sdk',
+        0,
+        errorCode.ErrorCode.OK,
+    ]);
+
+    awsEvent.setResource(resource);
+
+    if ('patchInput' in specificEventCreators[serviceIdentifier]) {
+        specificEventCreators[serviceIdentifier].patchInput(this, awsEvent);
+    }
+
+    return {
+        awsEvent,
+        serviceIdentifier,
+        earlyReturn: false,
+    };
+}
+
 /**
  * Wraps the aws-sdk Request object send/promise function with tracing
  * @param {Function} wrappedFunction The function to wrap
@@ -934,35 +1005,12 @@ function AWSSDKWrapper(wrappedFunction) {
     return function internalAWSSDKWrapper(callback) {
         try {
             const request = this;
-            const { serviceIdentifier } = (
-                request.service.constructor.prototype
-            );
+            const {
+                awsEvent, serviceIdentifier, earlyReturn
+            } = createAWSEvent(request);
 
-            if (!(serviceIdentifier in specificEventCreators)) {
-                // resource is not supported yet
+            if (earlyReturn) {
                 return wrappedFunction.apply(this, [callback]);
-            }
-
-            const resource = new serverlessEvent.Resource([
-                '',
-                serviceIdentifier,
-                `${request.operation}`,
-            ]);
-
-            const startTime = Date.now();
-            const awsEvent = new serverlessEvent.Event([
-                '',
-                utils.createTimestampFromTime(startTime),
-                null,
-                'aws-sdk',
-                0,
-                errorCode.ErrorCode.OK,
-            ]);
-
-            awsEvent.setResource(resource);
-
-            if ('patchInput' in specificEventCreators[serviceIdentifier]) {
-                specificEventCreators[serviceIdentifier].patchInput(this, awsEvent);
             }
 
             const responsePromise = new Promise((resolve) => {
@@ -984,7 +1032,9 @@ function AWSSDKWrapper(wrappedFunction) {
                 }).on('complete', (response) => {
                     try {
                         awsEvent.setId(`${response.requestId}`);
-                        awsEvent.setDuration(utils.createDurationTimestamp(startTime));
+                        awsEvent.setDuration(utils.createDurationTimestamp(
+                            utils.createTimeFromTimestamp(awsEvent.getStartTime())
+                        ));
 
                         if (response.data !== null) {
                             awsEvent.setErrorCode(errorCode.ErrorCode.OK);
@@ -1026,6 +1076,42 @@ function AWSSDKWrapper(wrappedFunction) {
         return wrappedFunction.apply(this, [callback]);
     };
 }
+
+
+/**
+ * Wraps any aws-sdk local (offline) function with tracing
+ * @param {Function} wrappedFunction The function to wrap
+ * @returns {Function} The wrapped function
+ */
+function AWSSDKLocalWrapper(wrappedFunction) {
+    return function internalAWSSDKLocalWrapper(callback, args) {
+        try {
+            const request = this;
+            request.operation = wrappedFunction.name
+            const {
+                awsEvent, serviceIdentifier, earlyReturn
+            } = createAWSEvent(request);
+
+            if (earlyReturn) {
+                return wrappedFunction.apply(this, [callback, args]);
+            }
+
+            awsEvent.setId(uuid4());
+            awsEvent.setDuration(utils.createDurationTimestamp(Date.now()));
+
+            const { localHandler } = specificEventCreators[serviceIdentifier];
+            localHandler && localHandler(awsEvent, request.operation, {callback, ...args});
+
+            tracer.addEvent(awsEvent);
+
+        } catch (e) {
+            tracer.addException(e);
+        }
+
+        return wrappedFunction.apply(this, [callback, args]);
+    };
+}
+
 
 /**
  * aws-sdk dynamically creates the `promise` function, so we have to re-wrap it
@@ -1077,6 +1163,13 @@ module.exports = {
             wrapPromiseOnAdd,
             AWSmod => AWSmod.Request
         );
+
+        moduleUtils.patchModule(
+            'aws-sdk',
+            'getSignedUrl',
+            AWSSDKLocalWrapper,
+            AWSmod => AWSmod.S3.prototype
+        )
     },
 
     /**
