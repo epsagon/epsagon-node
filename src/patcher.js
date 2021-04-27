@@ -34,7 +34,7 @@ const fs = require('./events/fs.js');
 
 
 const LIBNAME_TO_PATCHER = {
-    'aws-sdk': awsSDKPatcher,
+    'aws-sdk/global': awsSDKPatcher,
     'azure-sdk': azureSdkPatcher,
     'winston-cw': winstonCloudwatchPatcher,
     'cos-nodejs-sdk-v5': tencentCOSPatcher,
