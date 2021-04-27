@@ -90,20 +90,21 @@ const s3EventCreator = {
         console.log(event, operation, args);
 
         switch (operation) {
-            case 'getSignedUrl':
-                const {
-                    callback, Bucket, Key, Body, Expires
-                } = args
-                resource.setName(Bucket);
-                eventInterface.addToMetadata(event, {
-                    method: callback,
-                    key: Key,
-                    body: Body,
-                    expires: Expires || 15 * 60,
-                })
-                break;
-            default:
-                break;
+        case 'getSignedUrl': {
+            const {
+                callback, Bucket, Key, Body, Expires,
+            } = args;
+            resource.setName(Bucket);
+            eventInterface.addToMetadata(event, {
+                method: callback,
+                key: Key,
+                body: Body,
+                expires: Expires || 15 * 60,
+            });
+            break;
+        }
+        default:
+            break;
         }
     },
 };
@@ -954,14 +955,20 @@ const specificEventCreators = {
     ssm: SSMEventCreator,
 };
 
-
+/**
+ * Creator of all AWS Events. Used for both Network and Local calls.
+ * @param {Request} request AWS Request Object, either of a Network Request or Local Service
+ * @returns {Object} {awsEvent: serverlessEvent.Event (the aws Event that occured)
+ * serviceIdentifier: string (to which service does this event pertain to),
+ * earlyReturn: boolean (whether the call was not supported
+ * and failed [true] or succeeded [false]), }
+ */
 function createAWSEvent(request) {
     const {
-        serviceIdentifier
-        // } = request.constructor.prototype;
+        serviceIdentifier,
     } = (request.service ? request.service : request).constructor.prototype;
 
-    if (! (serviceIdentifier in specificEventCreators)) {
+    if (!(serviceIdentifier in specificEventCreators)) {
         console.log('serviceId', serviceIdentifier, ' not in specificEvents');
         return { earlyReturn: true };
     }
@@ -972,10 +979,8 @@ function createAWSEvent(request) {
         `${request.operation}`,
     ]);
 
-    // const startTime = Date.now();
     const awsEvent = new serverlessEvent.Event([
         '',
-        // utils.createTimestampFromTime(startTime),
         utils.createTimestamp(),
         null,
         'aws-sdk',
@@ -1006,7 +1011,7 @@ function AWSSDKWrapper(wrappedFunction) {
         try {
             const request = this;
             const {
-                awsEvent, serviceIdentifier, earlyReturn
+                awsEvent, serviceIdentifier, earlyReturn,
             } = createAWSEvent(request);
 
             if (earlyReturn) {
@@ -1087,9 +1092,9 @@ function AWSSDKLocalWrapper(wrappedFunction) {
     return function internalAWSSDKLocalWrapper(callback, args) {
         try {
             const request = this;
-            request.operation = wrappedFunction.name
+            request.operation = wrappedFunction.name;
             const {
-                awsEvent, serviceIdentifier, earlyReturn
+                awsEvent, serviceIdentifier, earlyReturn,
             } = createAWSEvent(request);
 
             if (earlyReturn) {
@@ -1100,10 +1105,10 @@ function AWSSDKLocalWrapper(wrappedFunction) {
             awsEvent.setDuration(utils.createDurationTimestamp(Date.now()));
 
             const { localHandler } = specificEventCreators[serviceIdentifier];
-            localHandler && localHandler(awsEvent, request.operation, {callback, ...args});
-
+            if (localHandler) {
+                localHandler(awsEvent, request.operation, { callback, ...args });
+            }
             tracer.addEvent(awsEvent);
-
         } catch (e) {
             tracer.addException(e);
         }
@@ -1169,7 +1174,7 @@ module.exports = {
             'getSignedUrl',
             AWSSDKLocalWrapper,
             AWSmod => AWSmod.S3.prototype
-        )
+        );
     },
 
     /**
