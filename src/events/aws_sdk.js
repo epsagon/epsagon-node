@@ -85,9 +85,7 @@ const s3EventCreator = {
      * @param {Object} args any additional info pertaining to the call
      */
     localHandler(event, operation, args) {
-        console.log('in local handler');
         const resource = event.getResource();
-        console.log(event, operation, args);
 
         switch (operation) {
         case 'getSignedUrl': {
@@ -969,7 +967,6 @@ function createAWSEvent(request) {
     } = (request.service ? request.service : request).constructor.prototype;
 
     if (!(serviceIdentifier in specificEventCreators)) {
-        console.log('serviceId', serviceIdentifier, ' not in specificEvents');
         return { earlyReturn: true };
     }
 
