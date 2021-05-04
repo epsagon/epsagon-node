@@ -46,7 +46,9 @@ module.exports.getModules = function getModules(id) {
 
     const searchPaths = require.resolve.paths(id);
     if (process.env.EPSAGON_ADD_NODE_PATH) {
-        searchPaths.push(...process.env.EPSAGON_ADD_NODE_PATH.split(':').map(item => item.trim()));
+        searchPaths.push(...process.env.EPSAGON_ADD_NODE_PATH.split(':').map(
+            item => path.resolve(item.trim())
+        ));
     }
     if (process.env.EPSAGON_AUTO_ADD_NODE_PATHS &&
         process.env.EPSAGON_AUTO_ADD_NODE_PATHS.toUpperCase() === 'TRUE'
@@ -66,7 +68,9 @@ module.exports.getModules = function getModules(id) {
         searchPaths.push(LAMBDA_DEFAULT_NODE_MODULES_PATH);
     }
     searchPaths.forEach((searchPath) => {
-        const module = tryRequire(`${searchPath}/${id}`);
+        const modulePath = path.resolve(`${searchPath}/${id}`);
+        const module = tryRequire(modulePath);
+
         if (module) {
             utils.debugLog('Loaded module', id, searchPath);
             modules.push(module);
