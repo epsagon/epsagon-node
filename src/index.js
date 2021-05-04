@@ -3,6 +3,7 @@ const tencentFunctionWrapper = require('./wrappers/tencent.js');
 const lambdaEnvWrapper = require('./wrappers/lambda_env');
 const openWhiskWrapper = require('./wrappers/openwhisk');
 const nodeWrapper = require('./wrappers/node.js');
+const googleCloudFunctionWrapper = require('./wrappers/google_cloud_function.js');
 const batchWrapper = require('./wrappers/batch.js');
 const tracer = require('./tracer.js');
 const config = require('./config.js');
@@ -24,6 +25,7 @@ module.exports = {
     tencentFunctionWrapper: f => f,
     stepLambdaWrapper: f => f,
     openWhiskWrapper: f => f,
+    googleCloudFunctionWrapper: f => f,
     nodeWrapper: f => f,
     wrapBatchJob: f => f,
     label: f => f,
@@ -47,6 +49,9 @@ if (!config.getConfig().isEpsagonDisabled) {
     module.exports.tencentFunctionWrapper = tencentFunctionWrapper.tencentFunctionWrapper;
     module.exports.stepLambdaWrapper = lambdaWrapper.stepLambdaWrapper;
     module.exports.nodeWrapper = nodeWrapper.nodeWrapper;
+    module.exports.googleCloudFunctionWrapper = (
+        googleCloudFunctionWrapper.googleCloudFunctionWrapper
+    );
     module.exports.openWhiskWrapper = openWhiskWrapper.openWhiskWrapper;
     module.exports.wrapBatchJob = batchWrapper.wrapBatchJob;
     module.exports.label = tracer.label;

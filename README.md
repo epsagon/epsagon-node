@@ -198,6 +198,7 @@ Some require installing also [`epsagon-frameworks`](https://github.com/epsagon/e
 |[AWS Lambda](#aws-lambda)               |All                        |`epsagon`                                          |<ul><li>- [x] (Through the dashboard only)</li></ul> |
 |[Step Functions](#step-functions)       |All                        |`epsagon`                                          |<ul><li>- [ ] </li></ul>                             |
 |[OpenWhisk Action](#openwhisk-action)   |All                        |`epsagon`                                          |<ul><li>- [ ] </li></ul>                             |
+|[Google Cloud Function](#google-cloud-function)   |All                        |`epsagon`                                          |<ul><li>- [ ] </li></ul>                             |
 |[AWS Batch](#aws-batch)                 |All                        |`epsagon`                                          |<ul><li>- [ ] </li></ul>                             |
 |[Generic](#generic)                     |All                        |`epsagon`                                          |<ul><li>- [ ] </li></ul>                             |
 |[Express](#express)                     |`>=3.0.0`                  |`epsagon-frameworks`                               |<ul><li>- [x] </li></ul>                             |
@@ -289,6 +290,25 @@ module.exports.main = epsagon.openWhiskWrapper(
     metadataOnly: false
   }
 );
+```
+
+### Google Cloud Function
+
+Tracing Google Cloud Functions by wrapping your entry point with the `epsagon.googleCloudFunctionWrapper`:
+
+```javascript
+const epsagon = require('epsagon');
+epsagon.init({
+  token: 'epsagon-token',
+  appName: 'app-name-stage',
+  metadataOnly: false,
+  sendBatch: false,
+});
+
+// Wrap your entry point
+exports.helloWorld = epsagon.googleCloudFunctionWrapper((req, res) => {
+  res.status(200).send('hello world');
+});
 ```
 
 ### AWS Batch
