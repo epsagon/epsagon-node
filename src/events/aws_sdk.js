@@ -925,7 +925,7 @@ const SSMEventCreator = {
     responseHandler(response, event) {
         switch (response.request.operation) {
         case 'getParameter':
-            eventInterface.addToMetadata(event, {
+            eventInterface.addToMetadata(event, {}, {
                 parameter: {
                     Name: (response.data.Parameter || { Name: '' }).Name || '',
                     Value: (response.data.Parameter || { Value: '' }).Value || '',
@@ -939,16 +939,17 @@ const SSMEventCreator = {
             if (response.data.InvalidParameters && response.data.InvalidParameters.length > 0) {
                 eventInterface.addToMetadata(
                     event,
+                    {},
                     { invalid_parameters: response.data.InvalidParameters }
                 );
             }
 
             if (response.data.Parameters && response.data.Parameters.length > 0) {
-                eventInterface.addToMetadata(event, {
+                eventInterface.addToMetadata(event, {}, {
                     parameters: response.data.Parameters
                         .map(singleParameter => ({
-                            Path: singleParameter.Path,
-                            Value: singleParameter.Name,
+                            Name: singleParameter.Name,
+                            Value: singleParameter.Value,
                             Type: singleParameter.Type,
                         })),
                 });
