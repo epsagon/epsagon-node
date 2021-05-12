@@ -926,9 +926,11 @@ const SSMEventCreator = {
         switch (response.request.operation) {
         case 'getParameter':
             eventInterface.addToMetadata(event, {
-                name: (response.data.Parameter || { Name: '' }).Name || '',
-                value: (response.data.Parameter || { Value: '' }).Value || '',
-                type: (response.data.Parameter || { Type: '' }).Type || '',
+                parameter: {
+                    Name: (response.data.Parameter || { Name: '' }).Name || '',
+                    Value: (response.data.Parameter || { Value: '' }).Value || '',
+                    Type: (response.data.Parameter || { Type: '' }).Type || '',
+                },
             });
             break;
 
