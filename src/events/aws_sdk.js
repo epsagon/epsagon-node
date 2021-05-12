@@ -944,15 +944,11 @@ const SSMEventCreator = {
             if (response.data.Parameters && response.data.Parameters.length > 0) {
                 eventInterface.addToMetadata(event, {
                     parameters: response.data.Parameters
-                        .map((singleParameter) => {
-                            const filteredParameter = {};
-
-                            filteredParameter.Path = (singleParameter.Name);
-                            filteredParameter.Value = (singleParameter.Value);
-                            filteredParameter.Type = (singleParameter.Type);
-
-                            return filteredParameter;
-                        }),
+                        .map(singleParameter => ({
+                            Path: singleParameter.Path,
+                            Value: singleParameter.Name,
+                            Type: singleParameter.Type,
+                        })),
                 });
             }
             break;
