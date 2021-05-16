@@ -30,7 +30,10 @@ const amqpPatcher = require('./events/amqp.js');
 const ldapPatcher = require('./events/ldap.js');
 const cassandraPatcher = require('./events/cassandra-driver.js');
 const tencentCOSPatcher = require('./events/tencent-cos.js');
+const neo4jPatcher = require('./events/neo4j.js');
+
 const fs = require('./events/fs.js');
+
 
 
 const LIBNAME_TO_PATCHER = {
@@ -60,6 +63,7 @@ const LIBNAME_TO_PATCHER = {
     amqp: amqpPatcher,
     ldap: ldapPatcher,
     cassandra: cassandraPatcher,
+    neo4j: neo4jPatcher,
     fs,
 };
 
@@ -106,6 +110,7 @@ if (!config.getConfig().isEpsagonPatchDisabled) {
             ldapPatcher,
             cassandraPatcher,
             tencentCOSPatcher,
+            neo4jPatcher,
             fs,
         ].forEach(patch);
     } else {
