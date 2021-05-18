@@ -35,7 +35,6 @@ const neo4jPatcher = require('./events/neo4j.js');
 const fs = require('./events/fs.js');
 
 
-
 const LIBNAME_TO_PATCHER = {
     'aws-sdk/global': awsSDKPatcher,
     'azure-sdk': azureSdkPatcher,

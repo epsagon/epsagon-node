@@ -172,6 +172,7 @@ function neo4jSessionRunWrapper(wrappedFunction) {
             const originalSubscribe = resultResponse.subscribe;
 
             // Override the Result subscribe with patched subscriber
+            // eslint-disable-next-line func-names
             resultResponse.subscribe = function (observer) {
                 const records = [];
 
