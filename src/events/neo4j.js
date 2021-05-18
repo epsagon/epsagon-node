@@ -1,6 +1,5 @@
 // All Session and Transaction properties are private
-/* eslint-disable no-underscore-dangle */
-/* eslint-disable prefer-rest-params */
+/* eslint-disable no-underscore-dangle, prefer-rest-params */
 
 /**
  * @fileoverview: Handlers for Neo4j driver instrumentation
