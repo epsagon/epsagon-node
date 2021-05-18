@@ -1,9 +1,12 @@
+// All Session and Transaction properties are private
+/* eslint-disable no-underscore-dangle */
+/* eslint-disable prefer-rest-params */
+
 /**
  * @fileoverview: Handlers for Neo4j driver instrumentation
  */
 
 const uuid4 = require('uuid4');
-const neo4j = require('neo4j-driver')
 
 const moduleUtils = require('./module_utils.js');
 const eventInterface = require('../event.js');
@@ -36,18 +39,18 @@ function getAddressInfo(session) {
 
     switch (session.constructor.name) {
     // By default, Session opens two same connectionProviders - Read and Write, and not default one
-    case "Session":
+    case 'Session':
         connectionHolder = session._readConnectionHolder;
         break;
 
-    case "Transaction":
+    case 'Transaction':
         connectionHolder = session._connectionHolder;
         break;
 
     default:
         return {
-            host, port
-        }
+            host, port,
+        };
     }
 
     if (session && connectionHolder && connectionHolder._connectionProvider) {
@@ -57,7 +60,7 @@ function getAddressInfo(session) {
     }
 
     return {
-        port, host
+        port, host,
     };
 }
 
@@ -74,47 +77,48 @@ function getNeo4JSessionMetadata(session) {
 
     let connectionHolder;
     let sessionMode;
-    let operationMode = "";
+    let operationMode = '';
 
     switch (session.constructor.name) {
     // By default, Session opens two same connectionProviders - Read and Write, and not default one
-    case "Session":
+    case 'Session':
         connectionHolder = session._readConnectionHolder;
-        sessionMode = "READ|WRITE";
+        sessionMode = 'READ|WRITE';
         break;
 
-    case "Transaction":
+    case 'Transaction':
         connectionHolder = session._connectionHolder;
         sessionMode = connectionHolder._mode;
 
         break;
 
     default:
-        return
+        return;
     }
 
     switch (sessionMode) {
-    case "READ":
-        operationMode = "Read";
+    case 'READ':
+        operationMode = 'Read';
         break;
 
-    case "WRITE":
-        operationMode = "Write";
+    case 'WRITE':
+        operationMode = 'Write';
         break;
 
-    case "READ|WRITE":
-        operationMode = "Read|Write"
+    case 'READ|WRITE':
+        operationMode = 'Read|Write';
         break;
 
     default:
         break;
     }
 
-    metadata.dbName = connectionHolder._database ? connectionHolder._database : "default"
-    metadata.operation = session.constructor.name + ":" + operationMode;
+    metadata.dbName = connectionHolder._database ? connectionHolder._database : 'default';
+    metadata.operation = `${session.constructor.name}:${operationMode}`;
 
     fullMetadata.config = connectionHolder._connectionProvider._config;
 
+    // eslint-disable-next-line consistent-return
     return { metadata, fullMetadata };
 }
 
@@ -128,7 +132,7 @@ function neo4jSessionRunWrapper(wrappedFunction) {
     return function internalNeo4jSessionRunWrapper(...args) {
         const relevantArgs = getArgsFromFunction(...args);
         const {
-            query, params
+            query, params,
         } = relevantArgs;
 
         utils.debugLog('User called Neo4j wrapped run function');
@@ -137,7 +141,7 @@ function neo4jSessionRunWrapper(wrappedFunction) {
             const startTime = Date.now();
 
             const {
-                metadata, fullMetadata
+                metadata, fullMetadata,
             } = getNeo4JSessionMetadata(this);
 
             const { host, port } = getAddressInfo(this);
@@ -162,7 +166,7 @@ function neo4jSessionRunWrapper(wrappedFunction) {
 
             dbApiEvent.setResource(resource);
 
-             eventInterface.addToMetadata(dbApiEvent, metadata, fullMetadata);
+            eventInterface.addToMetadata(dbApiEvent, metadata, fullMetadata);
 
             const resultResponse = wrappedFunction.apply(this, [query, params]);
             const originalSubscribe = resultResponse.subscribe;
@@ -173,43 +177,46 @@ function neo4jSessionRunWrapper(wrappedFunction) {
 
                 return originalSubscribe.call(this, {
                     ...observer,
-                    onKeys: function (_keys) {
+                    // eslint-disable-next-line no-unused-vars,require-jsdoc
+                    onKeys(_keys) {
                         if (!observer.onKeys) return;
-                        return observer.keys.apply(this, arguments);
+                        observer.keys.apply(this, arguments);
                     },
 
-                    onNext: function (record) {
+                    // eslint-disable-next-line require-jsdoc
+                    onNext(record) {
                         records.push(record);
                         return observer.onNext.apply(this, arguments);
                     },
 
-                    onCompleted: function (summary) {
+                    // eslint-disable-next-line require-jsdoc
+                    onCompleted(summary) {
                         switch (summary.queryType) {
-                        case "s":
-                        case "r":
+                        case 's':
+                        case 'r':
                             eventInterface.addToMetadata(
                                 dbApiEvent,
-                                { items_count: records.length, operation_executed: "Read"}
+                                { items_count: records.length, operation_executed: 'Read' }
                             );
                             break;
 
-                        case "w":
+                        case 'w':
                             eventInterface.addToMetadata(
                                 dbApiEvent,
-                                {operation_executed: "Write"},
-                                {write_stats: summary.counters._stats}
-                            )
+                                { operation_executed: 'Write' },
+                                { write_stats: summary.counters._stats }
+                            );
                             break;
-                        case "rw":
+                        case 'rw':
                             eventInterface.addToMetadata(
                                 dbApiEvent,
-                                {items_count: records.length, operation_executed: "Read, Write"},
-                                {write_stats: summary.counters._stats}
+                                { items_count: records.length, operation_executed: 'Read, Write' },
+                                { write_stats: summary.counters._stats }
                             );
                             break;
 
                         default:
-                            utils.debugLog("Unkown query type: " + summary.queryType);
+                            utils.debugLog(`Unkown query type: ${summary.queryType}`);
                             break;
                         }
 
@@ -218,18 +225,19 @@ function neo4jSessionRunWrapper(wrappedFunction) {
                         return observer.onCompleted.apply(this, arguments);
                     },
 
-                    onError: function (err) {
+                    // eslint-disable-next-line require-jsdoc
+                    onError(err) {
                         eventInterface.setException(dbApiEvent, err);
+                        // eslint-disable-next-line prefer-rest-params
                         return observer.onError.apply(this, arguments);
-                    }
-                })
-            }
+                    },
+                });
+            };
 
             return resultResponse;
-
         } catch (error) {
             tracer.addException(error);
-            return wrappedFunction.apply(this, [query, params])
+            return wrappedFunction.apply(this, [query, params]);
         }
     };
 }
@@ -253,5 +261,5 @@ module.exports = {
             neo4jSessionRunWrapper,
             Session => Session.default.prototype
         );
-    }
-}
+    },
+};
