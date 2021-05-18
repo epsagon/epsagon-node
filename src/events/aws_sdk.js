@@ -902,13 +902,16 @@ const SSMEventCreator = {
         const resource = event.getResource();
         const { operation } = request;
 
-        resource.setName(parameters.Name || 'SSM');
+        resource.setName(parameters.Name || parameters.Path || 'SSM');
         switch (operation) {
         case 'getParameter':
+        case 'getParameters':
+        case 'getParametersByPath':
             eventInterface.addToMetadata(event, {}, {
                 WithDecryption: parameters.WithDecryption,
             });
             break;
+
         default:
             break;
         }
@@ -922,10 +925,37 @@ const SSMEventCreator = {
     responseHandler(response, event) {
         switch (response.request.operation) {
         case 'getParameter':
-            eventInterface.addToMetadata(event, {
-                value: (response.data.Parameter || { Value: '' }).Value || '',
+            eventInterface.addToMetadata(event, {}, {
+                parameter: {
+                    Name: (response.data.Parameter || { Name: '' }).Name || '',
+                    Value: (response.data.Parameter || { Value: '' }).Value || '',
+                    Type: (response.data.Parameter || { Type: '' }).Type || '',
+                },
             });
             break;
+
+        case 'getParameters':
+        case 'getParametersByPath':
+            if (response.data.InvalidParameters && response.data.InvalidParameters.length > 0) {
+                eventInterface.addToMetadata(
+                    event,
+                    {},
+                    { invalid_parameters: response.data.InvalidParameters }
+                );
+            }
+
+            if (response.data.Parameters && response.data.Parameters.length > 0) {
+                eventInterface.addToMetadata(event, {}, {
+                    parameters: response.data.Parameters
+                        .map(singleParameter => ({
+                            Name: singleParameter.Name,
+                            Value: singleParameter.Value,
+                            Type: singleParameter.Type,
+                        })),
+                });
+            }
+            break;
+
         default:
             break;
         }
