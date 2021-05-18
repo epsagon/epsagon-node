@@ -45,7 +45,7 @@ module.exports.markAsTimeout = function setTimeout(event) {
 
 /**
  * Adds items from a map to a resource Metadata
- * @param {proto.event_pb.Event} event The event to add the items to
+ * @param {serverlessEvent.Event} event The event to add the items to
  * @param {object} map The map containing the objects
  * @param {object} [fullDataMap={}] Additional data to add only if {@link config.metadataOnly}
  *     is False
