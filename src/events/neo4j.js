@@ -165,6 +165,7 @@ function getPatchedSubscribeMethods(
     const records = [];
 
     return {
+        ...observer,
         // eslint-disable-next-line require-jsdoc
         onNext(record) {
             records.push(record);
@@ -276,6 +277,11 @@ function neo4jSessionRunWrapper(wrappedFunction) {
 
         utils.debugLog('User called Neo4j wrapped Session run function');
 
+        const resultResponse = wrappedFunction.apply(
+            this,
+            [query, params, transactionConfig]
+        );
+
         try {
             const startTime = Date.now();
 
@@ -285,12 +291,6 @@ function neo4jSessionRunWrapper(wrappedFunction) {
                 dbApiEvent,
                 {},
                 { query, param: params, transaction_config: transactionConfig }
-            );
-
-
-            const resultResponse = wrappedFunction.apply(
-                this,
-                [query, params, transactionConfig]
             );
 
             const originalSubscribe = resultResponse.subscribe;
@@ -310,7 +310,7 @@ function neo4jSessionRunWrapper(wrappedFunction) {
             return resultResponse;
         } catch (error) {
             tracer.addException(error);
-            return wrappedFunction.apply(this, [query, params, transactionConfig]);
+            return resultResponse;
         }
     };
 }
@@ -330,6 +330,8 @@ function neo4jTransactionRunWrapper(wrappedFunction) {
 
         utils.debugLog('User called Neo4j wrapped Transaction run function');
 
+        const resultResponse = wrappedFunction.apply(this, [query, params]);
+
         try {
             const startTime = Date.now();
             const dbApiEvent = createNewNeo4jEvent(this, startTime);
@@ -340,7 +342,6 @@ function neo4jTransactionRunWrapper(wrappedFunction) {
                 { query, param: params }
             );
 
-            const resultResponse = wrappedFunction.apply(this, [query, params]);
             const originalSubscribe = resultResponse.subscribe;
 
             // Override the Result subscribe with patched subscriber
@@ -358,7 +359,7 @@ function neo4jTransactionRunWrapper(wrappedFunction) {
             return resultResponse;
         } catch (error) {
             tracer.addException(error);
-            return wrappedFunction.apply(this, [query, params]);
+            return resultResponse;
         }
     };
 }
