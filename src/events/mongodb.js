@@ -36,7 +36,7 @@ function getCommandMetadata(cmd) {
 
 /**
  * Gets the post and the host of the mongodb server
- * @param {Objecy} server original server arg that provided to function
+ * @param {Object} server original server arg that provided to function
  * @returns {Object} json with host and port
  */
 function getHostAndPort(server) {
