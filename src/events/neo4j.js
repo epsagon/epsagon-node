@@ -73,7 +73,7 @@ function getAddressInfo(session) {
         };
     }
 
-    if (session && connectionHolder && connectionHolder._connectionProvider) {
+    if (connectionHolder && connectionHolder._connectionProvider) {
         const connectionProvider = connectionHolder._connectionProvider;
         port = connectionProvider._address.port();
         host = connectionProvider._address.host();
@@ -276,21 +276,20 @@ function neo4jSessionRunWrapper(wrappedFunction) {
         } = relevantArgs;
 
         utils.debugLog('User called Neo4j wrapped Session run function');
-
-        const resultResponse = wrappedFunction.apply(
-            this,
-            [query, params, transactionConfig]
-        );
-
+        let resultResponse;
         try {
             const startTime = Date.now();
-
             const dbApiEvent = createNewNeo4jEvent(this, startTime);
 
             eventInterface.addToMetadata(
                 dbApiEvent,
                 {},
                 { query, param: params, transaction_config: transactionConfig }
+            );
+
+            resultResponse = wrappedFunction.apply(
+                this,
+                [query, params, transactionConfig]
             );
 
             const originalSubscribe = resultResponse.subscribe;
@@ -330,8 +329,8 @@ function neo4jTransactionRunWrapper(wrappedFunction) {
 
         utils.debugLog('User called Neo4j wrapped Transaction run function');
 
-        const resultResponse = wrappedFunction.apply(this, [query, params]);
 
+        let resultResponse;
         try {
             const startTime = Date.now();
             const dbApiEvent = createNewNeo4jEvent(this, startTime);
@@ -341,6 +340,8 @@ function neo4jTransactionRunWrapper(wrappedFunction) {
                 {},
                 { query, param: params }
             );
+
+            resultResponse = wrappedFunction.apply(this, [query, params]);
 
             const originalSubscribe = resultResponse.subscribe;
 
