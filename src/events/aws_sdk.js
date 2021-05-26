@@ -95,6 +95,7 @@ const s3EventCreator = {
             resource.setName(Bucket);
             eventInterface.addToMetadata(event, {
                 method: callback,
+                bucket: Bucket,
                 key: Key,
                 body: Body,
                 expires: Expires || 15 * 60,
@@ -1144,6 +1145,26 @@ function AWSSDKLocalWrapper(wrappedFunction) {
     };
 }
 
+/**
+ * Wraps any aws-sdk local (offline) function that is converted to a promise
+ * @param {Function} wrappedFunction any localPromise function
+ * @returns {function(*, *): {then}} The wrapped function, is .then-able
+ * @constructor
+ */
+function AWSSDKLocalPromiseWrapper(wrappedFunction) {
+    return function internalAWSSDKLocalPromiseWrapper(callback, args) {
+        const request = this;
+        return new Promise((resolve, reject) => {
+
+            const res = wrappedFunction.apply(request, [callback, args]);
+            console.log(res)
+            console.log(typeof res)
+
+
+            resolve();  // resolve(res)
+        });
+    };
+}
 
 /**
  * aws-sdk dynamically creates the `promise` function, so we have to re-wrap it
@@ -1195,11 +1216,16 @@ module.exports = {
             wrapPromiseOnAdd,
             AWSmod => AWSmod.Request
         );
-
         moduleUtils.patchModule(
             'aws-sdk',
             'getSignedUrl',
             AWSSDKLocalWrapper,
+            AWSmod => AWSmod.S3.prototype
+        );
+        moduleUtils.patchModule(
+            'aws-sdk',
+            'getSignedUrlPromise',
+            AWSSDKLocalPromiseWrapper,
             AWSmod => AWSmod.S3.prototype
         );
     },
