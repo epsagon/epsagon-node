@@ -12,15 +12,6 @@ function createTimestampFromTime(time) {
 }
 
 /**
- * Returns a time (according to epsagon-protocol timestamp format) from a given epsagon timestamp
- * @param {double} time the time in epsagon's format
- * @returns {number} the time in miliseconds that was used to generate the original timestamp
- */
-function createTimeFromTimestamp(time) {
-    return time * 1000;
-}
-
-/**
  * Check if an object is a Promise.
  * @param {Object} object the time in miliseconds to generate the timestamp from
  * @return {Boolean} true if promise, else - false.
@@ -205,7 +196,6 @@ function truncateMessage(message, maxSize) {
 
 
 module.exports.createTimestampFromTime = createTimestampFromTime;
-module.exports.createTimeFromTimestamp = createTimeFromTimestamp;
 module.exports.createTimestamp = createTimestamp;
 module.exports.createDurationTimestamp = createDurationTimestamp;
 module.exports.reflectPromise = reflectPromise;
