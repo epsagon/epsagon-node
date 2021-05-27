@@ -130,7 +130,7 @@ try {
   epsagon.setError(err);
 }
 
-// Or manually specify Error object
+// or manually specify Error object
 epsagon.setError(Error('My custom error'));
 ```
 
