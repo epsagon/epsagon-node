@@ -1196,7 +1196,6 @@ function wrapS3PromiseOnAdd(wrappedFunction) {
         utils.debugLog('Failed to re-instrument aws-sdk\'s promise method', e);
     }
     return function internalWrapS3PromiseOnAdd(promiseDependency) {
-        console.log('IN INTERNAL WRAP')
         return wrappedFunction.apply(this, [promiseDependency]);
     };
 }
