@@ -1170,6 +1170,7 @@ function wrapRequestPromiseOnAdd(wrappedFunction) {
     };
 }
 
+
 /**
  * aws-sdk dynamically creates the `getSignedUrlPromise` function, so we have to wrap it
  * every time `S3.addPromisesToClass` is called
@@ -1199,6 +1200,7 @@ function wrapS3PromiseOnAdd(wrappedFunction) {
         return wrappedFunction.apply(this, [promiseDependency]);
     };
 }
+
 
 module.exports = {
     /**
@@ -1237,6 +1239,7 @@ module.exports = {
             wrapS3PromiseOnAdd,
             AWSmod => AWSmod.S3
         );
+
     },
 
     /**
