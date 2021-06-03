@@ -191,6 +191,26 @@ describe('lambdaWrapper tests', () => {
         expect(resource.getMetadataMap().get('aws_account')).to.equal('4');
     });
 
+    it('lambdaWrapper: test coldstart on provisioned concurrency', () => {
+        process.env.AWS_LAMBDA_INITIALIZATION_TYPE = 'provisioned-concurrency';
+        const contextData = {
+            functionName: 'functionName',
+            awsRequestId: 'awsRequestId',
+            logStreamName: 'logStreamName',
+            logGroupName: 'logGroupName',
+            functionVersion: 'functionVersion',
+            memoryLimitInMB: 'memoryLimitInMB',
+            invokedFunctionArn: '0:1:2:3:4:5:6',
+        };
+        Object.assign(this.context, contextData);
+
+        this.wrappedStub({}, this.context, this.callbackStub);
+        const runnerEvent = getRunner(this.addRunnerStub);
+        const resource = runnerEvent.getResource();
+        expect(resource.getMetadataMap().get('cold_start')).to.equal('false');
+        process.env.AWS_LAMBDA_INITIALIZATION_TYPE = undefined;
+    });
+
     it('lambdaWrapper: create runner event with alias', () => {
         const contextData = {
             invokedFunctionArn: '0:1:2:3:4:5:6:7',
