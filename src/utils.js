@@ -70,6 +70,19 @@ function reflectPromise(promise) {
 }
 
 /**
+ * Overrides the `name` property of a function and sets it to the new value
+ * The modified function is not returned, but instead changed in place
+ * @param {Function} func The function to override the name
+ * @param {String} name The new name of the function
+ */
+const rewriteFuncName = (func, name) => {
+    Object.defineProperty(func, 'name', {
+        writable: true,
+        value: name,
+    });
+};
+
+/**
  * Prints a log if debugging is enabled
  * @param {list} args list of arguments as passed to console.log
  */
@@ -209,6 +222,7 @@ module.exports.createTimeFromTimestamp = createTimeFromTimestamp;
 module.exports.createTimestamp = createTimestamp;
 module.exports.createDurationTimestamp = createDurationTimestamp;
 module.exports.reflectPromise = reflectPromise;
+module.exports.rewriteFuncName = rewriteFuncName;
 module.exports.debugLog = debugLog;
 module.exports.printWarning = printWarning;
 module.exports.printError = printError;
