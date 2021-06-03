@@ -127,3 +127,23 @@ module.exports.unpatchModules = function unpatchModules() {
 
     console.log('finished unpatching');
 };
+
+/**
+ * Unpatch single module method
+ * @param {String} id The module id to unpatch
+ * @param {String} methodName The method to unpatch
+ * @param {Function} memberExtractor Extracts the wrapped member from the module
+ */
+module.exports.unpatchModule = function unpatchModule(id, methodName, memberExtractor) {
+    const modules = module.exports.getModules(id);
+    modules.forEach((mod) => {
+        const extracted = memberExtractor(mod);
+        shimmerPatches.filter(patch => patch !== { id, methodName, module: extracted });
+        try {
+            shimmer.unwrap(extracted, methodName);
+        } catch (err) {
+            utils.debugLog(`Could not unpatch module ${id}.${methodName}`);
+            utils.debugLog(err);
+        }
+    });
+};
