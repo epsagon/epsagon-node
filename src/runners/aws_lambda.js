@@ -36,6 +36,11 @@ function createRunner(originalContext, resourceType = 'lambda') {
     const arnSplit = (originalContext.invokedFunctionArn || '').split(':');
     const AWSAccountNumber = (arnSplit.length > 4) ? arnSplit[4] : '';
 
+    // In case function is provisioned concurrency mode, so cold_start should be false
+    if (process.env.AWS_LAMBDA_INITIALIZATION_TYPE === 'provisioned-concurrency') {
+        consts.COLD_START = false;
+    }
+
     eventInterface.addToMetadata(runner, {
         log_stream_name: `${originalContext.logStreamName}`,
         log_group_name: `${originalContext.logGroupName}`,
