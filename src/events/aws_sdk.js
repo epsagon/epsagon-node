@@ -86,7 +86,6 @@ const s3EventCreator = {
      */
     localHandler(event, operation, args) {
         const resource = event.getResource();
-
         switch (operation) {
         case 'getSignedUrl': {
             const {
@@ -1145,34 +1144,14 @@ function AWSSDKLocalWrapper(wrappedFunction) {
     };
 }
 
-/**
- * Wraps any aws-sdk local (offline) function that is converted to a promise
- * @param {Function} wrappedFunction any localPromise function
- * @returns {function(*, *): {then}} The wrapped function, is .then-able
- * @constructor
- */
-function AWSSDKLocalPromiseWrapper(wrappedFunction) {
-    return function internalAWSSDKLocalPromiseWrapper(callback, args) {
-        const request = this;
-        return new Promise((resolve, reject) => {
-
-            const res = wrappedFunction.apply(request, [callback, args]);
-            console.log(res)
-            console.log(typeof res)
-
-
-            resolve();  // resolve(res)
-        });
-    };
-}
 
 /**
  * aws-sdk dynamically creates the `promise` function, so we have to re-wrap it
- * every time `addPromisesToClass` is called
+ * every time `Request.addPromisesToClass` is called
  * @param {Function} wrappedFunction the `addPromisesToClass` function
  * @return {Function} The wrapped function
  */
-function wrapPromiseOnAdd(wrappedFunction) {
+function wrapRequestPromiseOnAdd(wrappedFunction) {
     return function internalWrapPromiseOnAdd(promiseDependency) {
         const result = wrappedFunction.apply(this, [promiseDependency]);
         try {
@@ -1188,6 +1167,36 @@ function wrapPromiseOnAdd(wrappedFunction) {
             utils.debugLog('Failed to re-instrument aws-sdk\'s promise method', err);
         }
         return result;
+    };
+}
+
+/**
+ * aws-sdk dynamically creates the `getSignedUrlPromise` function, so we have to wrap it
+ * every time `S3.addPromisesToClass` is called
+ * Users of `S3.getSignedUrlPromise` should not use with `S3.getSignedUrl`
+ * @param {Function} wrappedFunction the `addPromisesToClass` function
+ * @return {Function} The wrapped function
+ */
+function wrapS3PromiseOnAdd(wrappedFunction) {
+    const getSignedUrlPromiseWrapper = (func) => {
+        moduleUtils.unpatchModule('aws-sdk', 'getSignedUrl', AWSmod => AWSmod.S3.prototype);
+        utils.rewriteFuncName(func, 'getSignedUrl');
+        return AWSSDKLocalWrapper(func);
+    };
+
+    try {
+        moduleUtils.patchModule(
+            'aws-sdk',
+            'getSignedUrlPromise',
+            getSignedUrlPromiseWrapper,
+            AWSmod => AWSmod.S3.prototype
+        );
+    } catch (e) {
+        utils.debugLog('Failed to re-instrument aws-sdk\'s promise method', e);
+    }
+    return function internalWrapS3PromiseOnAdd(promiseDependency) {
+        console.log('IN INTERNAL WRAP')
+        return wrappedFunction.apply(this, [promiseDependency]);
     };
 }
 
@@ -1208,25 +1217,25 @@ module.exports = {
             AWSSDKWrapper,
             AWSmod => AWSmod.Request.prototype
         );
-
-        // This method is static - not in prototype
-        moduleUtils.patchModule(
-            'aws-sdk/global',
-            'addPromisesToClass',
-            wrapPromiseOnAdd,
-            AWSmod => AWSmod.Request
-        );
         moduleUtils.patchModule(
             'aws-sdk',
             'getSignedUrl',
             AWSSDKLocalWrapper,
             AWSmod => AWSmod.S3.prototype
         );
+
+        /* These methods are static - not in prototype */
+        moduleUtils.patchModule(
+            'aws-sdk/global',
+            'addPromisesToClass',
+            wrapRequestPromiseOnAdd,
+            AWSmod => AWSmod.Request
+        );
         moduleUtils.patchModule(
             'aws-sdk',
-            'getSignedUrlPromise',
-            AWSSDKLocalPromiseWrapper,
-            AWSmod => AWSmod.S3.prototype
+            'addPromisesToClass',
+            wrapS3PromiseOnAdd,
+            AWSmod => AWSmod.S3
         );
     },
 
