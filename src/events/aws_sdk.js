@@ -1238,7 +1238,6 @@ module.exports = {
             wrapS3PromiseOnAdd,
             AWSmod => AWSmod.S3
         );
-
     },
 
     /**
