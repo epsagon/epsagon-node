@@ -7,7 +7,7 @@ branches:
 
 install:
   - npm install
-  - npm install -g serverless
+  - npm install -g serverless@2.45.2
 
 node_js:
   - "8.10"
