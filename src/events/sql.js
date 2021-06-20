@@ -104,7 +104,10 @@ module.exports.wrapSqlQuery = function wrapSqlQuery(queryString, params, callbac
                         rows = res;
                     }
                     eventInterface.addToMetadata(dbapiEvent, { rowCount });
-                    if (rowCount && rows instanceof Array && rows.length) {
+                    if (rowCount &&
+                        rows instanceof Array &&
+                        rows.length &&
+                        !tracer.doesContainIgnoredKey(config.getConfig().ignoredDBTables, table)) {
                         if (rows.length > MAX_QUERY_ELEMENTS) {
                             eventInterface.addToMetadata(dbapiEvent, { is_trimmed: true });
                         }

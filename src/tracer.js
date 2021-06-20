@@ -446,6 +446,27 @@ function sendCurrentTrace(traceSender, tracerObject) {
 }
 
 /**
+ * Tests if a string value (which is suspected to be a stringyfied JSON)
+ * contains an ignored key
+ * @param {Array<String | RegExp>} keysToIgnore a list of keys to ignore
+ * @param {string} value a value to search ignored keys in
+ * @returns {boolean} true for non-ignored keys
+ */
+module.exports.doesContainIgnoredKey = function doesContainIgnoredKey(keysToIgnore, value) {
+    return keysToIgnore
+        .some((predicate) => {
+            if (typeof predicate === 'string' &&
+                config.processIgnoredKey(value).includes(predicate)) {
+                return true;
+            }
+            if (predicate instanceof RegExp && predicate.test(value)) {
+                return true;
+            }
+            return false;
+        });
+}
+
+/**
  * Filter a trace to exclude all unwanted keys
  * @param {Object} traceObject  the trace to filter
  * @param {Array<String>} ignoredKeys   keys to ignore
@@ -485,23 +506,7 @@ module.exports.filterTrace = function filterTrace(traceObject, ignoredKeys, remo
         return true;
     }
 
-    /**
-     * Tests if a string value (which is suspected to be a stringyfied JSON)
-     * contains an ignored key
-     * @param {string} value a value to search ignored keys in
-     * @returns {boolean} true for non-ignored keys
-     */
-    const doesContainIgnoredKey = value => ignoredKeys
-        .some((predicate) => {
-            if (typeof predicate === 'string' &&
-                config.processIgnoredKey(value).includes(predicate)) {
-                return true;
-            }
-            if (predicate instanceof RegExp && predicate.test(value)) {
-                return true;
-            }
-            return false;
-        });
+
 
 
     /**
@@ -528,7 +533,8 @@ module.exports.filterTrace = function filterTrace(traceObject, ignoredKeys, remo
         // trying to JSON load strings to filter sensitive data
         unFilteredKeys
             .forEach((k) => {
-                if (!isPossibleStringJSON(obj[k]) || !doesContainIgnoredKey(obj[k])) {
+                if (!isPossibleStringJSON(obj[k]) ||
+                    !module.exports.doesContainIgnoredKey(ignoredKeys, obj[k])) {
                     primitive.push(k);
                     return;
                 }
