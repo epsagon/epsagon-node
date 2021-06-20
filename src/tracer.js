@@ -464,7 +464,7 @@ module.exports.doesContainIgnoredKey = function doesContainIgnoredKey(keysToIgno
             }
             return false;
         });
-}
+};
 
 /**
  * Filter a trace to exclude all unwanted keys
@@ -505,9 +505,6 @@ module.exports.filterTrace = function filterTrace(traceObject, ignoredKeys, remo
         }
         return true;
     }
-
-
-
 
     /**
      * Recursivly filter object properties

@@ -38,7 +38,7 @@ const matchKeysToIgnore = (keys) => {
     if (filteredKeys.length !== keys.length) {
         utils.printWarning(
             'Epsagon Deprecaion Warning: matched keys supports only strings and RegExp, other values will be ignored. Recieved Keys:',
-            keys,
+            keys
         );
     }
     return processIgnoredKeys(filteredKeys);
