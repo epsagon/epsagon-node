@@ -7,10 +7,8 @@ branches:
 
 install:
   - npm install
-  - npm install -g serverless
 
 node_js:
-  - "8.10"
   - "10.16"
   - "12.13"
   - "14.15"
@@ -26,6 +24,7 @@ jobs:
     - stage: acceptance
       node_js: "12.13"
       script:
+        - npm install -g serverless@2.45.2
         - npm run build
         - ./test/acceptance/run.sh $TRAVIS_BUILD_NUMBER
 
