@@ -5,7 +5,8 @@
         "browser": false
     },
     "plugins": [
-        "json"
+        "json",
+        "@typescript-eslint"
     ],
     "rules": {
         "no-console": "off",
