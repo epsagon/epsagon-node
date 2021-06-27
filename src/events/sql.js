@@ -90,7 +90,7 @@ module.exports.wrapSqlQuery = function wrapSqlQuery(queryString, params, callbac
             Query: queryString.substring(0, MAX_QUERY_SIZE),
         });
         if (params && params.length) {
-            eventInterface.addToMetadata(dbapiEvent, {}, {
+            eventInterface.addToMetadata(dbapiEvent, { }, {
                 Params: params.slice(0, MAX_PARAMS_LENGTH),
             });
         }
