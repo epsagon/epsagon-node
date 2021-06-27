@@ -5,6 +5,7 @@ const tracer = require('../tracer.js');
 const serverlessEvent = require('../proto/event_pb.js');
 const eventInterface = require('../event.js');
 const errorCode = require('../proto/error_code_pb.js');
+const config = require('../config.js');
 
 const MAX_QUERY_SIZE = 2048;
 const MAX_PARAMS_LENGTH = 5;
@@ -30,11 +31,13 @@ module.exports.parseQueryArgs = function parseQueryArgs(arg1, arg2) {
  * @param {string} queryString The executed SQL command
  * @param {Array} params The params argument (values)
  * @param {Function} callback The callback argument (cb)
- * @param {Object} config The connection config object
+ * @param {Object} connConfig The connection config object
  * @param {string} driver The database driver type (mysql/pg/..)
  * @returns {Array} The arguments
  */
-module.exports.wrapSqlQuery = function wrapSqlQuery(queryString, params, callback, config, driver) {
+module.exports.wrapSqlQuery = function wrapSqlQuery(
+    queryString, params, callback, connConfig, driver
+) {
     let patchedCallback;
 
     try {
@@ -50,9 +53,13 @@ module.exports.wrapSqlQuery = function wrapSqlQuery(queryString, params, callbac
             sqlObj.type = 'SQL-Command';
         }
 
-        const { type, table } = sqlObj;
+        const { type } = sqlObj;
+        let { table } = sqlObj;
+        if (!table) {
+            table = (sqlObj.from.length > 0 ? sqlObj.from[0].table : '');
+        }
 
-        const { database, host } = config;
+        const { database, host } = connConfig;
 
         let resourceType = 'sql';
         if (host.match('.rds.')) { resourceType = 'rds'; }
@@ -107,7 +114,8 @@ module.exports.wrapSqlQuery = function wrapSqlQuery(queryString, params, callbac
                     if (rowCount &&
                         rows instanceof Array &&
                         rows.length &&
-                        !tracer.doesContainIgnoredKey(config.getConfig().ignoredDBTables, table)) {
+                        !tracer.doesContainIgnoredKey(config.getConfig().ignoredDBTables, table)
+                    ) {
                         if (rows.length > MAX_QUERY_ELEMENTS) {
                             eventInterface.addToMetadata(dbapiEvent, { is_trimmed: true });
                         }

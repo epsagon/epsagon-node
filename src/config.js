@@ -34,7 +34,7 @@ const processIgnoredKeys = keys => keys.map(k => (typeof k === 'string' ? module
  */
 const matchKeysToIgnore = (keys) => {
     const filteredKeys = keys
-        .filter(key => typeof key === 'string' || key instanceof RegExp);
+        .filter(key => key && (typeof key === 'string' || key instanceof RegExp));
     if (filteredKeys.length !== keys.length) {
         utils.printWarning(
             'Epsagon Deprecaion Warning: matched keys supports only strings and RegExp, other values will be ignored. Recieved Keys:',

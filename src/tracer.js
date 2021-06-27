@@ -455,8 +455,7 @@ function sendCurrentTrace(traceSender, tracerObject) {
 module.exports.doesContainIgnoredKey = function doesContainIgnoredKey(keysToIgnore, value) {
     return keysToIgnore
         .some((predicate) => {
-            if (typeof predicate === 'string' &&
-                config.processIgnoredKey(value).includes(predicate)) {
+            if (typeof predicate === 'string' && config.processIgnoredKey(value).includes(predicate)) {
                 return true;
             }
             if (predicate instanceof RegExp && predicate.test(value)) {
