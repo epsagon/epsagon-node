@@ -5,7 +5,7 @@ const tracer = require('../tracer.js');
 const serverlessEvent = require('../proto/event_pb.js');
 const eventInterface = require('../event.js');
 const errorCode = require('../proto/error_code_pb.js');
-const config = require('../config.js');
+const epsagonConfig = require('../config.js');
 
 const MAX_QUERY_SIZE = 2048;
 const MAX_PARAMS_LENGTH = 5;
@@ -31,13 +31,11 @@ module.exports.parseQueryArgs = function parseQueryArgs(arg1, arg2) {
  * @param {string} queryString The executed SQL command
  * @param {Array} params The params argument (values)
  * @param {Function} callback The callback argument (cb)
- * @param {Object} connConfig The connection config object
+ * @param {Object} config The connection config object
  * @param {string} driver The database driver type (mysql/pg/..)
  * @returns {Array} The arguments
  */
-module.exports.wrapSqlQuery = function wrapSqlQuery(
-    queryString, params, callback, connConfig, driver
-) {
+module.exports.wrapSqlQuery = function wrapSqlQuery(queryString, params, callback, config, driver) {
     let patchedCallback;
 
     try {
@@ -54,12 +52,12 @@ module.exports.wrapSqlQuery = function wrapSqlQuery(
         }
 
         const { type } = sqlObj;
-        let { table } = sqlObj;
-        if (!table) {
-            table = (sqlObj.from.length > 0 ? sqlObj.from[0].table : '');
+        let { tables } = sqlObj;
+        if (!tables) {
+            tables = sqlObj.from.map(f => f.table);
         }
 
-        const { database, host } = connConfig;
+        const { database, host } = config;
 
         let resourceType = 'sql';
         if (host.match('.rds.')) { resourceType = 'rds'; }
@@ -87,7 +85,7 @@ module.exports.wrapSqlQuery = function wrapSqlQuery(
             Host: host,
             Driver: driver,
             Type: type,
-            'Table Name': table,
+            'Table Name': (tables.length === 1 ? tables[0] : tables),
         }, {
             Query: queryString.substring(0, MAX_QUERY_SIZE),
         });
@@ -114,7 +112,7 @@ module.exports.wrapSqlQuery = function wrapSqlQuery(
                     if (rowCount &&
                         rows instanceof Array &&
                         rows.length &&
-                        !tracer.doesContainIgnoredKey(config.getConfig().ignoredDBTables, table)
+                        !tables.some(t => tracer.doesContainIgnoredKey(epsagonConfig.getConfig().ignoredDBTables, t))
                     ) {
                         if (rows.length > MAX_QUERY_ELEMENTS) {
                             eventInterface.addToMetadata(dbapiEvent, { is_trimmed: true });
