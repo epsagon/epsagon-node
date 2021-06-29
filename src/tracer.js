@@ -2,9 +2,6 @@
  * @fileoverview The tracer, managing all the trace collecting and sending
  */
 const uuid4 = require('uuid4');
-const axios = require('axios');
-const http = require('http');
-const https = require('https');
 const stringify = require('json-stringify-safe');
 const trace = require('./proto/trace_pb.js');
 const exception = require('./proto/exception_pb.js');
@@ -20,6 +17,8 @@ const ec2 = require('./containers/ec2.js');
 const winstonCloudwatch = require('./events/winston_cloudwatch');
 const TraceQueue = require('./trace_queue.js');
 const { isStrongId } = require('./helpers/events');
+const logSender = require('./trace_senders/logs.js');
+const httpSender = require('./trace_senders/http.js');
 
 const FILTER_TRACE_MAX_DEPTH = 50;
 
@@ -64,14 +63,6 @@ module.exports.createTracer = function createTracer() {
     };
 };
 
-/**
- * Session for the post requests to the collector
- */
-const session = axios.create({
-    timeout: config.getConfig().sendTimeout,
-    httpAgent: new http.Agent({ keepAlive: true }),
-    httpsAgent: new https.Agent({ keepAlive: true }),
-});
 
 /**
  * Adds an event to the tracer
@@ -578,38 +569,11 @@ module.exports.filterTrace = function filterTrace(traceObject, ignoredKeys, remo
  * @returns {Promise} a promise that is resolved after the trace is posted.
  *  */
 module.exports.postTrace = function postTrace(traceObject) {
-    utils.debugLog(`Posting trace to ${config.getConfig().traceCollectorURL}`);
-    utils.debugLog(`trace: ${JSON.stringify(traceObject, null, 2)}`);
+    if (config.getConfig().logTransportEnabled) {
+        return logSender.sendTrace(traceObject);
+    }
 
-    // based on https://github.com/axios/axios/issues/647#issuecomment-322209906
-    // axios timeout is only after the connection is made, not the address resolution itself
-    const cancelTokenSource = axios.CancelToken.source();
-    const handle = setTimeout(() => {
-        cancelTokenSource.cancel('timeout sending trace');
-    }, config.getConfig().sendTimeout);
-
-    return session.post(
-        config.getConfig().traceCollectorURL,
-        traceObject,
-        {
-            headers: { Authorization: `Bearer ${config.getConfig().token}` },
-            timeout: config.getConfig().sendTimeout,
-            cancelToken: cancelTokenSource.token,
-        }
-    ).then((res) => {
-        clearTimeout(handle);
-        utils.debugLog('Trace posted!');
-        return res;
-    }).catch((err) => {
-        clearTimeout(handle);
-        if (err.config && err.config.data) {
-            utils.debugLog(`Error sending trace. Trace size: ${err.config.data.length}`);
-        } else {
-            utils.debugLog(`Error sending trace. Error: ${err}`);
-        }
-        utils.debugLog(`${err ? err.stack : err}`);
-        return err;
-    }); // Always resolve.
+    return httpSender.sendTrace(traceObject);
 };
 
 /**

@@ -75,6 +75,7 @@ const config = {
      consts.MAX_TRACE_WAIT), // miliseconds
     maxBatchSizeBytes: consts.BATCH_SIZE_BYTES_HARD_LIMIT,
     maxQueueSizeBytes: consts.QUEUE_SIZE_BYTES_HARD_LIMIT,
+    logTransportEnabled: (process.env.EPSAGON_LOG_TRANSPORT || 'FALSE').toUpperCase() === 'TRUE',
 
     /**
      * get isEpsagonPatchDisabled
