@@ -77,6 +77,14 @@ describe('tracer config tests', () => {
         expect(config.getConfig()).to.contain(updatedConfig);
     });
 
+    it('setConfig: set custom ignored DB tables', () => {
+        const ignoredDBTables = ['customers', /.*password.*/];
+        config.setConfig({ ignoredDBTables });
+        for (let i = 0; i < ignoredDBTables.length; i += 1) {
+            expect(config.getConfig().ignoredDBTables[i]).to.equal(ignoredDBTables[i]);
+        }
+    });
+
     it('setConfig: set custom HTTP error code', () => {
         const httpErrorStatusCode = 42;
         config.setConfig({ httpErrorStatusCode });
