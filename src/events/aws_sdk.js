@@ -505,10 +505,12 @@ const dynamoDBEventCreator = {
         }
 
         case 'batchWriteItem': {
-            const unprocessedItems = (Object.keys(response.data.UnprocessedItems));
-            eventInterface.addToMetadata(event, {
-                unprocessedItems_count: unprocessedItems.length,
-            });
+            if (response.data.UnprocessedItems) {
+                const unprocessedItems = (Object.keys(response.data.UnprocessedItems));
+                eventInterface.addToMetadata(event, {
+                    unprocessedItems_count: unprocessedItems.length,
+                });
+            }
             break;
         }
 
