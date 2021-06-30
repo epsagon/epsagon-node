@@ -12,7 +12,7 @@ module.exports.sendTrace = function sendTrace(traceObject) {
     return new Promise((resolve) => {
         try {
             const encodedTrace = Buffer.from(JSON.stringify(traceObject)).toString('base64');
-            console.log(`EPSAGON_TRACE: ${encodedTrace}`);
+            process.stdout.write(`EPSAGON_TRACE: ${encodedTrace}\n`);
             utils.debugLog('Trace posted!');
         } catch (err) {
             utils.debugLog(`Error sending trace. Error: ${err}`);
