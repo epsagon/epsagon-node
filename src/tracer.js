@@ -21,6 +21,7 @@ const logSender = require('./trace_senders/logs.js');
 const httpSender = require('./trace_senders/http.js');
 
 const FILTER_TRACE_MAX_DEPTH = 50;
+const MAX_EVENTS = 30;
 
 
 /**
@@ -316,6 +317,29 @@ function addLabelsToTrace() {
 }
 
 /**
+ * reduce trace events by limiting each resource to only 30 operations
+ * @param {Array} eventsList: the list of events to reduce
+ * @returns {Array} reduced events list
+ */
+function reduceTraceEvents(eventsList) {
+    const eventsByResource = {};
+
+    eventsList.forEach((event) => {
+        const resourceName = event.hasResource() ? event.getResource().getName() : '';
+        if (resourceName) {
+            eventsByResource[resourceName] = eventsByResource[resourceName] || [];
+
+            if (eventsByResource[resourceName].length < MAX_EVENTS) {
+                eventsByResource[resourceName].push(event);
+            }
+        }
+    });
+
+    return Object.values(eventsByResource).reduce((a, b) => a.concat(b), []);
+}
+
+
+/**
  * Builds and sends current collected trace
  * Sends the trace to the epsagon infrastructure now, assuming all required event's promises was
  * handled
@@ -361,7 +385,7 @@ function sendCurrentTrace(traceSender, tracerObject) {
     let traceJson = {
         app_name: tracerObj.trace.getAppName(),
         token: tracerObj.trace.getToken(),
-        events: tracerObj.trace.getEventList().map(entry => ({
+        events: reduceTraceEvents(tracerObj.trace.getEventList()).map(entry => ({
             id: entry.getId(),
             start_time: entry.getStartTime(),
             resource: entry.hasResource() ? {
