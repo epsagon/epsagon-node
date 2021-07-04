@@ -31,6 +31,7 @@ const ldapPatcher = require('./events/ldap.js');
 const cassandraPatcher = require('./events/cassandra-driver.js');
 const tencentCOSPatcher = require('./events/tencent-cos.js');
 const neo4jPatcher = require('./events/neo4j.js');
+const nodeRedshift = require('./events/node_redshift.js');
 
 const fs = require('./events/fs.js');
 
@@ -40,6 +41,7 @@ const LIBNAME_TO_PATCHER = {
     'azure-sdk': azureSdkPatcher,
     'winston-cw': winstonCloudwatchPatcher,
     'cos-nodejs-sdk-v5': tencentCOSPatcher,
+    'node-redshift': nodeRedshift,
     http: httpPatcher,
     http2: http2Patcher,
     pg: pgPatcher,
@@ -111,6 +113,7 @@ if (!config.getConfig().isEpsagonPatchDisabled) {
             tencentCOSPatcher,
             neo4jPatcher,
             fs,
+            nodeRedshift,
         ].forEach(patch);
     } else {
         config.getConfig().patchWhitelist.forEach(
