@@ -514,7 +514,7 @@ module.exports.filterTrace = function filterTrace(traceObject, ignoredKeys, remo
      * stringify replacer function, used to ignore the relevant keys
      * @param {string} key  the key of the value
      * @param {any} value   the json value
-     * @returns the value to serialize
+     * @returns {any} the value to serialize
      */
     function replacer(key, value) {
         if (isNotIgnored(key)) {
