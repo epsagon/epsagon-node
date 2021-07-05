@@ -20,7 +20,7 @@ const { isStrongId } = require('./helpers/events');
 const logSender = require('./trace_senders/logs.js');
 const httpSender = require('./trace_senders/http.js');
 
-const FILTER_TRACE_MAX_DEPTH = 50;
+const MAX_EVENTS = parseInt(process.env.EPSAGON_MAX_EVENT || '30', 10);
 
 
 /**
@@ -316,6 +316,29 @@ function addLabelsToTrace() {
 }
 
 /**
+ * reduce trace events by limiting each resource to only 30 operations
+ * @param {Array} eventsList: the list of events to reduce
+ * @returns {Array} reduced events list
+ */
+function reduceTraceEvents(eventsList) {
+    const eventsByResource = {};
+
+    eventsList.forEach((event) => {
+        const resourceName = event.hasResource() ? event.getResource().getName() : '';
+        if (resourceName) {
+            eventsByResource[resourceName] = eventsByResource[resourceName] || [];
+
+            if (eventsByResource[resourceName].length < MAX_EVENTS) {
+                eventsByResource[resourceName].push(event);
+            }
+        }
+    });
+
+    return Object.values(eventsByResource).reduce((a, b) => a.concat(b), []);
+}
+
+
+/**
  * Builds and sends current collected trace
  * Sends the trace to the epsagon infrastructure now, assuming all required event's promises was
  * handled
@@ -361,7 +384,7 @@ function sendCurrentTrace(traceSender, tracerObject) {
     let traceJson = {
         app_name: tracerObj.trace.getAppName(),
         token: tracerObj.trace.getToken(),
-        events: tracerObj.trace.getEventList().map(entry => ({
+        events: reduceTraceEvents(tracerObj.trace.getEventList()).map(entry => ({
             id: entry.getId(),
             start_time: entry.getStartTime(),
             resource: entry.hasResource() ? {
@@ -464,15 +487,6 @@ module.exports.doesContainIgnoredKey = function doesContainIgnoredKey(keysToIgno
  * @returns {Object}  filtered trace
  */
 module.exports.filterTrace = function filterTrace(traceObject, ignoredKeys, removeIgnoredKeys) {
-    /**
-     * Check if a given param is an object
-     * @param {*} x   param to check
-     * @returns {boolean}   if `x` is an object
-     */
-    function isObject(x) {
-        return (typeof x === 'object') && x !== null;
-    }
-
     const isString = x => typeof x === 'string';
 
     const isPossibleStringJSON = v => isString(v) && v.length > 1 && ['[', '{'].includes(v[0]);
@@ -497,52 +511,27 @@ module.exports.filterTrace = function filterTrace(traceObject, ignoredKeys, remo
     }
 
     /**
-     * Recursivly filter object properties
-     * @param {Object} obj  object to filter
-     * @param {Number} maxDepth  the maximum depth for the recursion
-     * @returns {Object} filtered object
+     * stringify replacer function, used to ignore the relevant keys
+     * @param {string} key  the key of the value
+     * @param {any} value   the json value
+     * @returns {any} the value to serialize
      */
-    function filterObject(obj, maxDepth) {
-        if (!isObject(obj)) {
-            return obj;
+    function replacer(key, value) {
+        if (isNotIgnored(key)) {
+            if (isPossibleStringJSON(value)) {
+                try {
+                    const objValue = JSON.parse(value);
+                    const filtered = stringify(objValue, replacer, 0, () => {});
+                    return JSON.parse(filtered);
+                } catch (e) {
+                    return value;
+                }
+            }
+
+            return value;
         }
 
-        const unFilteredKeys = Object
-            .keys(obj)
-            .filter(isNotIgnored);
-        const maskedKeys = Object.keys(obj).filter(k => !isNotIgnored(k));
-
-        const primitive = unFilteredKeys.filter(k => !isObject(obj[k]) && !isString(obj[k]));
-        const objects = unFilteredKeys
-            .filter(k => isObject(obj[k]))
-            .map(k => ({ [k]: maxDepth > 0 ? filterObject(obj[k], maxDepth - 1) : null }));
-
-        // trying to JSON load strings to filter sensitive data
-        unFilteredKeys
-            .forEach((k) => {
-                if (!isPossibleStringJSON(obj[k]) ||
-                    !module.exports.doesContainIgnoredKey(ignoredKeys, obj[k])) {
-                    primitive.push(k);
-                    return;
-                }
-                try {
-                    const subObj = JSON.parse(obj[k]);
-                    if (subObj && isObject(subObj)) {
-                        objects.push({
-                            [k]: maxDepth > 0 ? filterObject(subObj, maxDepth - 1) : null,
-                        });
-                    } else {
-                        primitive.push(k);
-                    }
-                } catch (e) {
-                    primitive.push(k);
-                }
-            });
-
-        return Object.assign({},
-            !removeIgnoredKeys && maskedKeys.reduce((sum, key) => Object.assign({}, sum, { [key]: '****' }), {}),
-            primitive.reduce((sum, key) => Object.assign({}, sum, { [key]: obj[key] }), {}),
-            objects.reduce((sum, value) => Object.assign({}, sum, value), {}));
+        return removeIgnoredKeys ? undefined : '****';
     }
 
     utils.debugLog('Trace was filtered with ignored keys');
@@ -555,8 +544,9 @@ module.exports.filterTrace = function filterTrace(traceObject, ignoredKeys, remo
 
         // remove all circular references from the metadata object
         // before recursively ignoring keys to avoid an endless recursion
-        const metadata = JSON.parse(stringify(event.resource.metadata, null, 0, () => {}));
-        filteredEvent.resource.metadata = filterObject(metadata, FILTER_TRACE_MAX_DEPTH);
+        const metadata = JSON.parse(stringify(event.resource.metadata, replacer, 0, () => {}));
+        filteredEvent.resource.metadata = metadata;
+
         return filteredEvent;
     });
 

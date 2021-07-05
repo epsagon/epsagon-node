@@ -19,7 +19,10 @@ const session = axios.create({
 
 module.exports.sendTrace = function sendTrace(traceObject) {
     utils.debugLog(`Posting trace to ${config.getConfig().traceCollectorURL}`);
-    utils.debugLog(`trace: ${JSON.stringify(traceObject, null, 2)}`);
+
+    if ((process.env.EPSAGON_DEBUG || '').toUpperCase() === 'TRUE') {
+        utils.debugLog(`trace: ${JSON.stringify(traceObject, null, 2)}`);
+    }
 
     // based on https://github.com/axios/axios/issues/647#issuecomment-322209906
     // axios timeout is only after the connection is made, not the address resolution itself
