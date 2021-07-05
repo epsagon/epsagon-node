@@ -522,7 +522,7 @@ module.exports.filterTrace = function filterTrace(traceObject, ignoredKeys, remo
                 try {
                     const objValue = JSON.parse(value);
                     const filtered = stringify(objValue, replacer, 0, () => {});
-                    return filtered;
+                    return JSON.parse(filtered);
                 } catch (e) {
                     return value;
                 }
