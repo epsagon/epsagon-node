@@ -21,7 +21,7 @@ const logSender = require('./trace_senders/logs.js');
 const httpSender = require('./trace_senders/http.js');
 
 const FILTER_TRACE_MAX_DEPTH = 50;
-const MAX_EVENTS = 30;
+const MAX_EVENTS = parseInt(process.env.EPSAGON_MAX_EVENT || '30');
 
 
 /**
