@@ -520,53 +520,22 @@ module.exports.filterTrace = function filterTrace(traceObject, ignoredKeys, remo
         return true;
     }
 
-    /**
-     * Recursivly filter object properties
-     * @param {Object} obj  object to filter
-     * @param {Number} maxDepth  the maximum depth for the recursion
-     * @returns {Object} filtered object
-     */
-    function filterObject(obj, maxDepth) {
-        if (!isObject(obj)) {
-            return obj;
+    function replacer(key, value) {
+        if (isNotIgnored(key)) {
+            if (isPossibleStringJSON(value)) {
+                try {
+                    const objValue = JSON.parse(value);
+                    const filtered = stringify(objValue, replacer, 0, () => {});
+                    return filtered;
+                } catch {
+                    return value;
+                }
+            }
+
+            return value;
         }
 
-        const unFilteredKeys = Object
-            .keys(obj)
-            .filter(isNotIgnored);
-        const maskedKeys = Object.keys(obj).filter(k => !isNotIgnored(k));
-
-        const primitive = unFilteredKeys.filter(k => !isObject(obj[k]) && !isString(obj[k]));
-        const objects = unFilteredKeys
-            .filter(k => isObject(obj[k]))
-            .map(k => ({ [k]: maxDepth > 0 ? filterObject(obj[k], maxDepth - 1) : null }));
-
-        // trying to JSON load strings to filter sensitive data
-        unFilteredKeys
-            .forEach((k) => {
-                if (!isPossibleStringJSON(obj[k]) ||
-                    !module.exports.doesContainIgnoredKey(ignoredKeys, obj[k])) {
-                    primitive.push(k);
-                    return;
-                }
-                try {
-                    const subObj = JSON.parse(obj[k]);
-                    if (subObj && isObject(subObj)) {
-                        objects.push({
-                            [k]: maxDepth > 0 ? filterObject(subObj, maxDepth - 1) : null,
-                        });
-                    } else {
-                        primitive.push(k);
-                    }
-                } catch (e) {
-                    primitive.push(k);
-                }
-            });
-
-        return Object.assign({},
-            !removeIgnoredKeys && maskedKeys.reduce((sum, key) => Object.assign({}, sum, { [key]: '****' }), {}),
-            primitive.reduce((sum, key) => Object.assign({}, sum, { [key]: obj[key] }), {}),
-            objects.reduce((sum, value) => Object.assign({}, sum, value), {}));
+        return removeIgnoredKeys ? undefined : '****';
     }
 
     utils.debugLog('Trace was filtered with ignored keys');
@@ -579,8 +548,11 @@ module.exports.filterTrace = function filterTrace(traceObject, ignoredKeys, remo
 
         // remove all circular references from the metadata object
         // before recursively ignoring keys to avoid an endless recursion
-        const metadata = JSON.parse(stringify(event.resource.metadata, null, 0, () => {}));
-        filteredEvent.resource.metadata = filterObject(metadata, FILTER_TRACE_MAX_DEPTH);
+        const metadata = JSON.parse(stringify(event.resource.metadata, replacer, 0, () => {}));
+        filteredEvent.resource.metadata = metadata;
+
+
+        // filteredEvent.resource.metadata = filterObject(metadata, FILTER_TRACE_MAX_DEPTH);
         return filteredEvent;
     });
 
