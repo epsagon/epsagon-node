@@ -20,8 +20,7 @@ const { isStrongId } = require('./helpers/events');
 const logSender = require('./trace_senders/logs.js');
 const httpSender = require('./trace_senders/http.js');
 
-const FILTER_TRACE_MAX_DEPTH = 50;
-const MAX_EVENTS = parseInt(process.env.EPSAGON_MAX_EVENT || '30');
+const MAX_EVENTS = parseInt(process.env.EPSAGON_MAX_EVENT || '30', 10);
 
 
 /**
@@ -488,15 +487,6 @@ module.exports.doesContainIgnoredKey = function doesContainIgnoredKey(keysToIgno
  * @returns {Object}  filtered trace
  */
 module.exports.filterTrace = function filterTrace(traceObject, ignoredKeys, removeIgnoredKeys) {
-    /**
-     * Check if a given param is an object
-     * @param {*} x   param to check
-     * @returns {boolean}   if `x` is an object
-     */
-    function isObject(x) {
-        return (typeof x === 'object') && x !== null;
-    }
-
     const isString = x => typeof x === 'string';
 
     const isPossibleStringJSON = v => isString(v) && v.length > 1 && ['[', '{'].includes(v[0]);
@@ -520,6 +510,12 @@ module.exports.filterTrace = function filterTrace(traceObject, ignoredKeys, remo
         return true;
     }
 
+    /**
+     * stringify replacer function, used to ignore the relevant keys
+     * @param {string} key  the key of the value
+     * @param {any} value   the json value
+     * @returns the value to serialize
+     */
     function replacer(key, value) {
         if (isNotIgnored(key)) {
             if (isPossibleStringJSON(value)) {
