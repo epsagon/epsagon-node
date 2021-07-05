@@ -551,8 +551,6 @@ module.exports.filterTrace = function filterTrace(traceObject, ignoredKeys, remo
         const metadata = JSON.parse(stringify(event.resource.metadata, replacer, 0, () => {}));
         filteredEvent.resource.metadata = metadata;
 
-
-        // filteredEvent.resource.metadata = filterObject(metadata, FILTER_TRACE_MAX_DEPTH);
         return filteredEvent;
     });
 
