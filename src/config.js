@@ -20,9 +20,29 @@ module.exports.processIgnoredKey = function processIgnoredKey(key) {
         .replace(/\s/g, '');
 };
 
-
+/**
+ * process list of ignored keys
+ * @param {Array<string | RegExp>} keys the list of keys to process
+ * @returns {Array<string | RegExp>} the list of keys after process
+ */
 const processIgnoredKeys = keys => keys.map(k => (typeof k === 'string' ? module.exports.processIgnoredKey(k) : k));
 
+/**
+ * process list of ignored keys, supporting String & RegExp. Warns if else
+ * @param {Array<string | RegExp>}keys the list of keys to match
+ * @return {Array<string | RegExp>} the list of keys to override in config
+ */
+const matchKeysToIgnore = (keys) => {
+    const filteredKeys = keys
+        .filter(key => key && (typeof key === 'string' || key instanceof RegExp));
+    if (filteredKeys.length !== keys.length) {
+        utils.printWarning(
+            'Epsagon Deprecaion Warning: matched keys supports only strings and RegExp, other values will be ignored. Recieved Keys:',
+            keys
+        );
+    }
+    return processIgnoredKeys(filteredKeys);
+};
 
 /**
  * The default sendTimeout to send for send operations (both sync and async)
@@ -40,6 +60,7 @@ const config = {
     traceCollectorURL: process.env.EPSAGON_COLLECTOR_URL || consts.TRACE_COLLECTOR_URL,
     isEpsagonDisabled: (process.env.DISABLE_EPSAGON || '').toUpperCase() === 'TRUE',
     urlPatternsToIgnore: [],
+    ignoredDBTables: [],
     internalSampleRate: consts.DEFAULT_SAMPLE_RATE,
     labels: {},
     sendOnlyErrors: (process.env.EPSAGON_SEND_TRACE_ON_ERROR || '').toUpperCase() === 'TRUE',
@@ -54,6 +75,7 @@ const config = {
      consts.MAX_TRACE_WAIT), // miliseconds
     maxBatchSizeBytes: consts.BATCH_SIZE_BYTES_HARD_LIMIT,
     maxQueueSizeBytes: consts.QUEUE_SIZE_BYTES_HARD_LIMIT,
+    logTransportEnabled: (process.env.EPSAGON_LOG_TRANSPORT || 'FALSE').toUpperCase() === 'TRUE',
 
     /**
      * get isEpsagonPatchDisabled
@@ -88,6 +110,10 @@ if (process.env.EPSAGON_SAMPLE_RATE) {
 }
 if (process.env.EPSAGON_URLS_TO_IGNORE) {
     config.urlPatternsToIgnore = process.env.EPSAGON_URLS_TO_IGNORE.split(',');
+}
+
+if (process.env.EPSAGON_IGNORED_DB_TABLES) {
+    config.ignoredDBTables = process.env.EPSAGON_IGNORED_DB_TABLES.split(',');
 }
 
 if (process.env.EPSAGON_IGNORED_KEYS) {
@@ -181,16 +207,13 @@ module.exports.setConfig = function setConfig(configData) {
         config.disableHttpResponseBodyCapture = configData.disableHttpResponseBodyCapture;
     }
 
+    // User-defined DB Table response blacklist
+    if (configData.ignoredDBTables && Array.isArray(configData.ignoredDBTables)) {
+        config.ignoredDBTables = matchKeysToIgnore(configData.ignoredDBTables);
+    }
+
     if (configData.ignoredKeys && Array.isArray(configData.ignoredKeys)) {
-        const filteredIgnoredKeys = configData.ignoredKeys
-            .filter(key => typeof key === 'string' || key instanceof RegExp);
-        if (filteredIgnoredKeys.length !== configData.ignoredKeys.length) {
-            utils.printWarning(
-                'Epsagon deprecation warning: ignoredKeys supports only strings and RegExp objects, other values will be ignored. received ignoredKeys:',
-                configData.ignoredKeys
-            );
-        }
-        config.ignoredKeys = processIgnoredKeys(filteredIgnoredKeys);
+        config.ignoredKeys = matchKeysToIgnore(configData.ignoredKeys);
     }
 
     if (configData.removeIgnoredKeys) {

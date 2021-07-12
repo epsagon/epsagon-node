@@ -5,6 +5,7 @@ const tracer = require('../tracer.js');
 const serverlessEvent = require('../proto/event_pb.js');
 const eventInterface = require('../event.js');
 const errorCode = require('../proto/error_code_pb.js');
+const epsagonConfig = require('../config.js');
 
 const MAX_QUERY_SIZE = 2048;
 const MAX_PARAMS_LENGTH = 5;
@@ -50,7 +51,11 @@ module.exports.wrapSqlQuery = function wrapSqlQuery(queryString, params, callbac
             sqlObj.type = 'SQL-Command';
         }
 
-        const { type, table } = sqlObj;
+        const { type } = sqlObj;
+        let { tables } = sqlObj;
+        if (!tables) {
+            tables = sqlObj.from.map(f => f.table);
+        }
 
         const { database, host } = config;
 
@@ -80,12 +85,12 @@ module.exports.wrapSqlQuery = function wrapSqlQuery(queryString, params, callbac
             Host: host,
             Driver: driver,
             Type: type,
-            'Table Name': table,
+            'Table Name': (tables.length === 1 ? tables[0] : tables),
         }, {
             Query: queryString.substring(0, MAX_QUERY_SIZE),
         });
         if (params && params.length) {
-            eventInterface.addToMetadata(dbapiEvent, {}, {
+            eventInterface.addToMetadata(dbapiEvent, { }, {
                 Params: params.slice(0, MAX_PARAMS_LENGTH),
             });
         }
@@ -104,7 +109,12 @@ module.exports.wrapSqlQuery = function wrapSqlQuery(queryString, params, callbac
                         rows = res;
                     }
                     eventInterface.addToMetadata(dbapiEvent, { rowCount });
-                    if (rowCount && rows instanceof Array && rows.length) {
+                    const ignoredTables = epsagonConfig.getConfig().ignoredDBTables;
+                    if (rowCount &&
+                        rows instanceof Array &&
+                        rows.length &&
+                        !tables.some(t => tracer.doesContainIgnoredKey(ignoredTables, t))
+                    ) {
                         if (rows.length > MAX_QUERY_ELEMENTS) {
                             eventInterface.addToMetadata(dbapiEvent, { is_trimmed: true });
                         }
