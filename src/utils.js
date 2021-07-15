@@ -200,7 +200,7 @@ function truncateMessage(message, maxSize) {
  * @returns {Array} the unique items
  */
 function distinct(arr) {
-    return [...new Set(arr)]
+    return [...new Set(arr)];
 }
 
 
@@ -218,4 +218,4 @@ module.exports.isPromise = isPromise;
 module.exports.isLambdaEnv = isLambdaEnv;
 module.exports.getValueIfExist = getValueIfExist;
 module.exports.truncateMessage = truncateMessage;
-module.exports.distinct = distinct
+module.exports.distinct = distinct;
