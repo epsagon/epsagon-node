@@ -1,27 +1,24 @@
 /**
  * @fileoverview The tracer, managing all the trace collecting and sending
  */
-const uuid4 = require('uuid4');
-const stringify = require('json-stringify-safe');
-const trace = require('./proto/trace_pb.js');
-const exception = require('./proto/exception_pb.js');
-const errorCode = require('./proto/error_code_pb.js');
-const utils = require('./utils.js');
-const config = require('./config.js');
-const eventInterface = require('./event.js');
-const consts = require('./consts.js');
-const ecs = require('./containers/ecs.js');
-const k8s = require('./containers/k8s.js');
-const azure = require('./containers/azure.js');
-const ec2 = require('./containers/ec2.js');
-const winstonCloudwatch = require('./events/winston_cloudwatch');
-const TraceQueue = require('./trace_queue.js');
-const { isStrongId } = require('./helpers/events');
-const logSender = require('./trace_senders/logs.js');
-const httpSender = require('./trace_senders/http.js');
-
-const MAX_EVENTS = parseInt(process.env.EPSAGON_MAX_EVENT || '30', 10);
-
+const uuid4 = require("uuid4");
+const stringify = require("json-stringify-safe");
+const trace = require("./proto/trace_pb.js");
+const exception = require("./proto/exception_pb.js");
+const errorCode = require("./proto/error_code_pb.js");
+const utils = require("./utils.js");
+const config = require("./config.js");
+const eventInterface = require("./event.js");
+const consts = require("./consts.js");
+const ecs = require("./containers/ecs.js");
+const k8s = require("./containers/k8s.js");
+const azure = require("./containers/azure.js");
+const ec2 = require("./containers/ec2.js");
+const winstonCloudwatch = require("./events/winston_cloudwatch");
+const TraceQueue = require("./trace_queue.js");
+const { isStrongId } = require("./helpers/events");
+const logSender = require("./trace_senders/logs.js");
+const httpSender = require("./trace_senders/http.js");
 
 /**
  * Returns a function to get the relevant tracer.
@@ -46,8 +43,8 @@ module.exports.createTracer = function createTracer() {
     }
 
     const tracerObj = new trace.Trace([
-        '',
-        '',
+        "",
+        "",
         [],
         [],
         consts.VERSION,
@@ -62,7 +59,6 @@ module.exports.createTracer = function createTracer() {
         createdAt: Date.now(),
     };
 };
-
 
 /**
  * Adds an event to the tracer
@@ -91,9 +87,11 @@ module.exports.addPendingEvent = function addPendingEvent(event, promise) {
     if (utils.isPromise(promise)) {
         tracerObj.pendingEvents.set(
             event,
-            utils.makeQueryablePromise(promise.catch((err) => {
-                module.exports.addException(err);
-            }))
+            utils.makeQueryablePromise(
+                promise.catch((err) => {
+                    module.exports.addException(err);
+                })
+            )
         );
     }
 };
@@ -112,12 +110,14 @@ module.exports.addException = function addException(userError, additionalData) {
         utils.createTimestamp(),
     ]);
 
-    if (typeof additionalData === 'object') {
+    if (typeof additionalData === "object") {
         Object.keys(additionalData).forEach((key) => {
             if (additionalData[key] === undefined) {
-                raisedException.getAdditionalDataMap().set(key, 'undefined');
+                raisedException.getAdditionalDataMap().set(key, "undefined");
             } else {
-                raisedException.getAdditionalDataMap().set(key, additionalData[key]);
+                raisedException
+                    .getAdditionalDataMap()
+                    .set(key, additionalData[key]);
             }
         });
     }
@@ -133,30 +133,31 @@ module.exports.addException = function addException(userError, additionalData) {
  * Initializes the tracer
  * @param {object} configData user's configuration
  */
-module.exports.initTrace = function initTrace(
-    configData
-) {
+module.exports.initTrace = function initTrace(configData) {
     try {
         if (!utils.isLambdaEnv) {
             const ecsMetaUri = ecs.hasECSMetadata();
             if (ecsMetaUri) {
-                ecs.loadECSMetadata(ecsMetaUri).catch(err => utils.debugLog(err));
+                ecs.loadECSMetadata(ecsMetaUri).catch((err) =>
+                    utils.debugLog(err)
+                );
             }
             if (k8s.hasK8sMetadata()) {
                 k8s.loadK8sMetadata();
             }
             azure.loadAzureMetadata((azureAdditionalConfig) => {
-                config.setConfig(Object.assign(azureAdditionalConfig, configData));
+                config.setConfig(
+                    Object.assign(azureAdditionalConfig, configData)
+                );
             });
-            ec2.loadEC2Metadata().catch(err => utils.debugLog(err));
+            ec2.loadEC2Metadata().catch((err) => utils.debugLog(err));
         }
     } catch (err) {
-        utils.debugLog('Could not extract container env data');
+        utils.debugLog("Could not extract container env data");
     }
     config.setConfig(configData);
     traceQueue.updateConfig();
 };
-
 
 /**
  * Adds a runner to the current trace.
@@ -189,7 +190,6 @@ module.exports.restart = function restart() {
     tracerObj.trace.setToken(config.getConfig().token);
 };
 
-
 /**
  * Keeps only strong IDs in event metadata.
  * @param {array} eventMetadata Event metadata.
@@ -199,7 +199,7 @@ module.exports.restart = function restart() {
 function getTrimmedMetadata(eventMetadata, isRunner) {
     let trimmedEventMetadata;
     Object.keys(eventMetadata).forEach((eventKey) => {
-        if (!(isStrongId(eventKey) || (isRunner && eventKey === 'labels'))) {
+        if (!(isStrongId(eventKey) || (isRunner && eventKey === "labels"))) {
             if (!trimmedEventMetadata) {
                 trimmedEventMetadata = eventMetadata;
                 trimmedEventMetadata.is_trimmed = true;
@@ -209,7 +209,6 @@ function getTrimmedMetadata(eventMetadata, isRunner) {
     });
     return trimmedEventMetadata;
 }
-
 
 /**
  * Trimming trace exceptions.
@@ -221,7 +220,8 @@ function trimTraceExceptions(traceExceptions) {
     const firstException = traceExceptions[0];
     const totalTrimmed = traceExceptions.length - 1;
     const reduceSize =
-    JSON.stringify(traceExceptions).length - JSON.stringify(firstException).length;
+        JSON.stringify(traceExceptions).length -
+        JSON.stringify(firstException).length;
     return [firstException, totalTrimmed, reduceSize];
 }
 
@@ -245,21 +245,30 @@ function getTrimmedTrace(traceSize, jsTrace) {
         totalTrimmedExceptions = totalTrimmed;
         trimmedTrace.exceptions = [firstException];
     }
-    utils.debugLog(`Epsagon - Pre metadata trim: current trace size ${currentTraceSize}`);
+    utils.debugLog(
+        `Epsagon - Pre metadata trim: current trace size ${currentTraceSize}`
+    );
     // Trimming trace events metadata.
     if (currentTraceSize >= consts.MAX_TRACE_SIZE_BYTES) {
-        trimmedTrace.events = jsTrace.events.sort(event => (['runner', 'trigger'].includes(event.origin) ? -1 : 1));
+        trimmedTrace.events = jsTrace.events.sort((event) =>
+            ["runner", "trigger"].includes(event.origin) ? -1 : 1
+        );
         for (let i = jsTrace.events.length - 1; i >= 0; i -= 1) {
             const currentEvent = trimmedTrace.events[i];
             let eventMetadata = currentEvent.resource.metadata;
             if (eventMetadata) {
-                const isRunner = currentEvent.origin === 'runner';
-                const originalEventMetadataSize = JSON.stringify(eventMetadata).length;
-                const trimmedMetadata = getTrimmedMetadata(eventMetadata, isRunner);
+                const isRunner = currentEvent.origin === "runner";
+                const originalEventMetadataSize =
+                    JSON.stringify(eventMetadata).length;
+                const trimmedMetadata = getTrimmedMetadata(
+                    eventMetadata,
+                    isRunner
+                );
                 if (trimmedMetadata) {
                     eventMetadata = trimmedMetadata;
                     const trimmedSize =
-                    originalEventMetadataSize - JSON.stringify(trimmedMetadata).length;
+                        originalEventMetadataSize -
+                        JSON.stringify(trimmedMetadata).length;
                     currentTraceSize -= trimmedSize;
                     if (currentTraceSize < consts.MAX_TRACE_SIZE_BYTES) {
                         break;
@@ -268,12 +277,14 @@ function getTrimmedTrace(traceSize, jsTrace) {
             }
         }
     }
-    utils.debugLog(`Epsagon - After metadata trim: current trace size ${currentTraceSize}`);
+    utils.debugLog(
+        `Epsagon - After metadata trim: current trace size ${currentTraceSize}`
+    );
     // Trimming trace events.
     if (currentTraceSize >= consts.MAX_TRACE_SIZE_BYTES) {
         for (let i = jsTrace.events.length - 1; i >= 0; i -= 1) {
             const event = trimmedTrace.events[i];
-            if (!['runner', 'trigger'].includes(event.origin)) {
+            if (!["runner", "trigger"].includes(event.origin)) {
                 totalTrimmedEvents += 1;
                 trimmedTrace.events.splice(i, 1);
                 currentTraceSize -= JSON.stringify(event).length;
@@ -283,9 +294,13 @@ function getTrimmedTrace(traceSize, jsTrace) {
             }
         }
     }
-    utils.debugLog(`Epsagon - After events trim: current trace size ${currentTraceSize}`);
+    utils.debugLog(
+        `Epsagon - After events trim: current trace size ${currentTraceSize}`
+    );
     if (totalTrimmedEvents || totalTrimmedExceptions) {
-        utils.debugLog(`Epsagon - Trace size is larger than maximum size, ${totalTrimmedEvents} events and ${totalTrimmedExceptions} exceptions were trimmed.`);
+        utils.debugLog(
+            `Epsagon - Trace size is larger than maximum size, ${totalTrimmedEvents} events and ${totalTrimmedExceptions} exceptions were trimmed.`
+        );
     }
     return trimmedTrace;
 }
@@ -300,11 +315,16 @@ function addLabelsToTrace() {
         return;
     }
     Object.keys(config.getConfig().labels).forEach((key) => {
-        const currLabels = tracerObj.currRunner.getResource().getMetadataMap().get('labels');
+        const currLabels = tracerObj.currRunner
+            .getResource()
+            .getMetadataMap()
+            .get("labels");
         if (!currLabels) {
-            eventInterface.addLabelToMetadata(tracerObj.currRunner,
+            eventInterface.addLabelToMetadata(
+                tracerObj.currRunner,
                 key,
-                config.getConfig().labels[key]);
+                config.getConfig().labels[key]
+            );
         } else if (!JSON.parse(currLabels)[key]) {
             eventInterface.addLabelToMetadata(
                 tracerObj.currRunner,
@@ -314,29 +334,6 @@ function addLabelsToTrace() {
         }
     });
 }
-
-/**
- * reduce trace events by limiting each resource to only 30 operations
- * @param {Array} eventsList: the list of events to reduce
- * @returns {Array} reduced events list
- */
-function reduceTraceEvents(eventsList) {
-    const eventsByResource = {};
-
-    eventsList.forEach((event) => {
-        const resourceName = event.hasResource() ? event.getResource().getName() : '';
-        if (resourceName) {
-            eventsByResource[resourceName] = eventsByResource[resourceName] || [];
-
-            if (eventsByResource[resourceName].length < MAX_EVENTS) {
-                eventsByResource[resourceName].push(event);
-            }
-        }
-    });
-
-    return Object.values(eventsByResource).reduce((a, b) => a.concat(b), []);
-}
-
 
 /**
  * Builds and sends current collected trace
@@ -350,15 +347,18 @@ function reduceTraceEvents(eventsList) {
 function sendCurrentTrace(traceSender, tracerObject) {
     const tracerObj = tracerObject || module.exports.getTrace();
 
-    const { sendOnlyErrors, ignoredKeys, removeIgnoredKeys } = config.getConfig();
+    const { sendOnlyErrors, ignoredKeys, removeIgnoredKeys } =
+        config.getConfig();
     if (!tracerObj) {
-        utils.debugLog('Trace object not found for sending');
+        utils.debugLog("Trace object not found for sending");
         return Promise.resolve();
     }
     addLabelsToTrace();
 
     if (!tracerObj.currRunner) {
-        utils.debugLog('Epsagon - no trace was sent since runner was not found.');
+        utils.debugLog(
+            "Epsagon - no trace was sent since runner was not found."
+        );
         return Promise.resolve();
     }
 
@@ -374,9 +374,13 @@ function sendCurrentTrace(traceSender, tracerObject) {
 
     // Check if got error events
     if (sendOnlyErrors) {
-        const errorEvents = tracerObj.trace.getEventList().filter(event => event.getErrorCode());
+        const errorEvents = tracerObj.trace
+            .getEventList()
+            .filter((event) => event.getErrorCode());
         if (errorEvents.length === 0) {
-            utils.debugLog('Epsagon - no trace was sent since no error events found.');
+            utils.debugLog(
+                "Epsagon - no trace was sent since no error events found."
+            );
             tracerObj.pendingEvents.clear();
             return Promise.resolve();
         }
@@ -384,57 +388,78 @@ function sendCurrentTrace(traceSender, tracerObject) {
     let traceJson = {
         app_name: tracerObj.trace.getAppName(),
         token: tracerObj.trace.getToken(),
-        events: reduceTraceEvents(tracerObj.trace.getEventList()).map(entry => ({
+        events: tracerObj.trace.getEventList().map((entry) => ({
             id: entry.getId(),
             start_time: entry.getStartTime(),
-            resource: entry.hasResource() ? {
-                name: entry.getResource().getName(),
-                type: entry.getResource().getType(),
-                operation: entry.getResource().getOperation(),
-                metadata: entry.getResource().getMetadataMap().toArray().reduce((map, obj) => {
-                    // not linting this line because this is a hack until protobuf
-                    map[obj[0]] = obj[1]; // eslint-disable-line
-                    return map;
-                }, {}),
-            } : {},
+            resource: entry.hasResource()
+                ? {
+                      name: entry.getResource().getName(),
+                      type: entry.getResource().getType(),
+                      operation: entry.getResource().getOperation(),
+                      metadata: entry
+                          .getResource()
+                          .getMetadataMap()
+                          .toArray()
+                          .reduce((map, obj) => {
+                              // not linting this line because this is a hack until protobuf
+                              map[obj[0]] = obj[1]; // eslint-disable-line
+                              return map;
+                          }, {}),
+                  }
+                : {},
             origin: entry.getOrigin(),
             duration: entry.getDuration(),
             error_code: entry.getErrorCode(),
-            exception: entry.hasException() ? {
-                type: entry.getException().getType(),
-                message: entry.getException().getMessage(),
-                traceback: entry.getException().getTraceback(),
-                time: entry.getException().getTime(),
-                additional_data: entry.getException().getAdditionalDataMap()
-                    .toArray().reduce((map, obj) => {
-                        // not linting this line because this is a hack until protobuf
-                        map[obj[0]] = obj[1]; // eslint-disable-line
-                        return map;
-                    }, {}),
-            } : {},
+            exception: entry.hasException()
+                ? {
+                      type: entry.getException().getType(),
+                      message: entry.getException().getMessage(),
+                      traceback: entry.getException().getTraceback(),
+                      time: entry.getException().getTime(),
+                      additional_data: entry
+                          .getException()
+                          .getAdditionalDataMap()
+                          .toArray()
+                          .reduce((map, obj) => {
+                              // not linting this line because this is a hack until protobuf
+                              map[obj[0]] = obj[1]; // eslint-disable-line
+                              return map;
+                          }, {}),
+                  }
+                : {},
         })),
-        exceptions: tracerObj.trace.getExceptionList().map(entry => ({
+        exceptions: tracerObj.trace.getExceptionList().map((entry) => ({
             type: entry.getType(),
             message: entry.getMessage(),
             traceback: entry.getTraceback(),
             time: entry.getTime(),
-            additional_data: entry.getAdditionalDataMap().toArray().reduce((map, obj) => {
-                // not linting this line because this is a hack until protobuf
-                map[obj[0]] = obj[1]; // eslint-disable-line
-                return map;
-            }, {}),
+            additional_data: entry
+                .getAdditionalDataMap()
+                .toArray()
+                .reduce((map, obj) => {
+                    // not linting this line because this is a hack until protobuf
+                    map[obj[0]] = obj[1]; // eslint-disable-line
+                    return map;
+                }, {}),
         })),
         version: tracerObj.trace.getVersion(),
         platform: tracerObj.trace.getPlatform(),
     };
 
     try {
-        traceJson = ignoredKeys &&
-            Array.isArray(ignoredKeys) &&
-            ignoredKeys.length > 0 ?
-            module.exports.filterTrace(traceJson, ignoredKeys, removeIgnoredKeys) : traceJson;
+        traceJson =
+            ignoredKeys && Array.isArray(ignoredKeys) && ignoredKeys.length > 0
+                ? module.exports.filterTrace(
+                      traceJson,
+                      ignoredKeys,
+                      removeIgnoredKeys
+                  )
+                : traceJson;
     } catch (err) {
-        utils.printWarning('Epsagon - failed to filter trace, cancelling send', err);
+        utils.printWarning(
+            "Epsagon - failed to filter trace, cancelling send",
+            err
+        );
         return Promise.resolve({});
     }
 
@@ -442,7 +467,10 @@ function sendCurrentTrace(traceSender, tracerObject) {
     try {
         stringifyTraceJson = JSON.stringify(traceJson);
     } catch (err) {
-        utils.printWarning('Epsagon - no trace was sent since there was an error serializing the trace. Please contact support.', err);
+        utils.printWarning(
+            "Epsagon - no trace was sent since there was an error serializing the trace. Please contact support.",
+            err
+        );
         return Promise.resolve();
     }
     const originalTraceLength = stringifyTraceJson.length;
@@ -466,17 +494,22 @@ function sendCurrentTrace(traceSender, tracerObject) {
  * @param {string} value a value to search ignored keys in
  * @returns {boolean} true for non-ignored keys
  */
-module.exports.doesContainIgnoredKey = function doesContainIgnoredKey(keysToIgnore, value) {
-    return keysToIgnore
-        .some((predicate) => {
-            if (typeof predicate === 'string' && config.processIgnoredKey(value).includes(predicate)) {
-                return true;
-            }
-            if (predicate instanceof RegExp && predicate.test(value)) {
-                return true;
-            }
-            return false;
-        });
+module.exports.doesContainIgnoredKey = function doesContainIgnoredKey(
+    keysToIgnore,
+    value
+) {
+    return keysToIgnore.some((predicate) => {
+        if (
+            typeof predicate === "string" &&
+            config.processIgnoredKey(value).includes(predicate)
+        ) {
+            return true;
+        }
+        if (predicate instanceof RegExp && predicate.test(value)) {
+            return true;
+        }
+        return false;
+    });
 };
 
 /**
@@ -486,10 +519,15 @@ module.exports.doesContainIgnoredKey = function doesContainIgnoredKey(keysToIgno
  * @param {Boolean} removeIgnoredKeys Whether to remove keys instead of masking
  * @returns {Object}  filtered trace
  */
-module.exports.filterTrace = function filterTrace(traceObject, ignoredKeys, removeIgnoredKeys) {
-    const isString = x => typeof x === 'string';
+module.exports.filterTrace = function filterTrace(
+    traceObject,
+    ignoredKeys,
+    removeIgnoredKeys
+) {
+    const isString = (x) => typeof x === "string";
 
-    const isPossibleStringJSON = v => isString(v) && v.length > 1 && ['[', '{'].includes(v[0]);
+    const isPossibleStringJSON = (v) =>
+        isString(v) && v.length > 1 && ["[", "{"].includes(v[0]);
 
     /**
      * Tests if a key is to be ignored or not.
@@ -499,8 +537,10 @@ module.exports.filterTrace = function filterTrace(traceObject, ignoredKeys, remo
     function isNotIgnored(key) {
         for (let i = 0; i < ignoredKeys.length; i += 1) {
             const predicate = ignoredKeys[i];
-            if (typeof predicate === 'string' &&
-            predicate === config.processIgnoredKey(key)) {
+            if (
+                typeof predicate === "string" &&
+                predicate === config.processIgnoredKey(key)
+            ) {
                 return false;
             }
             if (predicate instanceof RegExp && predicate.test(key)) {
@@ -531,10 +571,10 @@ module.exports.filterTrace = function filterTrace(traceObject, ignoredKeys, remo
             return value;
         }
 
-        return removeIgnoredKeys ? undefined : '****';
+        return removeIgnoredKeys ? undefined : "****";
     }
 
-    utils.debugLog('Trace was filtered with ignored keys');
+    utils.debugLog("Trace was filtered with ignored keys");
     const events = traceObject.events.map((event) => {
         if (!(event && event.resource && event.resource.metadata)) {
             return event;
@@ -544,7 +584,9 @@ module.exports.filterTrace = function filterTrace(traceObject, ignoredKeys, remo
 
         // remove all circular references from the metadata object
         // before recursively ignoring keys to avoid an endless recursion
-        const metadata = JSON.parse(stringify(event.resource.metadata, replacer, 0, () => {}));
+        const metadata = JSON.parse(
+            stringify(event.resource.metadata, replacer, 0, () => {})
+        );
         filteredEvent.resource.metadata = metadata;
 
         return filteredEvent;
@@ -575,7 +617,7 @@ module.exports.postTrace = function postTrace(traceObject) {
 module.exports.sendTrace = function sendTrace(runnerUpdateFunc, tracerObject) {
     const tracerObj = tracerObject || module.exports.getTrace();
     if (!tracerObj || (tracerObj && tracerObj.disabled)) {
-        utils.debugLog('Trace object not found or disabled');
+        utils.debugLog("Trace object not found or disabled");
         return Promise.resolve();
     }
 
@@ -585,14 +627,20 @@ module.exports.sendTrace = function sendTrace(runnerUpdateFunc, tracerObject) {
     }
 
     addLabelsToTrace();
-    utils.debugLog('Sending trace async...');
+    utils.debugLog("Sending trace async...");
     return Promise.all(tracerObj.pendingEvents.values()).then(() => {
         // Setting runner's duration.
         runnerUpdateFunc();
         if (config.getConfig().sendBatch) {
-            return sendCurrentTrace(traceObject => traceQueue.push(traceObject), tracerObj);
+            return sendCurrentTrace(
+                (traceObject) => traceQueue.push(traceObject),
+                tracerObj
+            );
         }
-        return sendCurrentTrace(traceObject => module.exports.postTrace(traceObject), tracerObj);
+        return sendCurrentTrace(
+            (traceObject) => module.exports.postTrace(traceObject),
+            tracerObj
+        );
     });
 };
 
@@ -613,7 +661,7 @@ module.exports.sendTraceSync = function sendTraceSync() {
         return Promise.resolve();
     }
 
-    utils.debugLog('Sending trace sync');
+    utils.debugLog("Sending trace sync");
     tracerObj.pendingEvents.forEach((promise, event) => {
         if (promise.isPending()) {
             // Consider changing to report a different type of error. Maybe a new error code
@@ -627,12 +675,16 @@ module.exports.sendTraceSync = function sendTraceSync() {
                 });
             }
             if (event.getDuration() === 0) {
-                event.setDuration(utils.createDurationTimestamp(event.getStartTime() * 1000));
+                event.setDuration(
+                    utils.createDurationTimestamp(event.getStartTime() * 1000)
+                );
             }
         }
     });
 
-    return sendCurrentTrace(traceObject => module.exports.postTrace(traceObject));
+    return sendCurrentTrace((traceObject) =>
+        module.exports.postTrace(traceObject)
+    );
 };
 
 /**
@@ -643,7 +695,7 @@ module.exports.sendTraceSync = function sendTraceSync() {
 module.exports.label = function addLabel(key, value) {
     const tracerObj = module.exports.getTrace();
     if (!tracerObj || !tracerObj.currRunner) {
-        utils.debugLog('Failed to label without an active tracer');
+        utils.debugLog("Failed to label without an active tracer");
         return;
     }
     const labels = {
@@ -651,7 +703,11 @@ module.exports.label = function addLabel(key, value) {
     };
     const flatLabels = utils.flatten(labels);
     Object.keys(flatLabels).forEach((k) => {
-        eventInterface.addLabelToMetadata(tracerObj.currRunner, k, flatLabels[k]);
+        eventInterface.addLabelToMetadata(
+            tracerObj.currRunner,
+            k,
+            flatLabels[k]
+        );
     });
 };
 
@@ -662,7 +718,7 @@ module.exports.label = function addLabel(key, value) {
 module.exports.setError = function setRunnerError(err) {
     const tracerObj = module.exports.getTrace();
     if (!tracerObj || !tracerObj.currRunner) {
-        utils.debugLog('Failed to setError without an active tracer');
+        utils.debugLog("Failed to setError without an active tracer");
         return;
     }
     eventInterface.setException(tracerObj.currRunner, err);
@@ -675,7 +731,7 @@ module.exports.setError = function setRunnerError(err) {
 module.exports.setWarning = function setRunnerWarning(err) {
     const tracerObj = module.exports.getTrace();
     if (!tracerObj || !tracerObj.currRunner) {
-        utils.debugLog('Failed to setWarning without an active tracer');
+        utils.debugLog("Failed to setWarning without an active tracer");
         return;
     }
     eventInterface.setException(tracerObj.currRunner, err, true, true);
@@ -688,21 +744,22 @@ module.exports.setWarning = function setRunnerWarning(err) {
 module.exports.getTraceUrl = function getTraceUrl() {
     const tracerObj = module.exports.getTrace();
     if (!tracerObj || !tracerObj.currRunner) {
-        utils.debugLog('Failed to get trace URL without an active tracer');
-        return '';
+        utils.debugLog("Failed to get trace URL without an active tracer");
+        return "";
     }
     const activeRunner = tracerObj.currRunner.getResource();
-    return (activeRunner.getType() !== 'lambda') ?
-        consts.traceUrl(
-            module.exports.getTraceId(),
-            parseInt(tracerObj.currRunner.getStartTime(), 10)
-        ) : consts.lambdaTraceUrl(
-            activeRunner.getMetadataMap().get('aws_account'),
-            activeRunner.getMetadataMap().get('region'),
-            activeRunner.getName(),
-            tracerObj.currRunner.getId(),
-            parseInt(tracerObj.currRunner.getStartTime(), 10)
-        );
+    return activeRunner.getType() !== "lambda"
+        ? consts.traceUrl(
+              module.exports.getTraceId(),
+              parseInt(tracerObj.currRunner.getStartTime(), 10)
+          )
+        : consts.lambdaTraceUrl(
+              activeRunner.getMetadataMap().get("aws_account"),
+              activeRunner.getMetadataMap().get("region"),
+              activeRunner.getName(),
+              tracerObj.currRunner.getId(),
+              parseInt(tracerObj.currRunner.getStartTime(), 10)
+          );
 };
 
 /**
@@ -711,12 +768,11 @@ module.exports.getTraceUrl = function getTraceUrl() {
 module.exports.disable = function disable() {
     const tracerObj = module.exports.getTrace();
     if (!tracerObj) {
-        utils.debugLog('Failed to disabled without an active tracer');
+        utils.debugLog("Failed to disabled without an active tracer");
         return;
     }
     tracerObj.disabled = true;
 };
-
 
 /**
  * Enable tracer
@@ -724,7 +780,7 @@ module.exports.disable = function disable() {
 module.exports.enable = function enable() {
     const tracerObj = module.exports.getTrace();
     if (!tracerObj) {
-        utils.debugLog('Failed to enable without an active tracer');
+        utils.debugLog("Failed to enable without an active tracer");
         return;
     }
     tracerObj.disabled = false;
@@ -745,24 +801,24 @@ module.exports.isLoggingTracingEnabled = function isLoggingTracingEnabled() {
 module.exports.getTraceId = function getTraceId() {
     const tracer = module.exports.getTrace();
     if (tracer && tracer.currRunner && tracer.currRunner.hasResource()) {
-        return tracer.currRunner.getResource().getMetadataMap().get('trace_id');
+        return tracer.currRunner.getResource().getMetadataMap().get("trace_id");
     }
     return null;
 };
-
 
 /**
  * Adds `logging_tracing_enabled: true` to the current runner's Metadata iff it is enabled
  * in the config
  */
-module.exports.addLoggingTracingEnabledMetadata = function addLoggingTracingEnabledMetadata() {
-    if (config.getConfig().loggingTracingEnabled) {
-        const tracer = module.exports.getTrace();
-        if (tracer && tracer.currRunner) {
-            utils.debugLog('Setting logging_tracing_enabled');
-            eventInterface.addToMetadata(tracer.currRunner, {
-                logging_tracing_enabled: true,
-            });
+module.exports.addLoggingTracingEnabledMetadata =
+    function addLoggingTracingEnabledMetadata() {
+        if (config.getConfig().loggingTracingEnabled) {
+            const tracer = module.exports.getTrace();
+            if (tracer && tracer.currRunner) {
+                utils.debugLog("Setting logging_tracing_enabled");
+                eventInterface.addToMetadata(tracer.currRunner, {
+                    logging_tracing_enabled: true,
+                });
+            }
         }
-    }
-};
+    };
