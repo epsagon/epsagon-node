@@ -77,6 +77,34 @@ const s3EventCreator = {
             break;
         }
     },
+
+    /**
+     * Handles local S3 events. All offline functions which do not require an HTTP call
+     * @param {proto.event_pb.Event} event The event to update the data on
+     * @param {string} operation The name of the local operation
+     * @param {Object} args any additional info pertaining to the call
+     */
+    localHandler(event, operation, args) {
+        const resource = event.getResource();
+        switch (operation) {
+        case 'getSignedUrl': {
+            const {
+                callback, Bucket, Key, Body, Expires,
+            } = args;
+            resource.setName(Bucket);
+            eventInterface.addToMetadata(event, {
+                method: callback,
+                bucket: Bucket,
+                key: Key,
+                body: Body,
+                expires: Expires || 15 * 60,
+            });
+            break;
+        }
+        default:
+            break;
+        }
+    },
 };
 
 const kinesisEventCreator = {
@@ -961,6 +989,51 @@ const specificEventCreators = {
 };
 
 /**
+ * Creator of all AWS Events. Used for both Network and Local calls.
+ * @param {Request} request AWS Request Object, either of a Network Request or Local Service
+ * @returns {Object} {awsEvent: serverlessEvent.Event (the aws Event that occured)
+ * serviceIdentifier: string (to which service does this event pertain to),
+ * earlyReturn: boolean (whether the call was not supported
+ * and failed [true] or succeeded [false]), }
+ */
+function createAWSEvent(request) {
+    const {
+        serviceIdentifier,
+    } = (request.service ? request.service : request).constructor.prototype;
+
+    if (!(serviceIdentifier in specificEventCreators)) {
+        return { earlyReturn: true };
+    }
+
+    const resource = new serverlessEvent.Resource([
+        '',
+        serviceIdentifier,
+        `${request.operation}`,
+    ]);
+
+    const awsEvent = new serverlessEvent.Event([
+        '',
+        utils.createTimestamp(),
+        null,
+        'aws-sdk',
+        0,
+        errorCode.ErrorCode.OK,
+    ]);
+
+    awsEvent.setResource(resource);
+
+    if ('patchInput' in specificEventCreators[serviceIdentifier]) {
+        specificEventCreators[serviceIdentifier].patchInput(this, awsEvent);
+    }
+
+    return {
+        awsEvent,
+        serviceIdentifier,
+        earlyReturn: false,
+    };
+}
+
+/**
  * Wraps the aws-sdk Request object send/promise function with tracing
  * @param {Function} wrappedFunction The function to wrap
  * @returns {Function} The wrapped function
@@ -969,35 +1042,12 @@ function AWSSDKWrapper(wrappedFunction) {
     return function internalAWSSDKWrapper(callback) {
         try {
             const request = this;
-            const { serviceIdentifier } = (
-                request.service.constructor.prototype
-            );
+            const {
+                awsEvent, serviceIdentifier, earlyReturn,
+            } = createAWSEvent(request);
 
-            if (!(serviceIdentifier in specificEventCreators)) {
-                // resource is not supported yet
+            if (earlyReturn) {
                 return wrappedFunction.apply(this, [callback]);
-            }
-
-            const resource = new serverlessEvent.Resource([
-                '',
-                serviceIdentifier,
-                `${request.operation}`,
-            ]);
-
-            const startTime = Date.now();
-            const awsEvent = new serverlessEvent.Event([
-                '',
-                utils.createTimestampFromTime(startTime),
-                null,
-                'aws-sdk',
-                0,
-                errorCode.ErrorCode.OK,
-            ]);
-
-            awsEvent.setResource(resource);
-
-            if ('patchInput' in specificEventCreators[serviceIdentifier]) {
-                specificEventCreators[serviceIdentifier].patchInput(this, awsEvent);
             }
 
             const responsePromise = new Promise((resolve) => {
@@ -1019,7 +1069,9 @@ function AWSSDKWrapper(wrappedFunction) {
                 }).on('complete', (response) => {
                     try {
                         awsEvent.setId(`${response.requestId}`);
-                        awsEvent.setDuration(utils.createDurationTimestamp(startTime));
+                        awsEvent.setDuration(utils.createDurationTimestamp(
+                            utils.createTimeFromTimestamp(awsEvent.getStartTime())
+                        ));
 
                         if (response.data !== null) {
                             awsEvent.setErrorCode(errorCode.ErrorCode.OK);
@@ -1062,13 +1114,49 @@ function AWSSDKWrapper(wrappedFunction) {
     };
 }
 
+
+/**
+ * Wraps any aws-sdk local (offline) function with tracing
+ * @param {Function} wrappedFunction The function to wrap
+ * @returns {Function} The wrapped function
+ */
+function AWSSDKLocalWrapper(wrappedFunction) {
+    return function internalAWSSDKLocalWrapper(callback, args) {
+        try {
+            const request = this;
+            request.operation = wrappedFunction.name;
+            const {
+                awsEvent, serviceIdentifier, earlyReturn,
+            } = createAWSEvent(request);
+
+            if (earlyReturn) {
+                return wrappedFunction.apply(this, [callback, args]);
+            }
+
+            awsEvent.setId(uuid4());
+            awsEvent.setDuration(utils.createDurationTimestamp(Date.now()));
+
+            const { localHandler } = specificEventCreators[serviceIdentifier];
+            if (localHandler) {
+                localHandler(awsEvent, request.operation, { callback, ...args });
+            }
+            tracer.addEvent(awsEvent);
+        } catch (e) {
+            tracer.addException(e);
+        }
+
+        return wrappedFunction.apply(this, [callback, args]);
+    };
+}
+
+
 /**
  * aws-sdk dynamically creates the `promise` function, so we have to re-wrap it
- * every time `addPromisesToClass` is called
+ * every time `Request.addPromisesToClass` is called
  * @param {Function} wrappedFunction the `addPromisesToClass` function
  * @return {Function} The wrapped function
  */
-function wrapPromiseOnAdd(wrappedFunction) {
+function wrapRequestPromiseOnAdd(wrappedFunction) {
     return function internalWrapPromiseOnAdd(promiseDependency) {
         const result = wrappedFunction.apply(this, [promiseDependency]);
         try {
@@ -1087,6 +1175,37 @@ function wrapPromiseOnAdd(wrappedFunction) {
     };
 }
 
+
+/**
+ * aws-sdk dynamically creates the `getSignedUrlPromise` function, so we have to wrap it
+ * every time `S3.addPromisesToClass` is called
+ * Users of `S3.getSignedUrlPromise` should not use with `S3.getSignedUrl`
+ * @param {Function} wrappedFunction the `addPromisesToClass` function
+ * @return {Function} The wrapped function
+ */
+function wrapS3PromiseOnAdd(wrappedFunction) {
+    const getSignedUrlPromiseWrapper = (func) => {
+        moduleUtils.unpatchModule('aws-sdk', 'getSignedUrl', AWSmod => AWSmod.S3.prototype);
+        utils.rewriteFuncName(func, 'getSignedUrl');
+        return AWSSDKLocalWrapper(func);
+    };
+
+    try {
+        moduleUtils.patchModule(
+            'aws-sdk',
+            'getSignedUrlPromise',
+            getSignedUrlPromiseWrapper,
+            AWSmod => AWSmod.S3.prototype
+        );
+    } catch (e) {
+        utils.debugLog('Failed to re-instrument aws-sdk\'s promise method', e);
+    }
+    return function internalWrapS3PromiseOnAdd(promiseDependency) {
+        return wrappedFunction.apply(this, [promiseDependency]);
+    };
+}
+
+
 module.exports = {
     /**
      * Initializes the aws-sdk tracer
@@ -1104,13 +1223,25 @@ module.exports = {
             AWSSDKWrapper,
             AWSmod => AWSmod.Request.prototype
         );
+        moduleUtils.patchModule(
+            'aws-sdk',
+            'getSignedUrl',
+            AWSSDKLocalWrapper,
+            AWSmod => AWSmod.S3.prototype
+        );
 
-        // This method is static - not in prototype
+        /* These methods are static - not in prototype */
         moduleUtils.patchModule(
             'aws-sdk/global',
             'addPromisesToClass',
-            wrapPromiseOnAdd,
+            wrapRequestPromiseOnAdd,
             AWSmod => AWSmod.Request
+        );
+        moduleUtils.patchModule(
+            'aws-sdk',
+            'addPromisesToClass',
+            wrapS3PromiseOnAdd,
+            AWSmod => AWSmod.S3
         );
     },
 
