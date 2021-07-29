@@ -95,7 +95,7 @@
   },
   "dependencies": {
     "axios": "^0.21.1",
-    "google-protobuf-minified": "^1.0.4",
+    "google-protobuf-minified": "^1.0.5",
     "json-stringify-safe": "^5.0.1",
     "json.sortify": "^2.2.2",
     "md5": "^2.2.1",
