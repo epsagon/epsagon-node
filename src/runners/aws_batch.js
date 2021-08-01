@@ -1,7 +1,7 @@
 /**
  * @fileoverview Runner for AWS Batch environment
  */
-const axios = require('axios');
+const axios = require('axios-minified');
 const serverlessEvent = require('../proto/event_pb.js');
 const eventInterface = require('../event.js');
 const errorCode = require('../proto/error_code_pb.js');

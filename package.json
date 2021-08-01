@@ -94,7 +94,7 @@
     "underscore": "^1.12.0"
   },
   "dependencies": {
-    "axios": "^0.21.1",
+    "axios-minified": "^1.0.2",
     "google-protobuf-minified": "^1.0.5",
     "json-stringify-safe": "^5.0.1",
     "json.sortify": "^2.2.2",

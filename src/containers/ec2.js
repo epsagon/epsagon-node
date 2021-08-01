@@ -1,4 +1,4 @@
-const axios = require('axios');
+const axios = require('axios-minified');
 const utils = require('../utils');
 const eventIterface = require('../event');
 
