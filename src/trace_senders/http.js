@@ -2,7 +2,7 @@
  * @fileoverview Send traces to the epsagon backend using http
  */
 
-const axios = require('axios');
+const axios = require('axios-minified');
 const http = require('http');
 const https = require('https');
 const utils = require('../utils.js');
