@@ -91,9 +91,25 @@ function baseLambdaWrapper(
     shouldPassRunner = false,
     originalFunctionToWrap = null
 ) {
-    tracer.getTrace = traceObject.get;
     // eslint-disable-next-line consistent-return
     return (originalEvent, originalContext, originalCallback) => {
+        if (getConfig().ignoredPayloads || process.env.EPSAGON_PAYLOADS_TO_IGNORE) {
+            const ignoredPayloads = (getConfig().ignoredPayloads) ?
+                getConfig().ignoredPayloads :
+                JSON.parse(process.env.EPSAGON_PAYLOADS_TO_IGNORE);
+
+            const matches = ignoredPayloads.filter(
+                payload => JSON.stringify(payload) ===
+                    JSON.stringify(originalEvent)
+            );
+            if (matches.length > 0) {
+                return functionToWrap(originalEvent, originalContext,
+                    originalCallback);
+            }
+        }
+
+        tracer.getTrace = traceObject.get;
+
         tracer.restart();
         let runner;
         let timeoutHandler;
