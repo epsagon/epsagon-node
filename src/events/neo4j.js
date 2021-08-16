@@ -389,7 +389,7 @@ module.exports = {
             'neo4j-driver/lib/transaction-rx.js',
             'run',
             neo4jTransactionRunWrapper,
-            Transaction => Transaction.default.prototype
+            RxTransaction => RxTransaction.default.prototype
         );
     },
 };
