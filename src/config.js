@@ -123,13 +123,17 @@ if (process.env.EPSAGON_IGNORED_KEYS) {
 if ((process.env.EPSAGON_SSL || 'TRUE').toUpperCase() === 'FALSE') {
     config.traceCollectorURL = config.traceCollectorURL.replace('https:', 'http:');
 }
+
 if ((process.env.EPSAGON_SSL || 'TRUE').toUpperCase() === 'TRUE') {
     config.traceCollectorURL = config.traceCollectorURL.replace('http:', 'https:');
 }
 
-
 if (process.env.EPSAGON_PATCH_WHITELIST) {
     config.patchWhitelist = process.env.EPSAGON_PATCH_WHITELIST.split(',');
+}
+
+if (process.env.EPSAGON_PAYLOADS_TO_IGNORE) {
+    config.ignoredPayloads = JSON.parse(process.env.EPSAGON_PAYLOADS_TO_IGNORE);
 }
 
 /**

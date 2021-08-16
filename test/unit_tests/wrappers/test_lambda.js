@@ -494,6 +494,40 @@ describe('lambdaWrapper tests', () => {
         expect(this.wrappedStub).to.equal(newWrapped);
         done();
     });
+
+    it('lambdaWrapper: dont trace ignored payload (one)', (done) => {
+        process.env.EPSAGON_PAYLOADS_TO_IGNORE = '[{"source": "serverless-plugin-warmup"}]';
+
+        this.wrappedStub({ source: 'serverless-plugin-warmup' }, this.context, this.callbackStub);
+        setTimeout(() => {
+            expect(this.createFromEventStub.callCount).to.equal(0);
+            expect(this.restartStub.callCount).to.equal(0);
+            expect(this.createFromEventStub.calledWith({}));
+            expect(this.addEventStub.callCount).to.equal(0);
+            expect(this.addExceptionStub.called).to.be.false;
+            expect(this.sendTraceStub.callCount).to.equal(0);
+            expect(this.callbackStub.callCount).to.equal(1);
+            expect(this.setExceptionStub.called).to.be.false;
+            done();
+        }, 1);
+    });
+
+    it('lambdaWrapper: dont trace ignored payloads (multiple)', (done) => {
+        process.env.EPSAGON_PAYLOADS_TO_IGNORE = '[{"source": "serverless-plugin-warmup"}, {"foo": "bar"}]';
+
+        this.wrappedStub({ foo: 'bar' }, this.context, this.callbackStub);
+        setTimeout(() => {
+            expect(this.createFromEventStub.callCount).to.equal(0);
+            expect(this.restartStub.callCount).to.equal(0);
+            expect(this.createFromEventStub.calledWith({}));
+            expect(this.addEventStub.callCount).to.equal(0);
+            expect(this.addExceptionStub.called).to.be.false;
+            expect(this.sendTraceStub.callCount).to.equal(0);
+            expect(this.callbackStub.callCount).to.equal(1);
+            expect(this.setExceptionStub.called).to.be.false;
+            done();
+        }, 1);
+    });
 });
 
 describe('stepLambdaWrapper tests', () => {
