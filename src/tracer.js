@@ -2,9 +2,6 @@
  * @fileoverview The tracer, managing all the trace collecting and sending
  */
 const uuid4 = require('uuid4');
-const axios = require('axios');
-const http = require('http');
-const https = require('https');
 const stringify = require('json-stringify-safe');
 const trace = require('./proto/trace_pb.js');
 const exception = require('./proto/exception_pb.js');
@@ -20,8 +17,8 @@ const ec2 = require('./containers/ec2.js');
 const winstonCloudwatch = require('./events/winston_cloudwatch');
 const TraceQueue = require('./trace_queue.js');
 const { isStrongId } = require('./helpers/events');
-
-const FILTER_TRACE_MAX_DEPTH = 50;
+const logSender = require('./trace_senders/logs.js');
+const httpSender = require('./trace_senders/http.js');
 
 
 /**
@@ -64,14 +61,6 @@ module.exports.createTracer = function createTracer() {
     };
 };
 
-/**
- * Session for the post requests to the collector
- */
-const session = axios.create({
-    timeout: config.getConfig().sendTimeout,
-    httpAgent: new http.Agent({ keepAlive: true }),
-    httpsAgent: new https.Agent({ keepAlive: true }),
-});
 
 /**
  * Adds an event to the tracer
@@ -324,6 +313,7 @@ function addLabelsToTrace() {
     });
 }
 
+
 /**
  * Builds and sends current collected trace
  * Sends the trace to the epsagon infrastructure now, assuming all required event's promises was
@@ -446,6 +436,26 @@ function sendCurrentTrace(traceSender, tracerObject) {
 }
 
 /**
+ * Tests if a string value (which is suspected to be a stringyfied JSON)
+ * contains an ignored key
+ * @param {Array<String | RegExp>} keysToIgnore a list of keys to ignore
+ * @param {string} value a value to search ignored keys in
+ * @returns {boolean} true for non-ignored keys
+ */
+module.exports.doesContainIgnoredKey = function doesContainIgnoredKey(keysToIgnore, value) {
+    return keysToIgnore
+        .some((predicate) => {
+            if (typeof predicate === 'string' && config.processIgnoredKey(value).includes(predicate)) {
+                return true;
+            }
+            if (predicate instanceof RegExp && predicate.test(value)) {
+                return true;
+            }
+            return false;
+        });
+};
+
+/**
  * Filter a trace to exclude all unwanted keys
  * @param {Object} traceObject  the trace to filter
  * @param {Array<String>} ignoredKeys   keys to ignore
@@ -453,15 +463,6 @@ function sendCurrentTrace(traceSender, tracerObject) {
  * @returns {Object}  filtered trace
  */
 module.exports.filterTrace = function filterTrace(traceObject, ignoredKeys, removeIgnoredKeys) {
-    /**
-     * Check if a given param is an object
-     * @param {*} x   param to check
-     * @returns {boolean}   if `x` is an object
-     */
-    function isObject(x) {
-        return (typeof x === 'object') && x !== null;
-    }
-
     const isString = x => typeof x === 'string';
 
     const isPossibleStringJSON = v => isString(v) && v.length > 1 && ['[', '{'].includes(v[0]);
@@ -486,70 +487,27 @@ module.exports.filterTrace = function filterTrace(traceObject, ignoredKeys, remo
     }
 
     /**
-     * Tests if a string value (which is suspected to be a stringyfied JSON)
-     * contains an ignored key
-     * @param {string} value a value to search ignored keys in
-     * @returns {boolean} true for non-ignored keys
+     * stringify replacer function, used to ignore the relevant keys
+     * @param {string} key  the key of the value
+     * @param {any} value   the json value
+     * @returns {any} the value to serialize
      */
-    const doesContainIgnoredKey = value => ignoredKeys
-        .some((predicate) => {
-            if (typeof predicate === 'string' &&
-                config.processIgnoredKey(value).includes(predicate)) {
-                return true;
+    function replacer(key, value) {
+        if (isNotIgnored(key)) {
+            if (isPossibleStringJSON(value)) {
+                try {
+                    const objValue = JSON.parse(value);
+                    const filtered = stringify(objValue, replacer, 0, () => {});
+                    return JSON.parse(filtered);
+                } catch (e) {
+                    return value;
+                }
             }
-            if (predicate instanceof RegExp && predicate.test(value)) {
-                return true;
-            }
-            return false;
-        });
 
-
-    /**
-     * Recursivly filter object properties
-     * @param {Object} obj  object to filter
-     * @param {Number} maxDepth  the maximum depth for the recursion
-     * @returns {Object} filtered object
-     */
-    function filterObject(obj, maxDepth) {
-        if (!isObject(obj)) {
-            return obj;
+            return value;
         }
 
-        const unFilteredKeys = Object
-            .keys(obj)
-            .filter(isNotIgnored);
-        const maskedKeys = Object.keys(obj).filter(k => !isNotIgnored(k));
-
-        const primitive = unFilteredKeys.filter(k => !isObject(obj[k]) && !isString(obj[k]));
-        const objects = unFilteredKeys
-            .filter(k => isObject(obj[k]))
-            .map(k => ({ [k]: maxDepth > 0 ? filterObject(obj[k], maxDepth - 1) : null }));
-
-        // trying to JSON load strings to filter sensitive data
-        unFilteredKeys
-            .forEach((k) => {
-                if (!isPossibleStringJSON(obj[k]) || !doesContainIgnoredKey(obj[k])) {
-                    primitive.push(k);
-                    return;
-                }
-                try {
-                    const subObj = JSON.parse(obj[k]);
-                    if (subObj && isObject(subObj)) {
-                        objects.push({
-                            [k]: maxDepth > 0 ? filterObject(subObj, maxDepth - 1) : null,
-                        });
-                    } else {
-                        primitive.push(k);
-                    }
-                } catch (e) {
-                    primitive.push(k);
-                }
-            });
-
-        return Object.assign({},
-            !removeIgnoredKeys && maskedKeys.reduce((sum, key) => Object.assign({}, sum, { [key]: '****' }), {}),
-            primitive.reduce((sum, key) => Object.assign({}, sum, { [key]: obj[key] }), {}),
-            objects.reduce((sum, value) => Object.assign({}, sum, value), {}));
+        return removeIgnoredKeys ? undefined : '****';
     }
 
     utils.debugLog('Trace was filtered with ignored keys');
@@ -562,8 +520,9 @@ module.exports.filterTrace = function filterTrace(traceObject, ignoredKeys, remo
 
         // remove all circular references from the metadata object
         // before recursively ignoring keys to avoid an endless recursion
-        const metadata = JSON.parse(stringify(event.resource.metadata, null, 0, () => {}));
-        filteredEvent.resource.metadata = filterObject(metadata, FILTER_TRACE_MAX_DEPTH);
+        const metadata = JSON.parse(stringify(event.resource.metadata, replacer, 0, () => {}));
+        filteredEvent.resource.metadata = metadata;
+
         return filteredEvent;
     });
 
@@ -576,38 +535,11 @@ module.exports.filterTrace = function filterTrace(traceObject, ignoredKeys, remo
  * @returns {Promise} a promise that is resolved after the trace is posted.
  *  */
 module.exports.postTrace = function postTrace(traceObject) {
-    utils.debugLog(`Posting trace to ${config.getConfig().traceCollectorURL}`);
-    utils.debugLog(`trace: ${JSON.stringify(traceObject, null, 2)}`);
+    if (config.getConfig().logTransportEnabled) {
+        return logSender.sendTrace(traceObject);
+    }
 
-    // based on https://github.com/axios/axios/issues/647#issuecomment-322209906
-    // axios timeout is only after the connection is made, not the address resolution itself
-    const cancelTokenSource = axios.CancelToken.source();
-    const handle = setTimeout(() => {
-        cancelTokenSource.cancel('timeout sending trace');
-    }, config.getConfig().sendTimeout);
-
-    return session.post(
-        config.getConfig().traceCollectorURL,
-        traceObject,
-        {
-            headers: { Authorization: `Bearer ${config.getConfig().token}` },
-            timeout: config.getConfig().sendTimeout,
-            cancelToken: cancelTokenSource.token,
-        }
-    ).then((res) => {
-        clearTimeout(handle);
-        utils.debugLog('Trace posted!');
-        return res;
-    }).catch((err) => {
-        clearTimeout(handle);
-        if (err.config && err.config.data) {
-            utils.debugLog(`Error sending trace. Trace size: ${err.config.data.length}`);
-        } else {
-            utils.debugLog(`Error sending trace. Error: ${err}`);
-        }
-        utils.debugLog(`${err ? err.stack : err}`);
-        return err;
-    }); // Always resolve.
+    return httpSender.sendTrace(traceObject);
 };
 
 /**

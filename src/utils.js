@@ -194,6 +194,15 @@ function truncateMessage(message, maxSize) {
     return message.slice(0, maxSize);
 }
 
+/**
+ * Return unique values from an array
+ * @param {Array} arr  array to distinct
+ * @returns {Array} the unique items
+ */
+function distinct(arr) {
+    return [...new Set(arr)];
+}
+
 
 module.exports.createTimestampFromTime = createTimestampFromTime;
 module.exports.createTimestamp = createTimestamp;
@@ -209,3 +218,4 @@ module.exports.isPromise = isPromise;
 module.exports.isLambdaEnv = isLambdaEnv;
 module.exports.getValueIfExist = getValueIfExist;
 module.exports.truncateMessage = truncateMessage;
+module.exports.distinct = distinct;

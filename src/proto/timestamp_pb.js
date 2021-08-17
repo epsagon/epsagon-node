@@ -7,7 +7,7 @@
  */
 // GENERATED CODE -- DO NOT EDIT!
 
-var jspb = require('google-protobuf');
+var jspb = require('google-protobuf-minified');
 var goog = jspb;
 var global = Function('return this')();
 

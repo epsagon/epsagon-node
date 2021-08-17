@@ -85,6 +85,12 @@ module.exports = {
             redis => redis.prototype
         );
         moduleUtils.patchModule(
+            'ioredis-move',
+            'sendCommand',
+            redisClientWrapper,
+            redis => redis.prototype
+        );
+        moduleUtils.patchModule(
             'dy-ioredis/lib/redis.js',
             'sendCommand',
             redisClientWrapper,

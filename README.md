@@ -164,11 +164,14 @@ epsagon.init({
   appName: 'app-name-stage',
   metadataOnly: false,
   ignoredKeys: ['password', /.*_token$/],
+  ignoredDBTables: ['users', /.*password$/],
   urlPatternsToIgnore: ['example.com', 'auth.com'],
 });
 ```
 
-The `ignoredKeys` property can contain strings (will perform a loose match, so that `First Name` also matches `first_name`), regular expressions, and predicate functions.
+The `ignoredKeys` property can contain strings (will perform a loose match, so that `First Name` also matches `first_name`), regular expressions, and predicate functions. 
+`ignoredDBTables` works similary, except will ignore response rows from DB queries.
+
 Also, you can set `urlPatternsToIgnore` to ignore HTTP calls to specific domains.
 
 
@@ -777,6 +780,7 @@ Advanced options can be configured as a parameter to the init() method or as env
 |traceCollectorURL  |EPSAGON_COLLECTOR_URL      |String |-            |The address of the trace collector to send trace to                                |
 |isEpsagonDisabled  |DISABLE_EPSAGON            |Boolean|`false`      |A flag to completely disable Epsagon (can be used for tests or locally)            |
 |ignoredKeys        |EPSAGON_IGNORED_KEYS       |Array  |-            |Array of keys names (can be string or regex) to be removed from the trace          |
+|ignoredDBTables    |EPSAGON_IGNORED_DB_TABLES  |Array  |-            |Array of DB Table names (can be string or regex) to ignore response from trace.    |
 |removeIgnoredKeys  |EPSAGON_REMOVE_IGNORED_KEYS|Boolean|`false`      |Whether to remove ignored keys instead of masking them                             |
 |urlPatternsToIgnore|EPSAGON_URLS_TO_IGNORE     |Array  |`[]`         |Array of URL patterns to ignore the calls                                          |
 |sendTimeout        |EPSAGON_SEND_TIMEOUT_SEC   |Float  |`1.0`        |The timeout duration in seconds to send the traces to the trace collector          |
@@ -794,9 +798,10 @@ Advanced options can be configured as a parameter to the init() method or as env
 |-                  |EPSAGON_FS_INSTRUMENTATION |Boolean|`false`      |Whether to capture node `file system` calls into the trace                         |
 |-                  |EPSAGON_LOGGING_TRACING_ENABLED|Boolean|`true`      |whether to add an Epsagon ID to the logs in order to correlate traces to logs in the dashboard|
 |-                  |EPSAGON_STEPS_ID           |String|-             |The Epsagon step id from the ECS step functions state input     |
-|-                  |EPSAGON_STEPS_NUM          |String|`0`         |The step number of the ECS step functions state     |
-|-                  |EPSAGON_ALLOW_NO_ROUTE|Boolean|`false`      |Whether to capture non-matched route requests in Express.js                                      |
-|-                       |EPSAGON_LAMBDA_TIMEOUT_THRESHOLD_MS          |Integer|`200`      |The threshold in milliseconds to send the trace before a Lambda timeout occurs                                     |
+|-                  |EPSAGON_STEPS_NUM          |String|`0`           |The step number of the ECS step functions state     |
+|-                  |EPSAGON_ALLOW_NO_ROUTE     |Boolean|`false`      |Whether to capture non-matched route requests in Express.js                                      |
+|-                  |EPSAGON_LAMBDA_TIMEOUT_THRESHOLD_MS |Integer|`200` |The threshold in milliseconds to send the trace before a Lambda timeout occurs                                     |
+|-                  |EPSAGON_PAYLOADS_TO_IGNORE | Array |-            |Array of dictionaries to not instrument. Example: `'[{"source": "serverless-plugin-warmup"}]'` |
 
 
 ## Getting Help

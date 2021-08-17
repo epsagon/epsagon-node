@@ -230,6 +230,11 @@ const SQSEventCreator = {
             });
             break;
         case 'sendMessageBatch':
+            if (response.data.Successful && response.data.Successful.length > 0) {
+                eventInterface.addToMetadata(event, {
+                    record: JSON.stringify(response.data.Successful.map(item => item)),
+                });
+            }
             if (response.data.Failed && response.data.Failed > 0) {
                 errorMessages = JSON.stringify(response.data.Failed
                     .map(item => item));

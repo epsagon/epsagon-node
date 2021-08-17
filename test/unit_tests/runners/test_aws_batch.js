@@ -1,6 +1,6 @@
 const { expect } = require('chai');
 const sinon = require('sinon');
-const axios = require('axios');
+const axios = require('axios-minified');
 const batchRunner = require('../../../src/runners/aws_batch.js');
 const errorCode = require('../../../src/proto/error_code_pb.js');
 const tracer = require('../../../src/tracer.js');

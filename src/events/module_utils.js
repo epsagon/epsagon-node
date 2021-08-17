@@ -67,7 +67,8 @@ module.exports.getModules = function getModules(id) {
     if (utils.isLambdaEnv && !searchPaths.includes(LAMBDA_DEFAULT_NODE_MODULES_PATH)) {
         searchPaths.push(LAMBDA_DEFAULT_NODE_MODULES_PATH);
     }
-    searchPaths.forEach((searchPath) => {
+
+    utils.distinct(searchPaths).forEach((searchPath) => {
         const modulePath = path.resolve(`${searchPath}/${id}`);
         const module = tryRequire(modulePath);
 
