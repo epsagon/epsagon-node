@@ -386,17 +386,17 @@ module.exports = {
         );
 
         moduleUtils.patchModule(
-            'neo4j-driver/lib/transaction-rx.js',
+            'neo4j-driver-core/lib/transaction.js',
             'run',
             neo4jTransactionRunWrapper,
-            RxTransaction => RxTransaction.default.prototype
+            Transaction => Transaction.default.prototype
         );
 
         moduleUtils.patchModule(
-            'neo4j-driver/lib/session-rx.js',
+            'neo4j-driver-core/lib/session.js',
             'run',
             neo4jSessionRunWrapper,
-            RxSession => RxSession.default.prototype
+            Session => Session.default.prototype
         );
     },
 };
