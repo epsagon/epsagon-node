@@ -14,6 +14,7 @@ const moduleUtils = require('./module_utils.js');
 function memcachedClientWrapper(wrappedFunction) {
     return function internalMemcachedClientWrapper(commandObj) {
         try {
+            const startTime = Date.now();
             const { callback } = commandObj;
             const cmdArgs = commandObj(() => ({
                 // eslint-disable-next-line no-undef
@@ -31,8 +32,6 @@ function memcachedClientWrapper(wrappedFunction) {
                 'memcached',
                 commandObj.name,
             ]);
-
-            const startTime = Date.now();
 
             const dbapiEvent = new serverlessEvent.Event([
                 `memcached-${uuid4()}`,
