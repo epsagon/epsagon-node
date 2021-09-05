@@ -276,9 +276,7 @@ function httpWrapper(wrappedFunction) {
                 });
             if (body) {
                 utils.debugLog(`Set request body=${body}`);
-                eventInterface.addToMetadata(httpEvent, {}, {
-                    request_body: body,
-                });
+                setJsonPayload(httpEvent, 'request_body', body);
             }
 
             const patchedCallback = (res) => {
