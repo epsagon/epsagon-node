@@ -12,9 +12,10 @@ const moduleUtils = require('./module_utils.js');
  * @returns {Function} The wrapped function
  */
 function memcachedClientWrapper(wrappedFunction) {
-    return function internalMemcachedClientWrapper(commandObj) {
+    return function internalMemcachedClientWrapper(...args) {
         try {
             const startTime = Date.now();
+            const commandObj = args[0];
             const { callback } = commandObj;
             const cmdArgs = commandObj(() => ({
                 // eslint-disable-next-line no-undef
@@ -75,7 +76,7 @@ function memcachedClientWrapper(wrappedFunction) {
             tracer.addException(error);
         }
 
-        return wrappedFunction.apply(this, [commandObj]);
+        return wrappedFunction.apply(this, [...args]);
     };
 }
 
