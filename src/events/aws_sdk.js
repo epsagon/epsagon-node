@@ -983,13 +983,16 @@ function AWSSDKWrapper(wrappedFunction) {
                 request.service.constructor.prototype
             );
 
+            const resourceName = request.params ? request.params.FunctionName : 'lambda';
+            const requestPayload = request.params ? request.params.Payload : '';
+
             if (!(serviceIdentifier in specificEventCreators)) {
                 // resource is not supported yet
                 return wrappedFunction.apply(this, [callback]);
             }
 
             const resource = new serverlessEvent.Resource([
-                '',
+                resourceName,
                 serviceIdentifier,
                 `${request.operation}`,
             ]);
@@ -1005,6 +1008,7 @@ function AWSSDKWrapper(wrappedFunction) {
             ]);
 
             awsEvent.setResource(resource);
+            eventInterface.addToMetadata(awsEvent, { payload: requestPayload });
 
             if ('patchInput' in specificEventCreators[serviceIdentifier]) {
                 specificEventCreators[serviceIdentifier].patchInput(this, awsEvent);
