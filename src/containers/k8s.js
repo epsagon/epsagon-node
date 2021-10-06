@@ -22,6 +22,7 @@ function logInvocation(fn) {
  * a K8S container, false otherwise
  */
 module.exports.hasK8sMetadata = logInvocation(function hasK8sMetadata() {
+    utils.debugLog(`process.env.KUBERNETES_SERVICE_HOST: ${process.env.KUBERNETES_SERVICE_HOST}`)
     return !!(process.env.KUBERNETES_SERVICE_HOST);
 });
 
