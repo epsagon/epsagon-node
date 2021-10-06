@@ -8,10 +8,10 @@ let k8sContainerId = null;
 
 function logInvocation(fn) {
     return function (...args) {
-        utils.debugLog(`invoking function: ${fn && fn.name}, time: ${new Date().toUTCString()}`);
+        utils.debugLog(`[K8S-LOGS] invoking function: ${fn && fn.name}, time: ${new Date().toUTCString()}`);
         const returnValue = fn.apply(this, args);
 
-        utils.debugLog(`function: ${fn && fn.name} finished execution, result: ${returnValue}, time: ${new Date().toUTCString()}`);
+        utils.debugLog(`[K8S-LOGS] function: ${fn && fn.name} finished execution, result: ${returnValue}, time: ${new Date().toUTCString()}`);
         return returnValue;
     }
 }
@@ -22,7 +22,7 @@ function logInvocation(fn) {
  * a K8S container, false otherwise
  */
 module.exports.hasK8sMetadata = logInvocation(function hasK8sMetadata() {
-    utils.debugLog(`process.env.KUBERNETES_SERVICE_HOST: ${process.env.KUBERNETES_SERVICE_HOST}`)
+    utils.debugLog(`[K8S-LOGS] process.env.KUBERNETES_SERVICE_HOST: ${process.env.KUBERNETES_SERVICE_HOST}`)
     return !!(process.env.KUBERNETES_SERVICE_HOST);
 });
 
@@ -37,14 +37,14 @@ module.exports.loadK8sMetadata = logInvocation(function loadK8sMetadata() {
     if (!k8sContainerId) {
         try {
 
-            utils.debugLog('calling readFile on /proc/self/cgroup');
+            utils.debugLog('[K8S-LOGS] calling readFile on /proc/self/cgroup');
 
             const data = fs.readFileSync('/proc/self/cgroup');
             const firstLineParts = data.toString('utf-8').split('\n')[0].split('/');
 
             k8sContainerId = firstLineParts[firstLineParts.length - 1];
 
-            utils.debugLog('finished loading K8s metadata');
+            utils.debugLog('[K8S-LOGS] finished loading K8s metadata');
         } catch (err) {
             utils.debugLog('Error loading k8s container id - cannot read cgroup file', err);
         }
@@ -68,7 +68,7 @@ module.exports.addK8sMetadata = logInvocation(function addK8sMetadata(runner) {
         payload.k8s_container_id = k8sContainerId;
     }
 
-    utils.debugLog('adding K8s metadata to trace');
+    utils.debugLog('[K8S-LOGS] adding K8s metadata to trace');
     eventIterface.addToMetadata(runner, payload);
-    utils.debugLog('finished adding K8s metadata to trace');
+    utils.debugLog('[K8S-LOGS] finished adding K8s metadata to trace');
 });
