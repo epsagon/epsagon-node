@@ -6,14 +6,19 @@ const eventIterface = require('../event');
 let k8sHostname = null;
 let k8sContainerId = null;
 
+/**
+* log invocations of functions
+* @param {Function} fn  the function to log
+* @returns {Any} the result of the function
+*/
 function logInvocation(fn) {
-    return function (...args) {
+    return (...args) => {
         utils.debugLog(`[K8S-LOGS] invoking function: ${fn && fn.name}, time: ${new Date().toUTCString()}`);
         const returnValue = fn.apply(this, args);
 
         utils.debugLog(`[K8S-LOGS] function: ${fn && fn.name} finished execution, result: ${returnValue}, time: ${new Date().toUTCString()}`);
         return returnValue;
-    }
+    };
 }
 
 
@@ -21,14 +26,16 @@ function logInvocation(fn) {
  * @returns {boolean} true if the current process is running inside
  * a K8S container, false otherwise
  */
+/* eslint-disable-next-line prefer-arrow-callback */
 module.exports.hasK8sMetadata = logInvocation(function hasK8sMetadata() {
-    utils.debugLog(`[K8S-LOGS] process.env.KUBERNETES_SERVICE_HOST: ${process.env.KUBERNETES_SERVICE_HOST}`)
+    utils.debugLog(`[K8S-LOGS] process.env.KUBERNETES_SERVICE_HOST: ${process.env.KUBERNETES_SERVICE_HOST}`);
     return !!(process.env.KUBERNETES_SERVICE_HOST);
 });
 
 /**
  * Load K8S metadata and store it
  */
+/* eslint-disable-next-line prefer-arrow-callback */
 module.exports.loadK8sMetadata = logInvocation(function loadK8sMetadata() {
     if (!k8sHostname) {
         k8sHostname = os.hostname();
@@ -36,7 +43,6 @@ module.exports.loadK8sMetadata = logInvocation(function loadK8sMetadata() {
 
     if (!k8sContainerId) {
         try {
-
             utils.debugLog('[K8S-LOGS] calling readFile on /proc/self/cgroup');
 
             const data = fs.readFileSync('/proc/self/cgroup');
@@ -58,6 +64,7 @@ module.exports.loadK8sMetadata = logInvocation(function loadK8sMetadata() {
  *
  * @param {Object} runner  runner object to add the metadata
  */
+/* eslint-disable-next-line prefer-arrow-callback */
 module.exports.addK8sMetadata = logInvocation(function addK8sMetadata(runner) {
     if (!runner || !k8sHostname) return;
     const payload = {
