@@ -141,9 +141,9 @@ module.exports.initTrace = function initTrace(
                 ecs.loadECSMetadata(ecsMetaUri).catch(err => utils.debugLog(err));
             }
 
-            utils.debugLog('[K8S-LOGS] checking for K8s metadata')
+            utils.debugLog('[K8S-LOGS] checking for K8s metadata');
             if (k8s.hasK8sMetadata()) {
-                utils.debugLog('[K8S-LOGS] found K8s metadata, loading')
+                utils.debugLog('[K8S-LOGS] found K8s metadata, loading');
                 k8s.loadK8sMetadata();
             }
             azure.loadAzureMetadata((azureAdditionalConfig) => {
