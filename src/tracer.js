@@ -140,7 +140,10 @@ module.exports.initTrace = function initTrace(
             if (ecsMetaUri) {
                 ecs.loadECSMetadata(ecsMetaUri).catch(err => utils.debugLog(err));
             }
+
+            utils.debugLog('checking for K8s metadata')
             if (k8s.hasK8sMetadata()) {
+                utils.debugLog('found K8s metadata, loading')
                 k8s.loadK8sMetadata();
             }
             azure.loadAzureMetadata((azureAdditionalConfig) => {
@@ -344,6 +347,8 @@ function sendCurrentTrace(traceSender, tracerObject) {
         winstonCloudwatch.additionalMetadata()
     );
     ecs.addECSMetadata(tracerObj.currRunner);
+
+    utils.debugLog('adding K8s metadata to trace');
     k8s.addK8sMetadata(tracerObj.currRunner);
     azure.addAzureMetadata(tracerObj.currRunner);
     ec2.addEC2Metadata(tracerObj.currRunner);
