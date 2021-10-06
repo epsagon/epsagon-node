@@ -138,7 +138,8 @@ function internalMongodbOperationWrapper(...args) {
                     eventInterface.setException(dbapiEvent, err);
                 } else {
                     eventInterface.addToMetadata(dbapiEvent,
-                        { items_count: getItemsCount(operationName, response) });
+                        { items_count: getItemsCount(operationName, response) },
+                        { response });
                 }
 
                 resolve();

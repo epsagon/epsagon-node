@@ -2,7 +2,7 @@
  * @fileoverview The traces queue, cunsume traces and sends in batches
  */
 const EventEmitter = require('events');
-const axios = require('axios');
+const axios = require('axios-minified');
 const https = require('https');
 const http = require('http');
 const utils = require('./utils.js');

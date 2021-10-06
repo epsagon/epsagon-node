@@ -14,6 +14,7 @@ const openWhiskPatcher = require('./events/openwhisk.js');
 const googlePatcher = require('./events/google_cloud.js');
 const redisPatcher = require('./events/redis.js');
 const ioredisPatcher = require('./events/ioredis.js');
+const memcachedPatcher = require('./events/memcached.js');
 const mongoPatcher = require('./events/mongodb.js');
 const dnsPatcher = require('./events/dns.js');
 const natsPatcher = require('./events/nats.js');
@@ -46,6 +47,7 @@ const LIBNAME_TO_PATCHER = {
     mysql: mysqlPatcher,
     redis: redisPatcher,
     ioredis: ioredisPatcher,
+    memcached: memcachedPatcher,
     mongo: mongoPatcher,
     dax: daxPatcher,
     openwhisk: openWhiskPatcher,
@@ -75,7 +77,7 @@ function patch(patcher) {
         patcher.init();
     } catch (error) {
         if ((process.env.EPSAGON_DEBUG || '').toUpperCase() === 'TRUE') {
-            utils.debugLog(error);
+            utils.debugLog('error initiating patch', error);
         }
     }
 }
@@ -90,6 +92,7 @@ if (!config.getConfig().isEpsagonPatchDisabled) {
             mysqlPatcher,
             redisPatcher,
             ioredisPatcher,
+            memcachedPatcher,
             mongoPatcher,
             daxPatcher,
             openWhiskPatcher,

@@ -384,5 +384,19 @@ module.exports = {
             neo4jSessionRunWrapper,
             Session => Session.default.prototype
         );
+
+        moduleUtils.patchModule(
+            'neo4j-driver-core/lib/transaction.js',
+            'run',
+            neo4jTransactionRunWrapper,
+            Transaction => Transaction.default.prototype
+        );
+
+        moduleUtils.patchModule(
+            'neo4j-driver-core/lib/session.js',
+            'run',
+            neo4jSessionRunWrapper,
+            Session => Session.default.prototype
+        );
     },
 };

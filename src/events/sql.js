@@ -49,6 +49,7 @@ module.exports.wrapSqlQuery = function wrapSqlQuery(queryString, params, callbac
             sqlObj = parse(queryStringSan);
         } catch (error) {
             sqlObj.type = 'SQL-Command';
+            sqlObj.tables = ['Could not parse table name'];
         }
 
         const { type } = sqlObj;
