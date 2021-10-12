@@ -95,6 +95,47 @@ function getArgsFromFunction(...args) {
 }
 
 /**
+ * Adds response data by operation name
+ * @param {String} operationName mongodb operation name
+ * @param {Object} response response of the mongodb operation
+ * @param {serverlessEvent.Event} dbapiEvent The event to add the items to
+ */
+function addDataByOperation(operationName, response, dbapiEvent) {
+    switch (operationName) {
+    case 'find':
+        if (response.result.cursor.firstBatch.length > consts.MAX_QUERY_ELEMENTS) {
+            // create copy so we can trim the long response body
+            const trimmed = JSON.parse(JSON.stringify(response));
+            trimmed.result.cursor.firstBatch =
+                    trimmed.result.cursor.firstBatch.slice(0, consts.MAX_QUERY_ELEMENTS);
+            trimmed.cursor.firstBatch =
+                    trimmed.cursor.firstBatch.slice(0, consts.MAX_QUERY_ELEMENTS);
+            eventInterface.addToMetadata(dbapiEvent,
+                {
+                    items_count: consts.MAX_QUERY_ELEMENTS,
+                    is_trimmed: true,
+                    response: trimmed,
+                });
+        }
+        break;
+    case 'insert':
+    case 'update':
+    case 'delete':
+        eventInterface.addToMetadata(dbapiEvent,
+            { items_count: getItemsCount(operationName, response), response });
+        break;
+    case 'getMore':
+        // do not add the response in case of getMore. omly meta data
+        eventInterface.addToMetadata(dbapiEvent,
+            { items_count: getItemsCount(operationName, response) });
+        break;
+    default:
+        break;
+    }
+}
+
+
+/**
  * Wrap Mongodb operations call with tracing
  * @returns {Array} Execiton of the called function
  */
@@ -156,43 +197,6 @@ function internalMongodbOperationWrapper(...args) {
 
     arguments[args.length - 3] = patchedCallback; // eslint-disable-line prefer-rest-params
     return wrappedFunction.apply(this, arguments); // eslint-disable-line prefer-rest-params
-}
-
-/**
- * Adds response data by operation name
- * @param {String} operationName mongodb operation name
- * @param {Object} response response of the mongodb operation
- * @param {serverlessEvent.Event} event The event to add the items to
- */
-function addDataByOperation(operationName, response, dbapiEvent){
-    switch (operationName) {
-        case 'find':
-            if(response.result.cursor.firstBatch.length > consts.MAX_QUERY_ELEMENTS){
-                // create copy so we can trim the long response body
-                const trimmed = JSON.parse(JSON.stringify(response));
-                trimmed.result.cursor.firstBatch = trimmed.result.cursor.firstBatch.slice(0, consts.MAX_QUERY_ELEMENTS)
-                trimmed.cursor.firstBatch = trimmed.cursor.firstBatch.slice(0, consts.MAX_QUERY_ELEMENTS)
-                eventInterface.addToMetadata(dbapiEvent,
-                { items_count: consts.MAX_QUERY_ELEMENTS ,
-                    is_trimmed: true,
-                    response : trimmed
-                 });    
-            }
-            break;
-        case 'insert':
-        case 'update':
-        case 'delete':
-            eventInterface.addToMetadata(dbapiEvent,
-                { items_count: getItemsCount(operationName, response), response });
-            break;
-        case 'getMore':
-            //do not add the response in case of getMore. omly meta data
-            eventInterface.addToMetadata(dbapiEvent,
-                { items_count: getItemsCount(operationName, response) });
-            break;
-        default:
-            break;
-    }
 }
 
 /**
