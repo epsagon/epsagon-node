@@ -5,6 +5,7 @@ const utils = require('../utils.js');
 const serverlessEvent = require('../proto/event_pb.js');
 const tracer = require('../tracer.js');
 const errorCode = require('../proto/error_code_pb.js');
+const consts = require('../consts.js');
 
 
 /**
@@ -94,6 +95,47 @@ function getArgsFromFunction(...args) {
 }
 
 /**
+ * Adds response data by operation name
+ * @param {String} operationName mongodb operation name
+ * @param {Object} response response of the mongodb operation
+ * @param {serverlessEvent.Event} dbapiEvent The event to add the items to
+ */
+function addDataByOperation(operationName, response, dbapiEvent) {
+    switch (operationName) {
+    case 'find':
+        if (response.result.cursor.firstBatch.length > consts.MAX_QUERY_ELEMENTS) {
+            // create copy so we can trim the long response body
+            const trimmed = JSON.parse(JSON.stringify(response));
+            trimmed.result.cursor.firstBatch =
+                    trimmed.result.cursor.firstBatch.slice(0, consts.MAX_QUERY_ELEMENTS);
+            trimmed.cursor.firstBatch =
+                    trimmed.cursor.firstBatch.slice(0, consts.MAX_QUERY_ELEMENTS);
+            eventInterface.addToMetadata(dbapiEvent,
+                {
+                    items_count: consts.MAX_QUERY_ELEMENTS,
+                    is_trimmed: true,
+                    response: trimmed,
+                });
+        }
+        break;
+    case 'insert':
+    case 'update':
+    case 'delete':
+        eventInterface.addToMetadata(dbapiEvent,
+            { items_count: getItemsCount(operationName, response), response });
+        break;
+    case 'getMore':
+        // do not add the response in case of getMore. omly meta data
+        eventInterface.addToMetadata(dbapiEvent,
+            { items_count: getItemsCount(operationName, response) });
+        break;
+    default:
+        break;
+    }
+}
+
+
+/**
  * Wrap Mongodb operations call with tracing
  * @returns {Array} Execiton of the called function
  */
@@ -137,8 +179,7 @@ function internalMongodbOperationWrapper(...args) {
                 if (err) {
                     eventInterface.setException(dbapiEvent, err);
                 } else {
-                    eventInterface.addToMetadata(dbapiEvent,
-                        { items_count: getItemsCount(operationName, response) });
+                    addDataByOperation(operationName, response, dbapiEvent);
                 }
 
                 resolve();

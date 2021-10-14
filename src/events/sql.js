@@ -6,10 +6,10 @@ const serverlessEvent = require('../proto/event_pb.js');
 const eventInterface = require('../event.js');
 const errorCode = require('../proto/error_code_pb.js');
 const epsagonConfig = require('../config.js');
+const consts = require('../consts.js');
 
 const MAX_QUERY_SIZE = 2048;
 const MAX_PARAMS_LENGTH = 5;
-const MAX_QUERY_ELEMENTS = 100;
 
 
 /**
@@ -49,6 +49,7 @@ module.exports.wrapSqlQuery = function wrapSqlQuery(queryString, params, callbac
             sqlObj = parse(queryStringSan);
         } catch (error) {
             sqlObj.type = 'SQL-Command';
+            sqlObj.tables = ['Could not parse table name'];
         }
 
         const { type } = sqlObj;
@@ -115,12 +116,12 @@ module.exports.wrapSqlQuery = function wrapSqlQuery(queryString, params, callbac
                         rows.length &&
                         !tables.some(t => tracer.doesContainIgnoredKey(ignoredTables, t))
                     ) {
-                        if (rows.length > MAX_QUERY_ELEMENTS) {
+                        if (rows.length > consts.MAX_QUERY_ELEMENTS) {
                             eventInterface.addToMetadata(dbapiEvent, { is_trimmed: true });
                         }
                         eventInterface.addToMetadata(
                             dbapiEvent,
-                            { 'sql.rows': rows.slice(0, MAX_QUERY_ELEMENTS) }
+                            { 'sql.rows': rows.slice(0, consts.MAX_QUERY_ELEMENTS) }
                         );
                     }
                 }
