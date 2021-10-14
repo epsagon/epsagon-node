@@ -630,7 +630,7 @@ module.exports.label = function addLabel(key, value) {
     const labels = {
         [key]: value,
     };
-    const flatLabels = utils.flatten(labels);
+    const flatLabels = utils.flatten(JSON.parse(stringify(labels, null, 0, () => {})));
     Object.keys(flatLabels).forEach((k) => {
         eventInterface.addLabelToMetadata(tracerObj.currRunner, k, flatLabels[k]);
     });
