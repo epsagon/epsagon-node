@@ -5,6 +5,7 @@
 const config = require('./config.js');
 const utils = require('./utils.js');
 const awsSDKPatcher = require('./events/aws_sdk.js');
+const awsSDKv3Patcher = require('./events/aws_sdk_v3.js');
 const daxPatcher = require('./events/amazon_dax_client.js');
 const httpPatcher = require('./events/http.js');
 const http2Patcher = require('./events/http2.js');
@@ -38,6 +39,7 @@ const fs = require('./events/fs.js');
 
 const LIBNAME_TO_PATCHER = {
     'aws-sdk/global': awsSDKPatcher,
+    'aws-sdk/client-sns': awsSDKv3Patcher,
     'azure-sdk': azureSdkPatcher,
     'winston-cw': winstonCloudwatchPatcher,
     'cos-nodejs-sdk-v5': tencentCOSPatcher,
@@ -86,6 +88,7 @@ if (!config.getConfig().isEpsagonPatchDisabled) {
     if (!config.getConfig().patchWhitelist) {
         [
             awsSDKPatcher,
+            awsSDKv3Patcher,
             httpPatcher,
             http2Patcher,
             pgPatcher,
