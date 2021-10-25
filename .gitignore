@@ -10,3 +10,4 @@ src/resource_utils/sql_utils.js
 *.cpuprofile
 tenna_releases
 .nyc_output/*
+examples/
