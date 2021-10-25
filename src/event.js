@@ -111,9 +111,8 @@ module.exports.addLabelToMetadata = function addLabelToMetadata(event, key, valu
     const labelsJson = JSON.stringify(labels);
     if (labelsJson.length <= consts.MAX_LABEL_SIZE) {
         event.getResource().getMetadataMap().set('labels', labelsJson);
-    }
-    else {
-        utils.debugLog('Max label size exceeded for: ' + key);
+    } else {
+        utils.debugLog(`Max label size exceeded for: ${key}`);
     }
 };
 
