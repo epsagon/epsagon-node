@@ -149,36 +149,6 @@ const kinesisEventCreator = {
     },
 };
 
-const SNSv3EventCreator = {
-    /**
-     * Updates an event with the appropriate fields from a SNS request
-     * @param {object} request The AWS.Request object
-     * @param {proto.event_pb.Event} event The event to update the data on
-     */
-    requestHandler(request, event) {
-        const parameters = request.params || {};
-        const resource = event.getResource();
-        const paramArn = parameters.TopicArn || parameters.TargetArn;
-        resource.setName(`${paramArn.split(':').pop()}` || 'N/A');
-        eventInterface.addToMetadata(event, {}, {
-            'Notification Message': `${parameters.Message}`,
-            'Notification Message Attributes': `${JSON.stringify(request.MessageAttributes)}`,
-        });
-    },
-
-    /**
-     * Updates an event with the appropriate fields from a SNS response
-     * @param {object} response The AWS.Response object
-     * @param {proto.event_pb.Event} event The event to update the data on
-     */
-    responseHandler(response, event) {
-        eventInterface.addToMetadata(event, {
-            'Message ID': `${response.MessageId}`,
-        });
-    },
-};
-
-
 const SNSEventCreator = {
     /**
      * Updates an event with the appropriate fields from a SNS request
@@ -986,7 +956,6 @@ const specificEventCreators = {
     s3: s3EventCreator,
     kinesis: kinesisEventCreator,
     sns: SNSEventCreator,
-    SNS: SNSv3EventCreator, // change to sns
     sqs: SQSEventCreator,
     ses: SESEventCreator,
     lambda: lambdaEventCreator,
@@ -1000,101 +969,6 @@ const specificEventCreators = {
     cloudwatchlogs: CloudWatchLogsEventCreator,
     ssm: SSMEventCreator,
 };
-
-/**
- * Wraps the aws-sdk Request object send/promise function with tracing
- * @param {Function} wrappedFunction The function to wrap
- * @returns {Function} The wrapped function
- */
-function AWSSDKWrapperSNSV3(wrappedFunction) {
-    return function internalAWSSDKWrapper(callback) {
-        try {
-            const serviceIdentifier = this.constructor.name.toLowerCase();
-            // this.config.serviceId.toLowerCase()
-            const resourceName = ''; // sns
-            // request.params ? request.params.FunctionName : 'lambda';
-            const requestPayload = undefined; // request.params ? request.params.Payload : '';
-
-            if (!(serviceIdentifier in specificEventCreators)) {
-                // resource is not supported yet
-                return wrappedFunction.apply(this, [callback]);
-            }
-
-            const resource = new serverlessEvent.Resource([
-                resourceName,
-                serviceIdentifier,
-                `${wrappedFunction.name}`,
-            ]);
-
-            const startTime = Date.now();
-            const awsEvent = new serverlessEvent.Event([
-                '',
-                utils.createTimestampFromTime(startTime),
-                null,
-                'aws-sdk',
-                0,
-                errorCode.ErrorCode.OK,
-            ]);
-
-            awsEvent.setResource(resource);
-            eventInterface.addToMetadata(awsEvent, { payload: requestPayload });
-
-            if ('patchInput' in specificEventCreators[serviceIdentifier]) {
-                specificEventCreators[serviceIdentifier].patchInput(this, awsEvent);
-            }
-
-            // if promies - use then
-            // if async await - event emmiter
-            let responsePromise = wrappedFunction.apply(this, [callback]);
-
-            responsePromise = responsePromise.then((response) => {
-                try {
-                    awsEvent.setId(`${response.$metadata.requestId}`);
-                    awsEvent.setDuration(utils.createDurationTimestamp(startTime));
-                    if (response.MessageId !== null) {
-                        awsEvent.setErrorCode(errorCode.ErrorCode.OK);
-                        eventInterface.addToMetadata(awsEvent, {
-                            request_id: `${response.$metadata.requestId}`,
-                            retry_attempts: `${response.$metadata.attempts}`,
-                            status_code: `${response.$metadata.httpStatusCode}`,
-                        });
-                        specificEventCreators[serviceIdentifier].responseHandler(
-                            response,
-                            awsEvent
-                        );
-                    }
-                } catch (e) {
-                    tracer.addException(e);
-                }
-            }).catch((error) => {
-                console.log(error);
-                try {
-                    eventInterface.setException(awsEvent, error); // todo: test
-                    if (awsEvent.getErrorCode() !== errorCode.ErrorCode.EXCEPTION) {
-                        awsEvent.setErrorCode(errorCode.ErrorCode.ERROR);
-                    }
-                    eventInterface.addToMetadata(awsEvent, {
-                        request_id: `${error.$metadata.requestId}`,
-                        error_message: `${error.message}`,
-                        error_code: `${error.Code}`,
-                    });
-                } catch (e) {
-                    // console.log(e);
-                    tracer.addException(e);
-                }
-                throw error;
-            });
-            // .finally(() => {
-            //     console.log('finally');
-            // });
-            tracer.addEvent(awsEvent, responsePromise);
-        } catch (error) {
-            tracer.addException(error);
-        }
-        return wrappedFunction.apply(this, [callback]);
-    };
-}
-
 
 /**
  * Wraps the aws-sdk Request object send/promise function with tracing
@@ -1233,18 +1107,6 @@ module.exports = {
      * Initializes the aws-sdk tracer
      */
     init() {
-        // moduleUtils.patchModule(
-        //     '@aws-sdk/client-sns',
-        //     'publish',
-        //     AWSSDKWrapperSNSV3,
-        //     AWSmod => AWSmod.SNS.prototype
-        // );
-        // moduleUtils.patchModule(
-        //     '@aws-sdk/client-sns',
-        //     'send',
-        //     AWSSDKWrapperSNSV3,
-        //     AWSmod => AWSmod.SNSClient.prototype
-        // );
         moduleUtils.patchModule(
             'aws-sdk/global',
             'send',
