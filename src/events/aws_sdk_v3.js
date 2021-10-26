@@ -163,7 +163,7 @@ module.exports = {
             AWSSDKv3WrapperSNS,
             AWSmod => AWSmod.SNSClient.prototype
         );
-        // Inorder to do instrumentation to more aws-sdk clients, we should
+        // In order to do instrumentation to more aws-sdk clients, we should
         // patch 'send' function in @aws-sdk/smithy-client. Talk to haddasbronfman
     },
 };

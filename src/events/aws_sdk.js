@@ -979,7 +979,6 @@ function AWSSDKWrapper(wrappedFunction) {
     return function internalAWSSDKWrapper(callback) {
         try {
             const request = this;
-            console.log(request);
             const { serviceIdentifier } = (
                 request.service.constructor.prototype
             );
