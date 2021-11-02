@@ -58,6 +58,7 @@ const SNSv3EventCreator = {
 const specificEventCreators = {
     sns: SNSv3EventCreator,
 };
+
 /**
  *
  * @param {Command} command the wrapped command
