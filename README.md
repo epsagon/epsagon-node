@@ -13,7 +13,6 @@
 
 ![Trace](trace.png)
 
-
 This package provides tracing to Node.js applications for the collection of distributed tracing and performance metrics in [Epsagon](https://app.epsagon.com/?utm_source=github).
 
 ## Contents
@@ -33,6 +32,7 @@ This package provides tracing to Node.js applications for the collection of dist
 - [Getting Help](#getting-help)
 - [Opening Issues](#opening-issues)
 - [License](#license)
+
 
 ## Installation
 
