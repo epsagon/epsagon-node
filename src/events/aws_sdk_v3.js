@@ -79,11 +79,17 @@ function getOperationByCommand(command) {
  * @param {Function} wrappedFunction The function to wrap
  * @returns {Function} The wrapped function
  */
-function AWSSDKv3WrapperSNS(wrappedFunction) {
-    return function internalAWSSDKv3WrapperSNS(command) {
+function AWSSDKv3Wrapper(wrappedFunction) {
+    return function internalAWSSDKv3Wrapper(command) {
         try {
-            const serviceIdentifier = this.config.serviceId.toLowerCase();// sns
+            const serviceIdentifier = this.config.serviceId.toLowerCase();
             const resourceName = '';
+
+            if (!(serviceIdentifier in specificEventCreators)) {
+                // resource is not supported yet
+                return wrappedFunction.apply(this, [command]);
+            }
+
             const operation = getOperationByCommand(command);
             const resource = new serverlessEvent.Resource([
                 resourceName,
@@ -159,12 +165,10 @@ module.exports = {
      */
     init() {
         moduleUtils.patchModule(
-            '@aws-sdk/client-sns',
+            '@aws-sdk/smithy-client',
             'send',
-            AWSSDKv3WrapperSNS,
-            AWSmod => AWSmod.SNSClient.prototype
+            AWSSDKv3Wrapper,
+            AWSmod => AWSmod.Client.prototype
         );
-        // In order to do instrumentation to more aws-sdk clients, we should
-        // patch 'send' function in @aws-sdk/smithy-client. Talk to haddasbronfman
     },
 };
