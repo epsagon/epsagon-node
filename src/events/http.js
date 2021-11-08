@@ -180,6 +180,7 @@ function httpWrapper(wrappedFunction) {
             }
 
             const path = (
+                (parsedUrl && parsedUrl.href) ||
                 (parsedUrl && parsedUrl.path) ||
                 (options && options.path) ||
                 ('/')
