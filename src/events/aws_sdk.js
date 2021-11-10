@@ -2,6 +2,7 @@
  * @fileoverview Handlers for the aws-sdk js library instrumentation.
  */
 const md5 = require('md5');
+const sortJson = require('sort-json');
 const uuid4 = require('uuid4');
 const utils = require('../utils.js');
 const tracer = require('../tracer');
@@ -356,7 +357,7 @@ const dynamoDBEventCreator = {
      */
     generateItemHash(item) {
         const unmarshalledItem = DynamoDB.Converter.unmarshall(item);
-        return md5(JSON.sortify(unmarshalledItem));
+        return md5(sortJson(unmarshalledItem), { ignoreCase: true });
     },
 
     /**
