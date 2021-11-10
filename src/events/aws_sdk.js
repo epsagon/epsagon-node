@@ -3,7 +3,6 @@
  */
 const md5 = require('md5');
 const uuid4 = require('uuid4');
-JSON.sortify = require('json.sortify');
 const utils = require('../utils.js');
 const tracer = require('../tracer');
 const serverlessEvent = require('../proto/event_pb.js');

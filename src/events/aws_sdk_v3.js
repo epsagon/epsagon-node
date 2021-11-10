@@ -1,7 +1,6 @@
 /**
  * @fileoverview Handlers for the @aws-sdk js library instrumentation.
  */
-JSON.sortify = require('json.sortify');
 const utils = require('../utils.js');
 const tracer = require('../tracer');
 const serverlessEvent = require('../proto/event_pb.js');
@@ -165,8 +164,7 @@ module.exports = {
      */
     init() {
         moduleUtils.patchModule(
-            '@aws-sdk/smithy-client', // A client that can catch all 'send' commands
-            // sent from aws resources using aws-sdk v3.
+            '@aws-sdk/smithy-client',
             'send',
             AWSSDKv3Wrapper,
             AWSmod => AWSmod.Client.prototype
