@@ -1,7 +1,6 @@
 /**
  * @fileoverview Handlers for the @aws-sdk js library instrumentation.
  */
-JSON.sortify = require('json.sortify');
 const utils = require('../utils.js');
 const tracer = require('../tracer');
 const serverlessEvent = require('../proto/event_pb.js');

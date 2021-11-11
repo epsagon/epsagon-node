@@ -98,10 +98,10 @@
     "axios-minified": "^1.0.7",
     "google-protobuf-minified": "^1.0.8",
     "json-stringify-safe": "^5.0.1",
-    "json.sortify": "^2.2.2",
     "md5": "^2.2.1",
     "require-in-the-middle": "^5.0.3",
     "shimmer": "^1.2.1",
+    "sort-json": "^2.0.0",
     "uuid-parse": "^1.1.0",
     "uuid4": "^1.0.0"
   }
