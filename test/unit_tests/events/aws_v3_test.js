@@ -2,7 +2,7 @@ const { SNSClient, PublishCommand } = require('@aws-sdk/client-sns');
 const { expect } = require('chai');
 const epsagon = require('../../../src/index');
 const tracerObj = require('../../../src/trace_object.js');
-
+const consts = require('../consts.js');
 
 describe('aws sdk v3 sns-client tests', () => {
     beforeEach(() => {
@@ -16,11 +16,11 @@ describe('aws sdk v3 sns-client tests', () => {
 
     it('test instrumentation of publish to some non-existing sns', async () => {
         function publishSns() {
-            const snsClient = new SNSClient({ region: 'ap-southeast-1' });
+            const snsClient = new SNSClient({ region: consts.REGION });
             // The topic shouldn't really exist, as we only want to verify we get SNS trace.
             const params = {
-                Message: 'MESSAGE_TEXT',
-                TopicArn: 'arn:aws:sns:ap-southeast-1:262118031369:SnsSimpleTopic',
+                Message: consts.MESSAGE,
+                TopicArn: consts.SNS_NON_EXISTING_ARN,
             };
             return snsClient.send(new PublishCommand(params));
         }
