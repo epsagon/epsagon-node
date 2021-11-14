@@ -92,7 +92,8 @@
     "simple-oauth2": "^4.2.0",
     "sinon": "^4.3.0",
     "uglify-es": "^3.3.9",
-    "underscore": "^1.12.0"
+    "underscore": "^1.12.0",
+    "@aws-sdk/client-sns": "^3.37.0"
   },
   "dependencies": {
     "axios-minified": "^1.0.7",

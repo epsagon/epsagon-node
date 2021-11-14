@@ -101,7 +101,7 @@ function AWSSDKv3Wrapper(wrappedFunction) {
                 '',
                 utils.createTimestampFromTime(startTime),
                 null,
-                'aws-sdk',
+                '@aws-sdk',
                 0,
                 errorCode.ErrorCode.OK,
             ]);
