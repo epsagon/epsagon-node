@@ -1,5 +1,5 @@
 const { SNSClient, PublishCommand } = require('@aws-sdk/client-sns');
-const { expect } = require('chai');
+const { expect, assert } = require('chai');
 const epsagon = require('../../../src/index');
 const tracerObj = require('../../../src/trace_object.js');
 const consts = require('../consts.js');
@@ -8,7 +8,7 @@ describe('aws sdk v3 sns-client tests', () => {
     beforeEach(() => {
         epsagon.init({
             token: '',
-            appName: 'aws-sdk-v3-test',
+            appName: consts.SNS_APP_NAME,
             metadataOnly: false,
         });
     });
@@ -27,11 +27,15 @@ describe('aws sdk v3 sns-client tests', () => {
         const wrappedTestFunction = epsagon.nodeWrapper(publishSns);
         await wrappedTestFunction();
         const events = tracerObj.get().trace.getEventList();
-        events.forEach((event) => {
-            if (event.array[3] === '@aws-sdk') {
-                expect(event.array[2]).to.include('sns');
-                expect(event.array[2]).to.include('publish');
-            }
-        });
+        try {
+            events.forEach((event) => {
+                if (event.array[3] === '@aws-sdk') {
+                    expect(event.array[2]).to.include('sns');
+                    expect(event.array[2]).to.include('publish');
+                }
+            });
+        } catch (err) {
+            assert.fail();
+        }
     });
 });
