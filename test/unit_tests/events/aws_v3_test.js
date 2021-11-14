@@ -1,0 +1,37 @@
+const { SNSClient, PublishCommand } = require('@aws-sdk/client-sns');
+const { expect } = require('chai');
+const epsagon = require('../../../src/index');
+const tracerObj = require('../../../src/trace_object.js');
+
+
+describe('aws sdk v3 sns-client tests', () => {
+    beforeEach(() => {
+        epsagon.init({
+            token: process.env.EPSAGON_TOKEN,
+            appName: 'aws-sdk-v3-test',
+            metadataOnly: false,
+        });
+    });
+
+
+    it('test instrumentation of publish to some non-existing sns', async () => {
+        function publishSns() {
+            const snsClient = new SNSClient({ region: 'ap-southeast-1' });
+            // The topic shouldn't really exist, as we only want to verify we get SNS trace.
+            const params = {
+                Message: 'MESSAGE_TEXT',
+                TopicArn: 'arn:aws:sns:ap-southeast-1:262118031369:SnsSimpleTopic',
+            };
+            return snsClient.send(new PublishCommand(params));
+        }
+        const wrappedTestFunction = epsagon.nodeWrapper(publishSns);
+        await wrappedTestFunction();
+        const events = tracerObj.get().trace.getEventList();
+        events.forEach((event) => {
+            if (event.array[3] === '@aws-sdk') {
+                expect(event.array[2]).to.include('sns');
+                expect(event.array[2]).to.include('publish');
+            }
+        });
+    });
+});
