@@ -7,7 +7,7 @@ const consts = require('../consts.js');
 describe('aws sdk v3 sns-client tests', () => {
     beforeEach(() => {
         epsagon.init({
-            token: process.env.EPSAGON_TOKEN,
+            token: '',
             appName: 'aws-sdk-v3-test',
             metadataOnly: false,
         });
