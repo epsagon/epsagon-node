@@ -1,7 +1,6 @@
 /**
  * @fileoverview Handlers for the @aws-sdk js library instrumentation.
  */
-JSON.sortify = require('json.sortify');
 const utils = require('../utils.js');
 const tracer = require('../tracer');
 const serverlessEvent = require('../proto/event_pb.js');
@@ -79,11 +78,17 @@ function getOperationByCommand(command) {
  * @param {Function} wrappedFunction The function to wrap
  * @returns {Function} The wrapped function
  */
-function AWSSDKv3WrapperSNS(wrappedFunction) {
-    return function internalAWSSDKv3WrapperSNS(command) {
+function AWSSDKv3Wrapper(wrappedFunction) {
+    return function internalAWSSDKv3Wrapper(command) {
         try {
-            const serviceIdentifier = this.config.serviceId.toLowerCase();// sns
+            const serviceIdentifier = this.config.serviceId.toLowerCase();
             const resourceName = '';
+
+            if (!(serviceIdentifier in specificEventCreators)) {
+                // resource is not supported yet
+                return wrappedFunction.apply(this, [command]);
+            }
+
             const operation = getOperationByCommand(command);
             const resource = new serverlessEvent.Resource([
                 resourceName,
@@ -96,7 +101,7 @@ function AWSSDKv3WrapperSNS(wrappedFunction) {
                 '',
                 utils.createTimestampFromTime(startTime),
                 null,
-                'aws-sdk',
+                '@aws-sdk',
                 0,
                 errorCode.ErrorCode.OK,
             ]);
@@ -159,12 +164,11 @@ module.exports = {
      */
     init() {
         moduleUtils.patchModule(
-            '@aws-sdk/client-sns',
+            '@aws-sdk/smithy-client', // A client that can catch all 'send' commands
+            // sent from aws resources using aws-sdk v3.
             'send',
-            AWSSDKv3WrapperSNS,
-            AWSmod => AWSmod.SNSClient.prototype
+            AWSSDKv3Wrapper,
+            AWSmod => AWSmod.Client.prototype
         );
-        // In order to do instrumentation to more aws-sdk clients, we should
-        // patch 'send' function in @aws-sdk/smithy-client. Talk to haddasbronfman
     },
 };

@@ -3,7 +3,7 @@
  */
 const uuid4 = require('uuid4');
 const md5 = require('md5');
-JSON.sortify = require('json.sortify');
+const sortJson = require('sort-json');
 const tryRequire = require('../try_require.js');
 const serverlessEvent = require('../proto/event_pb.js');
 const errorCode = require('../proto/error_code_pb.js');
@@ -271,7 +271,7 @@ function createDynamoDBTrigger(event, trigger) {
                 DynamoDB.Converter.unmarshall(record.dynamodb.Keys) :
                 DynamoDB.Converter.unmarshall(record.dynamodb.NewImage)
         );
-        itemHash = md5(JSON.sortify(item));
+        itemHash = md5(sortJson(item), { ignoreCase: true });
     }
     trigger.setId(record.eventID);
     resource.setName(record.eventSourceARN.split('/')[1]);
