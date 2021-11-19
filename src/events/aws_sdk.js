@@ -172,10 +172,29 @@ const SNSEventCreator = {
      * @param {proto.event_pb.Event} event The event to update the data on
      */
     responseHandler(response, event) {
+        let errorMessages = '';
+        let errorMessagesCount = 0;
         switch (response.request.operation) {
         case 'publish':
             eventInterface.addToMetadata(event, {
                 'Message ID': `${response.data.MessageId}`,
+            });
+            break;
+        case 'publishBatch':
+            if (response.data.Successful && response.data.Successful.length > 0) {
+                eventInterface.addToMetadata(event, {
+                    record: JSON.stringify(response.data.Successful.map(item => item)),
+                });
+            }
+
+            if (response.data.Failed && response.data.Failed > 0) {
+                errorMessages = JSON.stringify(response.data.Failed.map(item => item));
+                errorMessagesCount = response.data.Failed.length;
+            }
+            eventInterface.addToMetadata(event, {
+                successful_record_count: `${response.data.Successful.length}`,
+                failed_record_count: `${errorMessagesCount}`,
+                sns_error_messages: errorMessages,
             });
             break;
         default:
