@@ -56,7 +56,7 @@ const SNSv3EventCreator = {
             if (response.Failed && response.Failed > 0) {
                 errorMessages = JSON.stringify(response.Failed
                     .map(item => item));
-                errorMessagesCount = response.FailedRecordCount;
+                errorMessagesCount = response.Failed.length;
             }
             eventInterface.addToMetadata(event, {
                 successful_record_count: `${response.Successful.length}`,
