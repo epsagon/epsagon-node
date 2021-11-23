@@ -59,7 +59,7 @@ describe('aws sdk v3 sns-client tests', () => {
             events.forEach((event) => {
                 if (event.array[3] === '@aws-sdk') {
                     expect(event.array[2]).to.include('sns');
-                    expect(event.array[2]).to.include('PublishBatchCommand');
+                    expect(event.array[2]).to.include('publishBatch');
                 }
             });
         } catch (err) {

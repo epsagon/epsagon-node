@@ -27,6 +27,15 @@ const SNSv3EventCreator = {
             });
             break;
         }
+        case 'publishBatch': {
+            const resource = event.getResource();
+            const paramArn = command.input.TopicArn || command.input.TargetArn;
+            resource.setName(`${paramArn.split(':').pop()}` || 'N/A');
+            eventInterface.addToMetadata(event, {}, {
+                'Notification Message Attributes': `${JSON.stringify(command.input.MessageAttributes)}`,
+            });
+            break;
+        }
         default:
             break;
         }
@@ -47,7 +56,7 @@ const SNSv3EventCreator = {
                 'Message ID': `${response.MessageId}`,
             });
             break;
-        case 'PublishBatchCommand':
+        case 'publishBatch':
             if (response.Successful && response.Successful.length > 0) {
                 eventInterface.addToMetadata(event, {
                     record: JSON.stringify(response.Successful.map(item => item)),
@@ -87,6 +96,8 @@ function getOperationByCommand(command) {
     switch (cmd) {
     case 'PublishCommand':
         return 'publish';
+    case 'PublishBatchCommand':
+        return 'publishBatch';
     default:
         return cmd;
     }
