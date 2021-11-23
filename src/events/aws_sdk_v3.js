@@ -50,6 +50,7 @@ const SNSv3EventCreator = {
     responseHandler(operation, response, event) {
         let errorMessages = '';
         let errorMessagesCount = 0;
+        let records = '';
         switch (operation) {
         case 'publish':
             eventInterface.addToMetadata(event, {
@@ -58,9 +59,7 @@ const SNSv3EventCreator = {
             break;
         case 'publishBatch':
             if (response.Successful && response.Successful.length > 0) {
-                eventInterface.addToMetadata(event, {
-                    record: JSON.stringify(response.Successful.map(item => item)),
-                });
+                records = JSON.stringify(response.Successful.map(item => item));
             }
             if (response.Failed && response.Failed > 0) {
                 errorMessages = JSON.stringify(response.Failed
@@ -69,6 +68,7 @@ const SNSv3EventCreator = {
             }
             eventInterface.addToMetadata(event, {
                 successful_record_count: `${response.Successful.length}`,
+                records,
                 failed_record_count: `${errorMessagesCount}`,
                 sqs_error_messages: errorMessages,
             });
