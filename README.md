@@ -308,6 +308,7 @@ epsagon.init({
   token: 'epsagon-token',
   appName: 'app-name-stage',
   metadataOnly: false,
+  sendBatch: false,
 });
 
 // Wrap your entry point
