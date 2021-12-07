@@ -64,18 +64,21 @@ function getItemsCount(operationName, response) {
     case 'find':
         itemsCount = response.result.cursor.firstBatch.length;
         break;
+    case 'connectionfind':
+        itemsCount = response.cursor.firstBatch.length;
+        break;
     case 'insert':
     case 'update':
     case 'delete':
         itemsCount = response.result.n;
         break;
     case 'getMore':
+    case 'connectiongetMore':
         itemsCount = response.cursor.nextBatch.length;
         break;
     case 'connectioninsert':
     case 'connectionupdate':
     case 'connectiondelete':
-    case 'connectiongetMore':
         itemsCount = response.n;
         break;
     default:
