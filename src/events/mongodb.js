@@ -72,6 +72,12 @@ function getItemsCount(operationName, response) {
     case 'getMore':
         itemsCount = response.cursor.nextBatch.length;
         break;
+    case 'connectioninsert':
+    case 'connectionupdate':
+    case 'connectiondelete':
+    case 'connectiongetMore':
+        itemsCount = response.n;
+        break;
     default:
         break;
     }
@@ -84,6 +90,26 @@ function getItemsCount(operationName, response) {
  * @returns {Object} Object of the extracted arguments
  */
 function getArgsFromFunction(...args) {
+    const operationName = args[args.length - 2];
+    // Mongo >= 4
+    if (operationName.includes('connection')) {
+        const ctx = args[args.length - 3];
+        const hostParts = typeof ctx.address === 'string' ? ctx.address.split(':') : '';
+        const options = hostParts.length === 2 ?
+            { host: hostParts[0], port: hostParts[1] } :
+            {}; // no port means the address is a random UUID so no host either
+        const topology = { s: { options } };
+
+        return {
+            server: topology,
+            namespace: args[0].db.collection,
+            cmd: args[args.length - 2] === 'getMore' ? {} : args[1],
+            callback: args[args.length - 4],
+            operationName,
+            wrappedFunction: args[args.length - 1],
+        };
+    }
+    // Mongo <= 4
     return {
         server: args[0],
         namespace: args[1],
@@ -102,6 +128,23 @@ function getArgsFromFunction(...args) {
  */
 function addDataByOperation(operationName, response, dbapiEvent) {
     switch (operationName) {
+    case 'connectionfind':
+        if (response.cursor.firstBatch.length > consts.MAX_QUERY_ELEMENTS) {
+            // create copy so we can trim the long response body
+            const trimmed = JSON.parse(JSON.stringify(response));
+            trimmed.cursor.firstBatch =
+                trimmed.cursor.firstBatch.slice(0, consts.MAX_QUERY_ELEMENTS);
+            trimmed.cursor.firstBatch =
+                trimmed.cursor.firstBatch.slice(0, consts.MAX_QUERY_ELEMENTS);
+            eventInterface.addToMetadata(dbapiEvent,
+                {
+                    items_count: consts.MAX_QUERY_ELEMENTS,
+                    is_trimmed: true,
+                    response: trimmed,
+                });
+        }
+        break;
+
     case 'find':
         if (response.result.cursor.firstBatch.length > consts.MAX_QUERY_ELEMENTS) {
             // create copy so we can trim the long response body
@@ -121,11 +164,15 @@ function addDataByOperation(operationName, response, dbapiEvent) {
     case 'insert':
     case 'update':
     case 'delete':
+    case 'connectioninsert':
+    case 'connectionupdate':
+    case 'connectiondelete':
+    case 'connectiongetMore':
         eventInterface.addToMetadata(dbapiEvent,
             { items_count: getItemsCount(operationName, response), response });
         break;
     case 'getMore':
-        // do not add the response in case of getMore. omly meta data
+        // do not add the response in case of getMore. only meta data
         eventInterface.addToMetadata(dbapiEvent,
             { items_count: getItemsCount(operationName, response) });
         break;
@@ -152,7 +199,7 @@ function internalMongodbOperationWrapper(...args) {
         const resource = new serverlessEvent.Resource([
             host,
             'mongodb',
-            operationName,
+            operationName.replace('connection', '').toLowerCase(),
         ]);
         const dbapiEvent = new serverlessEvent.Event([
             `mongodb-${uuid4()}`,
@@ -174,6 +221,8 @@ function internalMongodbOperationWrapper(...args) {
         const responsePromise = new Promise((resolve) => {
             patchedCallback = (err, response) => {
                 utils.debugLog('MongoDb Patched callback was called.');
+                utils.debugLog('operationName:', operationName);
+                utils.debugLog('response:', response);
                 dbapiEvent.setDuration(utils.createDurationTimestamp(startTime));
 
                 if (err) {
@@ -195,8 +244,9 @@ function internalMongodbOperationWrapper(...args) {
         tracer.addException(error);
     }
 
-    arguments[args.length - 3] = patchedCallback; // eslint-disable-line prefer-rest-params
-    return wrappedFunction.apply(this, arguments); // eslint-disable-line prefer-rest-params
+    arguments[3] = patchedCallback; // eslint-disable-line prefer-rest-params
+    // eslint-disable-next-line max-len
+    return wrappedFunction.apply(arguments[arguments.length - 3], arguments); // eslint-disable-line prefer-rest-params
 }
 
 /**
@@ -269,11 +319,49 @@ function mongodbCommandWrapper(wrappedFunction) {
     };
 }
 
+/**
+ * Wraps Connection.command (count for example) function with tracing
+ * @param {Function} wrappedFunction The function to wrap from mongodb
+ * @returns {Function} The wrapped function
+ */
+function mongodbConnectionCommandWrapper(wrappedFunction) {
+    return function internalMongodbConnectionCommandWrapper(...args) {
+        const cmd = args[1];
+        if (cmd && cmd.ismaster) {
+            return wrappedFunction.apply(this, args);
+        }
+        return internalMongodbOperationWrapper(...args, this, cmd && typeof cmd === 'object' ? `connection${Object.keys(cmd)[0]}` : 'connectionCommand', wrappedFunction);
+    };
+}
+
+/**
+ * Wraps query/find function function with tracing
+ * @param {Function} wrappedFunction The function to wrap from mongodb
+ * @returns {Function} The wrapped function
+ */
+function mongodbConnectionQueryWrapper(wrappedFunction) {
+    return function internalMongodbConnectionCommandWrapper(...args) {
+        return internalMongodbOperationWrapper(...args, this, 'connectionFind', wrappedFunction);
+    };
+}
+
+/**
+ * Wraps Connection getMore function with tracing
+ * @param {Function} wrappedFunction The function to wrap from mongodb
+ * @returns {Function} The wrapped function
+ */
+function mongodbConnectionGetMoreWrapper(wrappedFunction) {
+    return function internalMongodbConnectionCommandWrapper(...args) {
+        return internalMongodbOperationWrapper(...args, this, 'connectiongetMore', wrappedFunction);
+    };
+}
+
 module.exports = {
     /**
      * Initializes the mongodb tracer
      */
     init() {
+        // MongoDB <= 4
         moduleUtils.patchModule(
             'mongodb/lib/core/wireprotocol/index.js',
             'insert',
@@ -309,6 +397,25 @@ module.exports = {
             'command',
             mongodbCommandWrapper,
             mongodb => mongodb
+        );
+        // MongoDB >= 4
+        moduleUtils.patchModule(
+            'mongodb/lib/cmap/connection',
+            'command',
+            mongodbConnectionCommandWrapper,
+            connection => connection.Connection.prototype
+        );
+        moduleUtils.patchModule(
+            'mongodb/lib/cmap/connection',
+            'query',
+            mongodbConnectionQueryWrapper,
+            connection => connection.Connection.prototype
+        );
+        moduleUtils.patchModule(
+            'mongodb/lib/cmap/connection',
+            'getMore',
+            mongodbConnectionGetMoreWrapper,
+            connection => connection.Connection.prototype
         );
     },
 };
