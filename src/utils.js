@@ -2,6 +2,8 @@
  * @fileoverview Utility functions
  */
 
+const consts = require('./consts.js');
+
 /**
  * Creates a timestamp (according to epsagon-protocol timestamp format) from a given js time
  * @param {number} time the time in miliseconds to generate the timestamp from
@@ -66,7 +68,7 @@ function reflectPromise(promise) {
  */
 function debugLog(...args) {
     if ((process.env.EPSAGON_DEBUG || '').toUpperCase() === 'TRUE') {
-        console.log('[EPSAGON]', ...args); // eslint-disable-line no-console
+        console.log(consts.LOG_PREFIX, ...args); // eslint-disable-line no-console
     }
 }
 
@@ -75,7 +77,7 @@ function debugLog(...args) {
  * @param {list} args list of arguments as passed to console.warn
  */
 function printWarning(...args) {
-    console.warn(...args); // eslint-disable-line no-console
+    console.warn(consts.LOG_PREFIX, ...args); // eslint-disable-line no-console
 }
 
 /**
@@ -83,7 +85,7 @@ function printWarning(...args) {
  * @param {list} args list of arguments as passed to console.error
  */
 function printError(...args) {
-    console.error(...args); // eslint-disable-line no-console
+    console.error(consts.LOG_PREFIX, ...args); // eslint-disable-line no-console
 }
 
 /**

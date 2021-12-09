@@ -236,6 +236,10 @@ module.exports.setConfig = function setConfig(configData) {
         config.sendBatch = configData.sendBatch;
     }
 
+    if (config.sendBatch) {
+        utils.debugLog(`Trace batching activated. Traces might be ignored till ${config.batchSize} traces queue size reached.`);
+    }
+
     if (Number(configData.batchSize)) {
         config.batchSize = Number(configData.batchSize);
     }
