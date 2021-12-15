@@ -110,6 +110,7 @@ function getArgsFromFunction(...args) {
             callback: args[args.length - 4],
             operationName,
             wrappedFunction: args[args.length - 1],
+            callbackIndex: 3,
         };
     }
     // Mongo <= 4
@@ -117,9 +118,10 @@ function getArgsFromFunction(...args) {
         server: args[0],
         namespace: args[1],
         cmd: args[args.length - 2] === 'getMore' ? {} : args[2],
-        callback: args[args.length - 3],
+        callback: args[args.length - 4],
         operationName: args[args.length - 2],
         wrappedFunction: args[args.length - 1],
+        callbackIndex: args.length - 4,
     };
 }
 
@@ -192,7 +194,7 @@ function addDataByOperation(operationName, response, dbapiEvent) {
 function internalMongodbOperationWrapper(...args) {
     const relevantArgs = getArgsFromFunction(...args);
     const {
-        server, namespace, cmd, callback, operationName, wrappedFunction,
+        server, namespace, cmd, callback, operationName, wrappedFunction, callbackIndex,
     } = relevantArgs;
     let patchedCallback = callback;
     try {
@@ -224,8 +226,6 @@ function internalMongodbOperationWrapper(...args) {
         const responsePromise = new Promise((resolve) => {
             patchedCallback = (err, response) => {
                 utils.debugLog('MongoDb Patched callback was called.');
-                utils.debugLog('operationName:', operationName);
-                utils.debugLog('response:', response);
                 dbapiEvent.setDuration(utils.createDurationTimestamp(startTime));
 
                 if (err) {
@@ -247,7 +247,7 @@ function internalMongodbOperationWrapper(...args) {
         tracer.addException(error);
     }
 
-    arguments[3] = patchedCallback; // eslint-disable-line prefer-rest-params
+    arguments[callbackIndex] = patchedCallback; // eslint-disable-line prefer-rest-params
     // eslint-disable-next-line max-len
     return wrappedFunction.apply(arguments[arguments.length - 3], arguments); // eslint-disable-line prefer-rest-params
 }
@@ -259,7 +259,7 @@ function internalMongodbOperationWrapper(...args) {
  */
 function mongodbInsertWrapper(wrappedFunction) {
     return function internalMongodbInsertWrapper(...args) {
-        return internalMongodbOperationWrapper(...args, 'insert', wrappedFunction);
+        return internalMongodbOperationWrapper(...args, this, 'insert', wrappedFunction);
     };
 }
 
@@ -270,7 +270,7 @@ function mongodbInsertWrapper(wrappedFunction) {
  */
 function mongodbUpdateWrapper(wrappedFunction) {
     return function internalMongodbUpdateWrapper(...args) {
-        return internalMongodbOperationWrapper(...args, 'update', wrappedFunction);
+        return internalMongodbOperationWrapper(...args, this, 'update', wrappedFunction);
     };
 }
 
@@ -281,7 +281,7 @@ function mongodbUpdateWrapper(wrappedFunction) {
  */
 function mongodbRemoveWrapper(wrappedFunction) {
     return function internalMongodbRemoveWrapper(...args) {
-        return internalMongodbOperationWrapper(...args, 'delete', wrappedFunction);
+        return internalMongodbOperationWrapper(...args, this, 'delete', wrappedFunction);
     };
 }
 
@@ -292,7 +292,7 @@ function mongodbRemoveWrapper(wrappedFunction) {
  */
 function mongodbGetMoreWrapper(wrappedFunction) {
     return function internalMongodbGetMoreWrapper(...args) {
-        return internalMongodbOperationWrapper(...args, 'getMore', wrappedFunction);
+        return internalMongodbOperationWrapper(...args, this, 'getMore', wrappedFunction);
     };
 }
 
@@ -303,7 +303,7 @@ function mongodbGetMoreWrapper(wrappedFunction) {
  */
 function mongodbQueryWrapper(wrappedFunction) {
     return function internalMongodbQueryWrapper(...args) {
-        return internalMongodbOperationWrapper(...args, 'find', wrappedFunction);
+        return internalMongodbOperationWrapper(...args, this, 'find', wrappedFunction);
     };
 }
 
@@ -318,7 +318,7 @@ function mongodbCommandWrapper(wrappedFunction) {
         if (cmd && cmd.ismaster) {
             return wrappedFunction.apply(this, args);
         }
-        return internalMongodbOperationWrapper(...args, cmd && typeof cmd === 'object' ? Object.keys(cmd)[0] : '', wrappedFunction);
+        return internalMongodbOperationWrapper(...args, this, cmd && typeof cmd === 'object' ? Object.keys(cmd)[0] : '', wrappedFunction);
     };
 }
 
