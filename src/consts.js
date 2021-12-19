@@ -85,6 +85,8 @@ module.exports.STRONG_ID_KEYS = [
     'cold_start',
     'region',
     'status_code',
+    'epsagon-trace-id',
+    'epsagon.trace_ids',
 ];
 
 module.exports.traceUrl = (id, requestTime) => `https://app.epsagon.com/trace/${id}?timestamp=${requestTime}`;
