@@ -830,4 +830,4 @@ For help and questions about Epsagon, use the help widget inside the product.
 
 Provided under the MIT license. See LICENSE for details.
 
-Copyright 2020, Epsagon
+Copyright 2021, Epsagon
