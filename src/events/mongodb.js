@@ -97,11 +97,16 @@ function getArgsFromFunction(...args) {
     // Mongo >= 4
     if (operationName.includes('connection')) {
         const ctx = args[args.length - 3];
-        const hostParts = typeof ctx.address === 'string' ? ctx.address.split(':') : '';
-        const options = hostParts.length === 2 ?
-            { host: hostParts[0], port: hostParts[1] } :
-            {}; // no port means the address is a random UUID so no host either
+        let options = {};
+        if (ctx) {
+            const hostParts = typeof ctx.address === 'string' ? ctx.address.split(':') : '';
+            if (hostParts.length === 2) {
+                options = { host: hostParts[0], port: hostParts[1] };
+            }
+        }
+
         const topology = { s: { options } };
+
 
         return {
             server: topology,
