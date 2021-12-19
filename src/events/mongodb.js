@@ -103,10 +103,11 @@ function getArgsFromFunction(...args) {
             if (hostParts.length === 2) {
                 options = { host: hostParts[0], port: hostParts[1] };
             }
+        } else {
+            utils.debugLog('ctx in not defined. args: ', args);
         }
 
         const topology = { s: { options } };
-
 
         return {
             server: topology,
