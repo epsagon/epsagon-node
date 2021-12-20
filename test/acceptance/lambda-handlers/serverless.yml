@@ -10,6 +10,7 @@ provider:
     STAGE: dev
     EPSAGON_DEBUG: "TRUE"
   package:
+    individually: true
     exclude:
     - './**'
     - 'node_modules/**'

@@ -29,6 +29,6 @@ build_num=$1
 result=0
 
 run_acceptance_test ${build_num} nodejs12.x njs12
-run_acceptance_test ${build_num} nodejs14.0 njs14
+run_acceptance_test ${build_num} nodejs14.x njs14
 
 exit ${result}
