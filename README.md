@@ -829,5 +829,4 @@ For help and questions about Epsagon, use the help widget inside the product.
 ## License
 
 Provided under the MIT license. See LICENSE for details.
-
 Copyright 2021, Epsagon
