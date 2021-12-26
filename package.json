@@ -45,10 +45,10 @@
   },
     "nyc": {
     "check-coverage": true,
-    "statements": 18.02,
-    "branches": 13.79,
-    "functions": 26.2,
-    "lines": 18.18
+    "statements": 17,
+    "branches": 13,
+    "functions": 25,
+    "lines": 18
   },
   "devDependencies": {
     "@babel/runtime": "^7.4.5",
