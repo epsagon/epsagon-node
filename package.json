@@ -16,7 +16,7 @@
   "license": "MIT",
   "scripts": {
     "pretest": "./scripts/build_peg.sh",
-    "test": "nyc --reporter=text ./scripts/run_tests.sh",
+    "test": "nyc --reporter=text --reporter=text-summary ./scripts/run_tests.sh",
     "lint:js": "eslint --max-warnings=0 ./src/ ./examples/ ./test/unit_tests ./index.js -f table --ext .js --ext .jsx",
     "lint:js:fix": "eslint --max-warnings=0 ./src/ ./examples/ ./test/unit_tests ./index.js -f table --ext .js --ext .jsx --fix",
     "lint": "npm run lint:js",
@@ -42,6 +42,13 @@
     "hooks": {
       "commit-msg": "commitlint -E HUSKY_GIT_PARAMS"
     }
+  },
+    "nyc": {
+    "check-coverage": true,
+    "statements": 17,
+    "branches": 13,
+    "functions": 25,
+    "lines": 18
   },
   "devDependencies": {
     "@babel/runtime": "^7.4.5",
