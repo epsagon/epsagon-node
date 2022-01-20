@@ -607,22 +607,24 @@ const athenaEventCreator = {
  * @param {proto.event_pb.Event} event the event to update the new steps dict on
  */
 const initializeStepsDict = (request, paramsPropertyName, event) => {
-    const data = (request.params || {})[paramsPropertyName];
-    let parsedData;
-    try {
-        // According to the docs input must be at least "{}". so if it is not
-        // JSON parsable an error will be raised for sure and the machine won't
-        // be invoked anyway.
-        parsedData = JSON.parse(data);
-    } catch (error) {
-        parsedData = null;
-    }
-    if (parsedData) {
-        parsedData[STEP_ID_NAME] = { id: uuid4(), step_num: -1 };
-        request.params[paramsPropertyName] = JSON.stringify(parsedData);
-        eventInterface.addToMetadata(event, {
-            steps_dict: parsedData[STEP_ID_NAME],
-        });
+    if ((process.env.EPSAGON_SFN_ID_INJECTION || '').toUpperCase() === 'TRUE') {
+        const data = (request.params || {})[paramsPropertyName];
+        let parsedData;
+        try {
+            // According to the docs input must be at least "{}". so if it is not
+            // JSON parsable an error will be raised for sure and the machine won't
+            // be invoked anyway.
+            parsedData = JSON.parse(data);
+        } catch (error) {
+            parsedData = null;
+        }
+        if (parsedData) {
+            parsedData[STEP_ID_NAME] = { id: uuid4(), step_num: -1 };
+            request.params[paramsPropertyName] = JSON.stringify(parsedData);
+            eventInterface.addToMetadata(event, {
+                steps_dict: parsedData[STEP_ID_NAME],
+            });
+        }
     }
 };
 
