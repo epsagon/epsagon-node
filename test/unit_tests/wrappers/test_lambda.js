@@ -223,25 +223,19 @@ describe('lambdaWrapper tests', () => {
     });
 
     it('lambdaWrapper: trigger creation failure', (done) => {
-        try {
-            this.createFromEventStub.reset();
-            this.createFromEventStub.throws();
-            this.wrappedStub({}, this.context, this.callbackStub);
-            setTimeout(() => {
-                expect(this.createFromEventStub.callCount).to.equal(1);
-                expect(this.createFromEventStub.calledWith({}));
-                expect(this.addEventStub.callCount).to.equal(0);
-                expect(this.sendTraceStub.callCount).to.equal(1);
-                expect(this.stubFunction.callCount).to.equal(1);
-                expect(this.callbackStub.callCount).to.equal(1);
-                expect(this.setExceptionStub.called).to.be.false;
-                done();
-            }, 1);
-        } catch (e) {
-            console.log(e);
-        } finally {
+        this.createFromEventStub.reset();
+        this.createFromEventStub.throws();
+        this.wrappedStub({}, this.context, this.callbackStub);
+        setTimeout(() => {
+            expect(this.createFromEventStub.callCount).to.equal(1);
+            expect(this.createFromEventStub.calledWith({}));
+            expect(this.addEventStub.callCount).to.equal(0);
+            expect(this.sendTraceStub.callCount).to.equal(1);
+            expect(this.stubFunction.callCount).to.equal(1);
+            expect(this.callbackStub.callCount).to.equal(1);
+            expect(this.setExceptionStub.called).to.be.false;
             done();
-        }
+        }, 1);
     });
 
     it('lambdaWrapper: wrapped function throws error', (done) => {
@@ -253,22 +247,17 @@ describe('lambdaWrapper tests', () => {
             this.callbackStub
         );
         setTimeout(() => {
-            try {
-                expect(this.createFromEventStub.calledWith({}));
-                expect(this.createFromEventStub.callCount).to.equal(1);
-                expect(this.addEventStub.callCount).to.equal(1);
-                expect(this.addExceptionStub.called).to.be.false;
-                expect(getReturnValue(this.addRunnerStub)).to.be.undefined;
-                expect(this.sendTraceStub.callCount).to.equal(0);
-                expect(this.sendTraceSyncStub.callCount).to.equal(1);
-                expect(this.stubFunction.callCount).to.equal(1);
-                expect(this.callbackStub.callCount).to.equal(0);
-                expect(this.setExceptionStub.callCount).to.equal(1);
-            } catch (e) {
-                console.log(e);
-            } finally {
-                done();
-            }
+            expect(this.createFromEventStub.calledWith({}));
+            expect(this.createFromEventStub.callCount).to.equal(1);
+            expect(this.addEventStub.callCount).to.equal(1);
+            expect(this.addExceptionStub.called).to.be.false;
+            expect(getReturnValue(this.addRunnerStub)).to.be.undefined;
+            expect(this.sendTraceStub.callCount).to.equal(0);
+            expect(this.sendTraceSyncStub.callCount).to.equal(1);
+            expect(this.stubFunction.callCount).to.equal(1);
+            expect(this.callbackStub.callCount).to.equal(0);
+            expect(this.setExceptionStub.callCount).to.equal(1);
+            done();
         }, 1);
     });
 
@@ -276,21 +265,17 @@ describe('lambdaWrapper tests', () => {
         this.stubFunction.callsArgWith(2, new Error());
         this.wrappedStub({}, this.context, this.callbackStub);
         setTimeout(() => {
-            try {
-                expect(this.createFromEventStub.callCount).to.equal(1);
-                expect(this.createFromEventStub.calledWith({}));
-                expect(this.addEventStub.callCount).to.equal(1);
-                expect(getReturnValue(this.addRunnerStub)).to.be.undefined;
-                expect(this.restartStub.callCount).to.equal(1);
-                expect(this.addExceptionStub.called).to.be.false;
-                expect(this.sendTraceStub.callCount).to.equal(1);
-                expect(this.stubFunction.callCount).to.equal(1);
-                expect(this.callbackStub.callCount).to.equal(1);
-                expect(this.setExceptionStub.callCount).to.equal(1);
-                done();
-            } catch (e) {
-                console.error(e);
-            }
+            expect(this.createFromEventStub.callCount).to.equal(1);
+            expect(this.createFromEventStub.calledWith({}));
+            expect(this.addEventStub.callCount).to.equal(1);
+            expect(getReturnValue(this.addRunnerStub)).to.be.undefined;
+            expect(this.restartStub.callCount).to.equal(1);
+            expect(this.addExceptionStub.called).to.be.false;
+            expect(this.sendTraceStub.callCount).to.equal(1);
+            expect(this.stubFunction.callCount).to.equal(1);
+            expect(this.callbackStub.callCount).to.equal(1);
+            expect(this.setExceptionStub.callCount).to.equal(1);
+            done();
         }, 1);
     });
 
@@ -515,20 +500,15 @@ describe('lambdaWrapper tests', () => {
 
         this.wrappedStub({ source: 'serverless-plugin-warmup' }, this.context, this.callbackStub);
         setTimeout(() => {
-            try {
-                expect(this.createFromEventStub.callCount).to.equal(0);
-                expect(this.restartStub.callCount).to.equal(0);
-                expect(this.createFromEventStub.calledWith({}));
-                expect(this.addEventStub.callCount).to.equal(0);
-                expect(this.addExceptionStub.called).to.be.false;
-                expect(this.sendTraceStub.callCount).to.equal(0);
-                expect(this.callbackStub.callCount).to.equal(1);
-                expect(this.setExceptionStub.called).to.be.false;
-            } catch (e) {
-                console.log(e);
-            } finally {
-                done();
-            }
+            expect(this.createFromEventStub.callCount).to.equal(0);
+            expect(this.restartStub.callCount).to.equal(0);
+            expect(this.createFromEventStub.calledWith({}));
+            expect(this.addEventStub.callCount).to.equal(0);
+            expect(this.addExceptionStub.called).to.be.false;
+            expect(this.sendTraceStub.callCount).to.equal(0);
+            expect(this.callbackStub.callCount).to.equal(1);
+            expect(this.setExceptionStub.called).to.be.false;
+            done();
         }, 1);
     });
 
@@ -634,28 +614,23 @@ describe('stepLambdaWrapper tests', () => {
     it('stepLambdaWrapper: sanity first step', (done) => {
         this.wrappedStub({}, this.context, this.callbackStub);
         setTimeout(() => {
-            try {
-                const result = this.callbackStub.getCall(0).args[1];
-                expect(result).to.contain.key('Epsagon');
-                expect(result).to.contain.key('result');
-                expect(this.restartStub.callCount).to.equal(1);
-                expect(this.createFromEventStub.callCount).to.equal(1);
-                expect(this.createFromEventStub.calledWith({}));
-                expect(this.addEventStub.callCount).to.equal(1);
-                const returnValue = JSON.parse(getReturnValue(this.addRunnerStub));
-                expect(returnValue).to.contain.key('Epsagon');
-                expect(returnValue).to.contain.key('result');
-                expect(this.addExceptionStub.called).to.be.false;
-                expect(this.sendTraceStub.callCount).to.equal(1);
-                expect(this.stubFunction.callCount).to.equal(1);
-                expect(this.callbackStub.callCount).to.equal(1);
-                expect(this.setExceptionStub.called).to.be.false;
-                expect(this.uuid4Stub.calledOnce).to.be.true;
-            } catch (e) {
-                console.log(e);
-            } finally {
-                done();
-            }
+            const result = this.callbackStub.getCall(0).args[1];
+            expect(result).to.contain.key('Epsagon');
+            expect(result).to.contain.key('result');
+            expect(this.restartStub.callCount).to.equal(1);
+            expect(this.createFromEventStub.callCount).to.equal(1);
+            expect(this.createFromEventStub.calledWith({}));
+            expect(this.addEventStub.callCount).to.equal(1);
+            const returnValue = JSON.parse(getReturnValue(this.addRunnerStub));
+            expect(returnValue).to.contain.key('Epsagon');
+            expect(returnValue).to.contain.key('result');
+            expect(this.addExceptionStub.called).to.be.false;
+            expect(this.sendTraceStub.callCount).to.equal(1);
+            expect(this.stubFunction.callCount).to.equal(1);
+            expect(this.callbackStub.callCount).to.equal(1);
+            expect(this.setExceptionStub.called).to.be.false;
+            expect(this.uuid4Stub.calledOnce).to.be.true;
+            done();
         }, 1);
     });
 
@@ -664,29 +639,24 @@ describe('stepLambdaWrapper tests', () => {
         this.stubFunction.callsArgWith(2, null, output);
         this.wrappedStub({}, this.context, this.callbackStub);
         setTimeout(() => {
-            try {
-                const result = this.callbackStub.getCall(0).args[1];
-                expect(result).to.contain.key('Epsagon');
-                expect(result).to.contain.key('statusCode');
-                expect(this.restartStub.callCount).to.equal(1);
-                expect(this.createFromEventStub.callCount).to.equal(1);
-                expect(this.createFromEventStub.calledWith({}));
-                expect(this.addEventStub.callCount).to.equal(1);
-                const returnValue = JSON.parse(getReturnValue(this.addRunnerStub));
-                expect(returnValue).to.contain.key('Epsagon');
-                expect(returnValue).to.contain.key('statusCode');
-                expect(getStatusCode(this.addRunnerStub)).to.equal(output.statusCode);
-                expect(this.addExceptionStub.called).to.be.false;
-                expect(this.sendTraceStub.callCount).to.equal(1);
-                expect(this.stubFunction.callCount).to.equal(1);
-                expect(this.callbackStub.callCount).to.equal(1);
-                expect(this.setExceptionStub.called).to.be.false;
-                expect(this.uuid4Stub.calledOnce).to.be.true;
-            } catch (e) {
-                console.log(e);
-            } finally {
-                done();
-            }
+            const result = this.callbackStub.getCall(0).args[1];
+            expect(result).to.contain.key('Epsagon');
+            expect(result).to.contain.key('statusCode');
+            expect(this.restartStub.callCount).to.equal(1);
+            expect(this.createFromEventStub.callCount).to.equal(1);
+            expect(this.createFromEventStub.calledWith({}));
+            expect(this.addEventStub.callCount).to.equal(1);
+            const returnValue = JSON.parse(getReturnValue(this.addRunnerStub));
+            expect(returnValue).to.contain.key('Epsagon');
+            expect(returnValue).to.contain.key('statusCode');
+            expect(getStatusCode(this.addRunnerStub)).to.equal(output.statusCode);
+            expect(this.addExceptionStub.called).to.be.false;
+            expect(this.sendTraceStub.callCount).to.equal(1);
+            expect(this.stubFunction.callCount).to.equal(1);
+            expect(this.callbackStub.callCount).to.equal(1);
+            expect(this.setExceptionStub.called).to.be.false;
+            expect(this.uuid4Stub.calledOnce).to.be.true;
+            done();
         }, 1);
     });
 
@@ -697,29 +667,24 @@ describe('stepLambdaWrapper tests', () => {
             this.callbackStub
         );
         setTimeout(() => {
-            try {
-                const result = this.callbackStub.getCall(0).args[1];
-                expect(result).to.contain.key('Epsagon');
-                expect(result.Epsagon.step_num).to.equal(3);
-                expect(result).to.contain.key('result');
-                expect(this.restartStub.callCount).to.equal(1);
-                expect(this.createFromEventStub.callCount).to.equal(1);
-                expect(this.createFromEventStub.calledWith({}));
-                expect(this.addEventStub.callCount).to.equal(1);
-                const returnValue = JSON.parse(getReturnValue(this.addRunnerStub));
-                expect(returnValue).to.contain.key('Epsagon');
-                expect(returnValue).to.contain.key('result');
-                expect(this.addExceptionStub.called).to.be.false;
-                expect(this.sendTraceStub.callCount).to.equal(1);
-                expect(this.stubFunction.callCount).to.equal(1);
-                expect(this.callbackStub.callCount).to.equal(1);
-                expect(this.setExceptionStub.called).to.be.false;
-                expect(this.uuid4Stub.called).to.be.false;
-            } catch (e) {
-                console.log(e);
-            } finally {
-                done();
-            }
+            const result = this.callbackStub.getCall(0).args[1];
+            expect(result).to.contain.key('Epsagon');
+            expect(result.Epsagon.step_num).to.equal(3);
+            expect(result).to.contain.key('result');
+            expect(this.restartStub.callCount).to.equal(1);
+            expect(this.createFromEventStub.callCount).to.equal(1);
+            expect(this.createFromEventStub.calledWith({}));
+            expect(this.addEventStub.callCount).to.equal(1);
+            const returnValue = JSON.parse(getReturnValue(this.addRunnerStub));
+            expect(returnValue).to.contain.key('Epsagon');
+            expect(returnValue).to.contain.key('result');
+            expect(this.addExceptionStub.called).to.be.false;
+            expect(this.sendTraceStub.callCount).to.equal(1);
+            expect(this.stubFunction.callCount).to.equal(1);
+            expect(this.callbackStub.callCount).to.equal(1);
+            expect(this.setExceptionStub.called).to.be.false;
+            expect(this.uuid4Stub.called).to.be.false;
+            done();
         }, 1);
     });
 
@@ -757,35 +722,26 @@ describe('stepLambdaWrapper tests', () => {
     });
 
     it('stepLambdaWrapper: wrapped function dont return object', (done) => {
-        try {
-            this.stubFunction.callsArgWith(2, null, 3);
-            this.wrappedStub({}, this.context, this.callbackStub);
+        this.stubFunction.callsArgWith(2, null, 3);
+        this.wrappedStub({}, this.context, this.callbackStub);
 
-            // we are not handling this case yet, return value should be unchanged
-            setTimeout(() => {
-                try {
-                    const result = this.callbackStub.getCall(0).args[1];
-                    expect(result).to.not.contain.key('Epsagon');
-                    expect(result).to.equal(3);
-                    expect(this.restartStub.callCount).to.equal(1);
-                    expect(this.createFromEventStub.callCount).to.equal(1);
-                    expect(this.createFromEventStub.calledWith({}));
-                    expect(this.addEventStub.callCount).to.equal(1);
-                    expect(this.addExceptionStub.called).to.be.false;
-                    expect(this.sendTraceStub.callCount).to.equal(1);
-                    expect(this.stubFunction.callCount).to.equal(1);
-                    expect(this.callbackStub.callCount).to.equal(1);
-                    expect(this.setExceptionStub.called).to.be.false;
-                    expect(this.uuid4Stub.called).to.be.false;
-                } catch (e) {
-                    console.log(e);
-                } finally {
-                    done();
-                }
-            }, 1);
-        } catch (e) {
-            console.log(e);
-        }
+        // we are not handling this case yet, return value should be unchanged
+        setTimeout(() => {
+            const result = this.callbackStub.getCall(0).args[1];
+            expect(result).to.not.contain.key('Epsagon');
+            expect(result).to.equal(3);
+            expect(this.restartStub.callCount).to.equal(1);
+            expect(this.createFromEventStub.callCount).to.equal(1);
+            expect(this.createFromEventStub.calledWith({}));
+            expect(this.addEventStub.callCount).to.equal(1);
+            expect(this.addExceptionStub.called).to.be.false;
+            expect(this.sendTraceStub.callCount).to.equal(1);
+            expect(this.stubFunction.callCount).to.equal(1);
+            expect(this.callbackStub.callCount).to.equal(1);
+            expect(this.setExceptionStub.called).to.be.false;
+            expect(this.uuid4Stub.called).to.be.false;
+            done();
+        }, 1);
     });
 
     it('stepLambdaWrapper: trigger creation failure', (done) => {
@@ -793,19 +749,14 @@ describe('stepLambdaWrapper tests', () => {
         this.createFromEventStub.throws();
         this.wrappedStub({}, this.context, this.callbackStub);
         setTimeout(() => {
-            try {
-                expect(this.createFromEventStub.callCount).to.equal(1);
-                expect(this.createFromEventStub.calledWith({}));
-                expect(this.addEventStub.callCount).to.equal(0);
-                expect(this.sendTraceStub.callCount).to.equal(1);
-                expect(this.stubFunction.callCount).to.equal(1);
-                expect(this.callbackStub.callCount).to.equal(1);
-                expect(this.setExceptionStub.called).to.be.false;
-            } catch (e) {
-                console.log(e);
-            } finally {
-                done();
-            }
+            expect(this.createFromEventStub.callCount).to.equal(1);
+            expect(this.createFromEventStub.calledWith({}));
+            expect(this.addEventStub.callCount).to.equal(0);
+            expect(this.sendTraceStub.callCount).to.equal(1);
+            expect(this.stubFunction.callCount).to.equal(1);
+            expect(this.callbackStub.callCount).to.equal(1);
+            expect(this.setExceptionStub.called).to.be.false;
+            done();
         }, 1);
     });
 
@@ -814,23 +765,18 @@ describe('stepLambdaWrapper tests', () => {
         this.stubFunction.throws();
         this.wrappedStub({}, this.context, this.callbackStub);
         setTimeout(() => {
-            try {
-                expect(this.createFromEventStub.callCount).to.equal(1);
-                expect(this.createFromEventStub.calledWith({}));
-                expect(this.addEventStub.callCount).to.equal(1);
-                expect(getReturnValue(this.addRunnerStub)).to.be.undefined;
-                expect(this.addExceptionStub.called).to.be.false;
-                expect(this.sendTraceStub.called).to.be.false;
-                expect(this.sendTraceSyncStub.callCount).to.equal(1);
-                expect(this.stubFunction.callCount).to.equal(1);
-                expect(this.callbackStub.callCount).to.equal(0);
-                expect(this.setExceptionStub.callCount).to.equal(1);
-                expect(this.uuid4Stub.called).to.be.false;
-            } catch (e) {
-                console.log(e);
-            } finally {
-                done();
-            }
+            expect(this.createFromEventStub.callCount).to.equal(1);
+            expect(this.createFromEventStub.calledWith({}));
+            expect(this.addEventStub.callCount).to.equal(1);
+            expect(getReturnValue(this.addRunnerStub)).to.be.undefined;
+            expect(this.addExceptionStub.called).to.be.false;
+            expect(this.sendTraceStub.called).to.be.false;
+            expect(this.sendTraceSyncStub.callCount).to.equal(1);
+            expect(this.stubFunction.callCount).to.equal(1);
+            expect(this.callbackStub.callCount).to.equal(0);
+            expect(this.setExceptionStub.callCount).to.equal(1);
+            expect(this.uuid4Stub.called).to.be.false;
+            done();
         }, 1);
     });
 
@@ -838,28 +784,23 @@ describe('stepLambdaWrapper tests', () => {
         this.stubFunction.callsArgWith(2, new Error('fail'), { result: 1 });
         this.wrappedStub({}, this.context, this.callbackStub);
         setTimeout(() => {
-            try {
-                const error = this.callbackStub.getCall(0).args[0];
-                expect(error.message).to.equal('fail');
-                const result = this.callbackStub.getCall(0).args[1];
-                expect(result).to.not.contain.key('Epsagon');
-                expect(result).to.contain.key('result');
-                expect(this.restartStub.callCount).to.equal(1);
-                expect(this.createFromEventStub.callCount).to.equal(1);
-                expect(this.createFromEventStub.calledWith({}));
-                expect(this.addEventStub.callCount).to.equal(1);
-                expect(getReturnValue(this.addRunnerStub)).to.be.undefined;
-                expect(this.addExceptionStub.called).to.be.false;
-                expect(this.sendTraceStub.callCount).to.equal(1);
-                expect(this.stubFunction.callCount).to.equal(1);
-                expect(this.callbackStub.callCount).to.equal(1);
-                expect(this.setExceptionStub.callCount).to.equal(1);
-                expect(this.uuid4Stub.called).to.be.false;
-            } catch (e) {
-                console.log(e);
-            } finally {
-                done();
-            }
+            const error = this.callbackStub.getCall(0).args[0];
+            expect(error.message).to.equal('fail');
+            const result = this.callbackStub.getCall(0).args[1];
+            expect(result).to.not.contain.key('Epsagon');
+            expect(result).to.contain.key('result');
+            expect(this.restartStub.callCount).to.equal(1);
+            expect(this.createFromEventStub.callCount).to.equal(1);
+            expect(this.createFromEventStub.calledWith({}));
+            expect(this.addEventStub.callCount).to.equal(1);
+            expect(getReturnValue(this.addRunnerStub)).to.be.undefined;
+            expect(this.addExceptionStub.called).to.be.false;
+            expect(this.sendTraceStub.callCount).to.equal(1);
+            expect(this.stubFunction.callCount).to.equal(1);
+            expect(this.callbackStub.callCount).to.equal(1);
+            expect(this.setExceptionStub.callCount).to.equal(1);
+            expect(this.uuid4Stub.called).to.be.false;
+            done();
         }, 1);
     });
 
@@ -901,24 +842,19 @@ describe('stepLambdaWrapper tests', () => {
         this.wrappedStub = lambdaWrapper.stepLambdaWrapper(this.stubFunction);
         this.wrappedStub({}, this.context, this.callbackStub);
         setTimeout(() => {
-            try {
-                expect(this.createFromEventStub.callCount).to.equal(1);
-                expect(this.restartStub.callCount).to.equal(1);
-                expect(this.createFromEventStub.calledWith({}));
-                expect(this.addEventStub.callCount).to.equal(1);
-                expect(getReturnValue(this.addRunnerStub)).to.include(
-                    lambdaWrapper.FAILED_TO_SERIALIZE_MESSAGE
-                );
-                expect(this.addExceptionStub.called).to.be.false;
-                expect(this.sendTraceStub.callCount).to.equal(1);
-                expect(this.stubFunction.callCount).to.equal(1);
-                expect(this.callbackStub.callCount).to.equal(1);
-                expect(this.setExceptionStub.called).to.be.false;
-            } catch (e) {
-                console.log(e);
-            } finally {
-                done();
-            }
+            expect(this.createFromEventStub.callCount).to.equal(1);
+            expect(this.restartStub.callCount).to.equal(1);
+            expect(this.createFromEventStub.calledWith({}));
+            expect(this.addEventStub.callCount).to.equal(1);
+            expect(getReturnValue(this.addRunnerStub)).to.include(
+                lambdaWrapper.FAILED_TO_SERIALIZE_MESSAGE
+            );
+            expect(this.addExceptionStub.called).to.be.false;
+            expect(this.sendTraceStub.callCount).to.equal(1);
+            expect(this.stubFunction.callCount).to.equal(1);
+            expect(this.callbackStub.callCount).to.equal(1);
+            expect(this.setExceptionStub.called).to.be.false;
+            done();
         }, 1);
     });
 });
