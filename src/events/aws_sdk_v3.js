@@ -7,6 +7,11 @@ const serverlessEvent = require('../proto/event_pb.js');
 const eventInterface = require('../event.js');
 const errorCode = require('../proto/error_code_pb.js');
 const moduleUtils = require('./module_utils');
+const tryRequire = require('../try_require');
+const md5 = require('md5');
+const sortJson = require('sort-json');
+
+const DynamoDB = tryRequire('aws-sdk/clients/dynamodb');
 
 const SNSv3EventCreator = {
     /**
@@ -51,11 +56,191 @@ const SNSv3EventCreator = {
     },
 };
 
+const DynamoDBv3EventCreator = {
+    /**
+     * Generates the Hash of a DynamoDB entry as should be sent to the server.
+     * @param {Object} item The DynamoDB item to store
+     * @return {string} The hash of the item
+     */
+     generateItemHash(item) {
+        const unmarshalledItem = DynamoDB.Converter.unmarshall(item);
+        return md5(sortJson(unmarshalledItem), { ignoreCase: true });
+    },
+    
+    /**
+     * Updates an event with the appropriate fields from a dynamoDB command
+     * @param {string} operation the operation we wrapped.
+     * @param {Command} command the wrapped command
+     * @param {proto.event_pb.Event} event The event to update the data on
+     */
+    requestHandler(operation, command, event) {
+        const resource = event.getResource();
+        const parameters = command.input || {};
+        resource.setName(command.input.TableName || 'DynamoDBEngine');
+        
+        switch (operation) {
+            case 'DeleteCommand':
+            case 'DeleteItemCommand':
+                // on delete, hash only the key
+                eventInterface.addToMetadata(event, {
+                    item_hash: this.generateItemHash(parameters.Key),
+                });
+                /* fallthrough */
+            case 'GetCommand':
+            case 'GetItemCommand':
+                eventInterface.addToMetadata(event, {}, {
+                    Key: parameters.Key,
+                });
+                break;
+            
+            case 'PutCommand':
+            case 'PutItemCommand':
+                eventInterface.addToMetadata(event, {
+                    item_hash: this.generateItemHash(parameters.Item),
+                }, {
+                    Item: JSON.stringify(parameters.Item),
+                });
+                break;
+    
+            case 'UpdateItemCommand':
+                eventInterface.addToMetadata(event, {
+                    Key: parameters.Key,
+                }, {
+                    'Update Expression': JSON.stringify(
+                        parameters.UpdateExpression
+                    ),
+                    'Expression Attribute Names': JSON.stringify(
+                        parameters.ExpressionAttributeNames
+                    ),
+                    'ReturnValues': JSON.stringify(
+                        parameters.ReturnValues
+                    ),
+                });
+                break;
+
+            case 'ScanCommand':
+            case 'QueryCommand': {
+                eventInterface.addObjectToMetadata(
+                    event,
+                    'Parameters',
+                    parameters,
+                    [
+                        'KeyConditionExpression',
+                        'FilterExpression',
+                        'ExpressionAttributeValues',
+                        'ProjectionExpression'
+                    ]
+                );
+                break;
+            }
+    
+            case 'BatchWriteItemCommand': {
+                const tableName = Object.keys(parameters.RequestItems)[0];
+                resource.setName(tableName || parameters.TableName);
+                const addedItems = [];
+                const deletedKeys = [];
+                parameters.RequestItems[tableName].forEach(
+                    (item) => {
+                        if (item.PutRequest) {
+                            addedItems.push(item.PutRequest.Item);
+                        }
+                        if (item.DeleteRequest) {
+                            deletedKeys.push(item.DeleteRequest.Key);
+                        }
+                    }
+                );
+                if (addedItems.length !== 0) {
+                    eventInterface.addToMetadata(event, {}, { 'Added Items': JSON.stringify(addedItems) });
+                }
+                if (deletedKeys.length !== 0) {
+                    eventInterface.addToMetadata(event, {}, { 'Deleted Keys': JSON.stringify(deletedKeys) });
+                }
+                break;
+            }
+            
+            case 'UpdateCommand':
+                eventInterface.addToMetadata(event, {
+                    Key: parameters.Key,
+                }, {
+                    'Update Expression': JSON.stringify(
+                        parameters.UpdateExpression
+                    ),
+                    'Expression Attribute Names': JSON.stringify(
+                        parameters.ExpressionAttributeNames
+                    ),
+                    'ReturnValues': JSON.stringify(
+                        parameters.ReturnValues
+                    ),
+                });
+                break;
+            
+            default:
+                break;
+            }
+    },
+
+    /**
+     * Updates an event with the appropriate fields from a DynamoDB response
+     * @param {string} operation the operation we wrapped.
+     * @param {object} response The AWS.Response object
+     * @param {proto.event_pb.Event} event The event to update the data on
+     */
+     responseHandler(operation, response, event) {
+        switch (operation) {
+        case 'GetCommand':
+        case 'GetItemCommand':
+            eventInterface.addToMetadata(event, {}, {
+                Item: JSON.stringify(response.Item),
+            });
+            break;
+
+        case 'UpdateCommand':
+            if (response.Attributes) {
+                eventInterface.addToMetadata(event, {
+                    item_hash: this.generateItemHash(response.Attributes),
+                }, {});
+            }
+            break;
+
+        case 'ListTablesCommand':
+            eventInterface.addToMetadata(event, {
+                'Table Names': response.TableNames.join(', '),
+            });
+            break;
+
+        case 'ScanCommand':
+        case 'QueryCommand': {
+            eventInterface.addObjectToMetadata(
+                event,
+                'Response',
+                response,
+                ['Items', 'LastEvaluatedKey']
+            );
+            break;
+        }
+
+        case 'BatchWriteItemCommand': {
+            if (response.UnprocessedItems) {
+                const unprocessedItems = (Object.keys(response.UnprocessedItems));
+                eventInterface.addToMetadata(event, {
+                    unprocessedItems_count: unprocessedItems.length,
+                });
+            }
+            break;
+        }
+
+        default:
+            break;
+        }
+    },
+};
+
 /**
  * a map between AWS resource names and their appropriate creator object.
  */
 const specificEventCreators = {
     sns: SNSv3EventCreator,
+    dynamodb: DynamoDBv3EventCreator,
 };
 
 /**
@@ -164,11 +349,18 @@ module.exports = {
      */
     init() {
         moduleUtils.patchModule(
+            '@aws-sdk/client-dynamodb', // A client that can catch all 'send' commands
+            // sent from aws resources using aws-sdk v3.
+            'send',
+            AWSSDKv3Wrapper,
+            AWSmod => AWSmod.DynamoDBClient.prototype
+        );
+        moduleUtils.patchModule(
             '@aws-sdk/smithy-client', // A client that can catch all 'send' commands
             // sent from aws resources using aws-sdk v3.
             'send',
             AWSSDKv3Wrapper,
             AWSmod => AWSmod.Client.prototype
-        );
+        ); 
     },
 };
