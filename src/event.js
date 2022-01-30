@@ -85,7 +85,7 @@ module.exports.addObjectToMetadata = function addObjectToMetadata(
     let objectToAdd = object;
     if (!config.getConfig().metadataOnly && dataFields.length > 0) {
         const fields = Object.getOwnPropertyNames(object).filter(
-            field => !dataFields.includes(field)
+            field => dataFields.includes(field)
         );
         objectToAdd = Object.assign(...(fields.map(field => ({ [field]: object[field] }))));
         event.getResource().getMetadataMap().set(key, JSON.stringify(objectToAdd));
