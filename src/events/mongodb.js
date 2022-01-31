@@ -94,8 +94,10 @@ function getItemsCount(operationName, response) {
  */
 function getArgsFromFunction(...args) {
     const operationName = args[args.length - 2];
+    const checkVersion = args[0].db;
+
     // Mongo >= 4
-    if (operationName.includes('connection')) {
+    if (checkVersion) {
         const ctx = args[args.length - 3];
         let options = {};
         if (ctx) {
