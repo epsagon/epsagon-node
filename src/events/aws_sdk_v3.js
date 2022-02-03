@@ -8,6 +8,7 @@ const tracer = require('../tracer');
 const serverlessEvent = require('../proto/event_pb.js');
 const eventInterface = require('../event.js');
 const errorCode = require('../proto/error_code_pb.js');
+const resourceUtils = require('../resource_utils/sqs_utils.js');
 const moduleUtils = require('./module_utils');
 const tryRequire = require('../try_require');
 
@@ -50,6 +51,71 @@ const SNSv3EventCreator = {
                 'Message ID': `${response.MessageId}`,
             });
             break;
+        default:
+            break;
+        }
+    },
+};
+
+const SQSEventCreator = {
+    /**
+     * Updates an event with the appropriate fields from a SQS command
+     * @param {string} operation the operation we wrapped.
+     * @param {Command} command the wrapped command
+     * @param {proto.event_pb.Event} event The event to update the data on
+     */
+    requestHandler(operation, command, event) {
+        const parameters = command.input || {};
+        const resource = event.getResource();
+
+        if ('QueueUrl' in parameters) {
+            resource.setName(`${parameters.QueueUrl.split('/').pop()}`);
+        }
+
+        const entry = ('Entries' in parameters) ? parameters.Entries : parameters;
+        if ('MessageBody' in entry) {
+            eventInterface.addToMetadata(event, {}, {
+                'Message Body': entry.MessageBody,
+            });
+        }
+
+        if ('MessageAttributes' in entry) {
+            eventInterface.addToMetadata(event, {}, {
+                'Message Attributes': entry.MessageAttributes,
+            });
+        }
+    },
+
+    /**
+     * Updates an event with the appropriate fields from a SQS response
+     * @param {string} operation the operation we wrapped.
+     * @param {object} response The AWS.Response object
+     * @param {proto.event_pb.Event} event The event to update the data on
+     */
+    responseHandler(operation, response, event) {
+        switch (operation) {
+        case 'SendMessageCommand':
+            eventInterface.addToMetadata(event, {
+                'Message ID': `${response.MessageId}`,
+                'MD5 Of Message Body': `${response.MD5OfMessageBody}`,
+            });
+            break;
+        case 'ReceiveMessageCommand': {
+            let messagesNumber = 0;
+            if (('Messages' in response) && (response.Messages.length > 0)) {
+                messagesNumber = response.Messages.length;
+                eventInterface.addToMetadata(event, {
+                    'Message ID': `${response.Messages[0].MessageId}`,
+                    'MD5 Of Message Body': `${response.Messages[0].MD5OfBody}`,
+                });
+                const snsData = resourceUtils.getSNSTrigger(response.Messages);
+                if (snsData != null) {
+                    eventInterface.addToMetadata(event, { 'SNS Trigger': snsData });
+                }
+            }
+            eventInterface.addToMetadata(event, { 'Number Of Messages': messagesNumber });
+            break;
+        }
         default:
             break;
         }
@@ -226,6 +292,7 @@ const DynamoDBv3EventCreator = {
 const specificEventCreators = {
     sns: SNSv3EventCreator,
     dynamodb: DynamoDBv3EventCreator,
+    sqs: SQSEventCreator,
 };
 
 /**
@@ -339,6 +406,13 @@ module.exports = {
             'send',
             AWSSDKv3Wrapper,
             AWSmod => AWSmod.DynamoDBClient.prototype
+        );
+        moduleUtils.patchModule(
+            '@aws-sdk/client-sqs', // A client that can catch all 'send' commands
+            // sent from aws resources using aws-sdk v3.
+            'send',
+            AWSSDKv3Wrapper,
+            AWSmod => AWSmod.SQSClient.prototype
         );
         moduleUtils.patchModule(
             '@aws-sdk/smithy-client', // A client that can catch all 'send' commands
