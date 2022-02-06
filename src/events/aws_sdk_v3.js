@@ -70,8 +70,9 @@ const SQSv3EventCreator = {
 
         if ('QueueUrl' in parameters) {
             if (parameters.QueueUrl.split('/') != null &&
-                parameters.QueueUrl.split('/') !== '')
-            resource.setName(`${parameters.QueueUrl.split('/').pop()}`);
+               parameters.QueueUrl.split('/') !== '') {
+                resource.setName(`${parameters.QueueUrl.split('/').pop()}`);
+            }
         }
 
         const entry = ('Entries' in parameters) ? parameters.Entries : parameters;
