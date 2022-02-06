@@ -57,7 +57,7 @@ const SNSv3EventCreator = {
     },
 };
 
-const SQSEventCreator = {
+const SQSv3EventCreator = {
     /**
      * Updates an event with the appropriate fields from a SQS command
      * @param {string} operation the operation we wrapped.
@@ -69,6 +69,8 @@ const SQSEventCreator = {
         const resource = event.getResource();
 
         if ('QueueUrl' in parameters) {
+            if (parameters.QueueUrl.split('/') != null &&
+                parameters.QueueUrl.split('/') !== '')
             resource.setName(`${parameters.QueueUrl.split('/').pop()}`);
         }
 
@@ -102,7 +104,7 @@ const SQSEventCreator = {
             break;
         case 'ReceiveMessageCommand': {
             let messagesNumber = 0;
-            if (('Messages' in response) && (response.Messages.length > 0)) {
+            if (('Messages' in response) && (response.Messages != null)) {
                 messagesNumber = response.Messages.length;
                 eventInterface.addToMetadata(event, {
                     'Message ID': `${response.Messages[0].MessageId}`,
@@ -292,7 +294,7 @@ const DynamoDBv3EventCreator = {
 const specificEventCreators = {
     sns: SNSv3EventCreator,
     dynamodb: DynamoDBv3EventCreator,
-    sqs: SQSEventCreator,
+    sqs: SQSv3EventCreator,
 };
 
 /**
