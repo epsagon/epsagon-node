@@ -41,6 +41,7 @@ const LIBNAME_TO_PATCHER = {
     'aws-sdk/global': awsSDKPatcher,
     'aws-sdk/client-sns': awsSDKv3Patcher,
     'aws-sdk/client-dynamodb': awsSDKv3Patcher,
+    'aws-sdk/client-sqs': awsSDKv3Patcher,
     'azure-sdk': azureSdkPatcher,
     'winston-cw': winstonCloudwatchPatcher,
     'cos-nodejs-sdk-v5': tencentCOSPatcher,

@@ -48,7 +48,7 @@
     "statements": 17,
     "branches": 13,
     "functions": 25,
-    "lines": 18
+    "lines": 17
   },
   "devDependencies": {
     "@babel/runtime": "^7.4.5",
