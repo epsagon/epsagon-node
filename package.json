@@ -43,7 +43,7 @@
       "commit-msg": "commitlint -E HUSKY_GIT_PARAMS"
     }
   },
-    "nyc": {
+  "nyc": {
     "check-coverage": true,
     "statements": 17,
     "branches": 13,
@@ -102,7 +102,6 @@
     "underscore": "^1.12.0"
   },
   "dependencies": {
-    "@aws-sdk/client-dynamodb": "^3.49.0",
     "@aws-sdk/client-sns": "^3.41.0",
     "@aws-sdk/util-dynamodb": "^3.49.0",
     "axios-minified": "^1.0.7",
