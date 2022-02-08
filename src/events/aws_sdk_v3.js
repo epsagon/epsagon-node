@@ -3,6 +3,7 @@
  */
 const md5 = require('md5');
 const sortJson = require('sort-json');
+const { unmarshall } = require('@aws-sdk/util-dynamodb');
 const utils = require('../utils.js');
 const tracer = require('../tracer');
 const serverlessEvent = require('../proto/event_pb.js');
@@ -10,9 +11,7 @@ const eventInterface = require('../event.js');
 const errorCode = require('../proto/error_code_pb.js');
 const resourceUtils = require('../resource_utils/sqs_utils.js');
 const moduleUtils = require('./module_utils');
-const tryRequire = require('../try_require');
 
-const DynamoDB = tryRequire('aws-sdk/clients/dynamodb');
 
 const SNSv3EventCreator = {
     /**
@@ -132,7 +131,7 @@ const DynamoDBv3EventCreator = {
      * @return {string} The hash of the item
      */
     generateItemHash(item) {
-        const unmarshalledItem = DynamoDB.Converter.unmarshall(item);
+        const unmarshalledItem = unmarshall(item);
         return md5(sortJson(unmarshalledItem), { ignoreCase: true });
     },
 
