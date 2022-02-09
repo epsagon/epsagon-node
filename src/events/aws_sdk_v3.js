@@ -134,11 +134,10 @@ const DynamoDBv3EventCreator = {
         try {
             const unmarshalledItem = unmarshall(item);
             return md5(sortJson(unmarshalledItem), { ignoreCase: true });
-        }
-        catch (e) {
+        } catch (e) {
             tracer.addException(e);
         }
-        
+        return '';
     },
 
     /**
