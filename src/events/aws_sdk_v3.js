@@ -131,8 +131,13 @@ const DynamoDBv3EventCreator = {
      * @return {string} The hash of the item
      */
     generateItemHash(item) {
-        const unmarshalledItem = unmarshall(item);
-        return md5(sortJson(unmarshalledItem), { ignoreCase: true });
+        try {
+            const unmarshalledItem = unmarshall(item);
+            return md5(sortJson(unmarshalledItem), { ignoreCase: true });
+        } catch (e) {
+            tracer.addException(e);
+        }
+        return '';
     },
 
     /**
