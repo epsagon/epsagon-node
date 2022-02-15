@@ -85,6 +85,12 @@ describe('tracer config tests', () => {
         }
     });
 
+    it('setConfig: verify custom ignored DB tables edge case', () => {
+        const ignoredDBTables = 'incorrectValueSetting';
+        config.setConfig({ ignoredDBTables });
+        expect(config.getConfig().ignoredDBTables === undefined);
+    });
+
     it('setConfig: set custom HTTP error code', () => {
         const httpErrorStatusCode = 42;
         config.setConfig({ httpErrorStatusCode });
