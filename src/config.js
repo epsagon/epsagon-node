@@ -56,7 +56,6 @@ const config = {
     token: process.env.EPSAGON_TOKEN || '',
     appName: process.env.EPSAGON_APP_NAME || 'Application',
     metadataOnly: (process.env.EPSAGON_METADATA || '').toUpperCase() === 'TRUE',
-    skipReturnValue: (process.env.EPSAGON_SKIP_RETURN_VALUE || '').toUpperCase() === 'TRUE',
     useSSL: (process.env.EPSAGON_SSL || 'TRUE').toUpperCase() === 'TRUE',
     traceCollectorURL: process.env.EPSAGON_COLLECTOR_URL || consts.TRACE_COLLECTOR_URL,
     isEpsagonDisabled: (process.env.DISABLE_EPSAGON || '').toUpperCase() === 'TRUE',
@@ -129,6 +128,9 @@ if ((process.env.EPSAGON_SSL || 'TRUE').toUpperCase() === 'TRUE') {
     config.traceCollectorURL = config.traceCollectorURL.replace('http:', 'https:');
 }
 
+const skipReturnValue = (process.env.EPSAGON_SKIP_RETURN_VALUE || '').toUpperCase() === 'TRUE';
+config.addReturnValue = !skipReturnValue;
+
 if (process.env.EPSAGON_PATCH_WHITELIST) {
     config.patchWhitelist = process.env.EPSAGON_PATCH_WHITELIST.split(',');
 }
@@ -160,8 +162,9 @@ module.exports.setConfig = function setConfig(configData) {
         config.isEpsagonDisabled = configData.isEpsagonDisabled;
     }
 
-    if (configData.skipReturnValue) {
-        config.skipReturnValue = configData.skipReturnValue;
+    // Set addReturnValue for lambda
+    if (configData.addReturnValue || configData.addReturnValue === false) {
+        config.addReturnValue = configData.addReturnValue;
     }
 
     if (configData.appName) {

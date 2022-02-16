@@ -102,9 +102,14 @@ describe('tracer config tests', () => {
         expect(config.getConfig()).to.contain({ decodeHTTP: false });
     });
 
-    it('setConfig: set skipReturnValue to true', () => {
-        config.setConfig({ skipReturnValue: false });
-        expect(config.getConfig()).to.contain({ skipReturnValue: false });
+    it('setConfig: set addReturnValue to false', () => {
+        config.setConfig({ addReturnValue: false });
+        expect(config.getConfig()).to.contain({ addReturnValue: false });
+    });
+
+    it('setConfig: set addReturnValue to true', () => {
+        config.setConfig({ addReturnValue: true });
+        expect(config.getConfig()).to.contain({ addReturnValue: true });
     });
 
     it('setConfig: set custom sendTimeout', () => {
