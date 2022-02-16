@@ -16,7 +16,6 @@ declare module 'epsagon' {
     sendOnlyErrors?: boolean
     sendTimeout?: number
     decodeHTTP?: boolean
-    skipReturnValue?: boolean
     disableHttpResponseBodyCapture?: boolean
     loggingTracingEnabled?: boolean
     sendBatch?: boolean

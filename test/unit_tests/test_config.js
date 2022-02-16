@@ -103,8 +103,8 @@ describe('tracer config tests', () => {
     });
 
     it('setConfig: set skipReturnValue to true', () => {
-        config.setConfig({ skipReturnValue: true });
-        expect(config.getConfig()).to.contain({ skipReturnValue: true });
+        config.setConfig({ skipReturnValue: false });
+        expect(config.getConfig()).to.contain({ skipReturnValue: false });
     });
 
     it('setConfig: set custom sendTimeout', () => {
