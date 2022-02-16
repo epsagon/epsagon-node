@@ -191,7 +191,7 @@ function baseLambdaWrapper(
                 eventInterface.addToMetadata(runner, { status_code: statusCode });
             }
             const config = getConfig();
-            if (error === null && !config.metadataOnly && !config.skipReturnVal) {
+            if (error === null && !config.metadataOnly && !config.skipReturnValue) {
                 try {
                     // Taken from AWS Lambda runtime
                     const jsonResult = JSON.stringify(

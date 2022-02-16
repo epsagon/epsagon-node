@@ -56,7 +56,7 @@ const config = {
     token: process.env.EPSAGON_TOKEN || '',
     appName: process.env.EPSAGON_APP_NAME || 'Application',
     metadataOnly: (process.env.EPSAGON_METADATA || '').toUpperCase() === 'TRUE',
-    skipReturnValue: (process.env.EPSAGON_SKIP_RETURN_VALUE || '').toUpperCase === 'TRUE',
+    skipReturnValue: (process.env.EPSAGON_SKIP_RETURN_VALUE || '').toUpperCase() === 'TRUE',
     useSSL: (process.env.EPSAGON_SSL || 'TRUE').toUpperCase() === 'TRUE',
     traceCollectorURL: process.env.EPSAGON_COLLECTOR_URL || consts.TRACE_COLLECTOR_URL,
     isEpsagonDisabled: (process.env.DISABLE_EPSAGON || '').toUpperCase() === 'TRUE',
