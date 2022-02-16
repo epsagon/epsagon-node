@@ -56,6 +56,7 @@ const config = {
     token: process.env.EPSAGON_TOKEN || '',
     appName: process.env.EPSAGON_APP_NAME || 'Application',
     metadataOnly: (process.env.EPSAGON_METADATA || '').toUpperCase() === 'TRUE',
+    skipReturnVal: (process.env.EPSAGON_SKIP_RETURN_VALUE || '').toLocaleUpperCase === 'TRUE',
     useSSL: (process.env.EPSAGON_SSL || 'TRUE').toUpperCase() === 'TRUE',
     traceCollectorURL: process.env.EPSAGON_COLLECTOR_URL || consts.TRACE_COLLECTOR_URL,
     isEpsagonDisabled: (process.env.DISABLE_EPSAGON || '').toUpperCase() === 'TRUE',
@@ -157,6 +158,10 @@ module.exports.setConfig = function setConfig(configData) {
 
     if (configData.isEpsagonDisabled) {
         config.isEpsagonDisabled = configData.isEpsagonDisabled;
+    }
+
+    if (configData.skipReturnVal) {
+        config.skipReturnVal = configData.skipReturnVal;
     }
 
     if (configData.appName) {
