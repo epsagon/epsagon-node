@@ -190,11 +190,8 @@ function baseLambdaWrapper(
             if (statusCode) {
                 eventInterface.addToMetadata(runner, { status_code: statusCode });
             }
-
-            const table = utils.getObjectFromRunner(runner);
             const config = getConfig();
-
-            if (error === null && !config.metadataOnly && !config.ignoredDBTables.includes(table)) {
+            if (error === null && !config.metadataOnly && config.addReturnValue) {
                 try {
                     // Taken from AWS Lambda runtime
                     const jsonResult = JSON.stringify(
