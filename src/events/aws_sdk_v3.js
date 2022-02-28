@@ -324,6 +324,7 @@ function getOperationByCommand(command) {
  */
 function AWSSDKv3Wrapper(wrappedFunction) {
     return function internalAWSSDKv3Wrapper(command) {
+        let responsePromise = wrappedFunction.apply(this, [command]);
         try {
             const serviceIdentifier = this.config.serviceId.toLowerCase();
             const resourceName = '';
@@ -351,7 +352,6 @@ function AWSSDKv3Wrapper(wrappedFunction) {
             ]);
             awsEvent.setResource(resource);
 
-            let responsePromise = wrappedFunction.apply(this, [command]);
             specificEventCreators[serviceIdentifier].requestHandler(
                 operation,
                 command,
@@ -377,6 +377,7 @@ function AWSSDKv3Wrapper(wrappedFunction) {
                 } catch (e) {
                     tracer.addException(e);
                 }
+                return response;
             }).catch((error) => {
                 console.log(error);
                 try {
@@ -398,7 +399,7 @@ function AWSSDKv3Wrapper(wrappedFunction) {
         } catch (error) {
             tracer.addException(error);
         }
-        return wrappedFunction.apply(this, [command]);
+        return responsePromise;
     };
 }
 
