@@ -128,6 +128,9 @@ if ((process.env.EPSAGON_SSL || 'TRUE').toUpperCase() === 'TRUE') {
     config.traceCollectorURL = config.traceCollectorURL.replace('http:', 'https:');
 }
 
+const skipReturnValue = (process.env.EPSAGON_SKIP_RETURN_VALUE || '').toUpperCase() === 'TRUE';
+config.addReturnValue = !skipReturnValue;
+
 if (process.env.EPSAGON_PATCH_WHITELIST) {
     config.patchWhitelist = process.env.EPSAGON_PATCH_WHITELIST.split(',');
 }
@@ -157,6 +160,11 @@ module.exports.setConfig = function setConfig(configData) {
 
     if (configData.isEpsagonDisabled) {
         config.isEpsagonDisabled = configData.isEpsagonDisabled;
+    }
+
+    // Set addReturnValue for lambda
+    if (configData.addReturnValue || configData.addReturnValue === false) {
+        config.addReturnValue = configData.addReturnValue;
     }
 
     if (configData.appName) {
