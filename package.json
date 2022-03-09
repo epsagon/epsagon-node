@@ -43,12 +43,12 @@
       "commit-msg": "commitlint -E HUSKY_GIT_PARAMS"
     }
   },
-    "nyc": {
+  "nyc": {
     "check-coverage": true,
     "statements": 17,
     "branches": 13,
     "functions": 25,
-    "lines": 18
+    "lines": 17
   },
   "devDependencies": {
     "@babel/runtime": "^7.4.5",
@@ -103,6 +103,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-sns": "^3.41.0",
+    "@aws-sdk/util-dynamodb": "^3.49.0",
     "axios-minified": "^1.0.7",
     "google-protobuf-minified": "^1.0.8",
     "json-stringify-safe": "^5.0.1",

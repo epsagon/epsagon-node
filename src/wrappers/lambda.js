@@ -190,23 +190,27 @@ function baseLambdaWrapper(
             if (statusCode) {
                 eventInterface.addToMetadata(runner, { status_code: statusCode });
             }
-
-            if (error === null && !getConfig().metadataOnly) {
-                let jsonResult;
+            const config = getConfig();
+            if (error === null && !config.metadataOnly && config.addReturnValue) {
                 try {
                     // Taken from AWS Lambda runtime
-                    jsonResult = JSON.stringify(
+                    const jsonResult = JSON.stringify(
                         typeof result === 'undefined' ? null : result
                     );
+                    eventInterface.addToMetadata(
+                        runner,
+                        {
+                            return_value: jsonResult.substring(0, MAX_VALUE_CHARS),
+                        }
+                    );
                 } catch (err) {
-                    jsonResult = `${FAILED_TO_SERIALIZE_MESSAGE}: ${err.message}`;
+                    eventInterface.addToMetadata(
+                        runner,
+                        {
+                            return_value: `${FAILED_TO_SERIALIZE_MESSAGE}: ${err.message}`,
+                        }
+                    );
                 }
-                eventInterface.addToMetadata(
-                    runner,
-                    {
-                        return_value: jsonResult.substring(0, MAX_VALUE_CHARS),
-                    }
-                );
             }
 
             // Restoring empty event loop handling.

@@ -85,6 +85,12 @@ describe('tracer config tests', () => {
         }
     });
 
+    it('setConfig: verify custom ignored DB tables edge case', () => {
+        const ignoredDBTables = 'incorrectValueSetting';
+        config.setConfig({ ignoredDBTables });
+        expect(config.getConfig().ignoredDBTables === undefined);
+    });
+
     it('setConfig: set custom HTTP error code', () => {
         const httpErrorStatusCode = 42;
         config.setConfig({ httpErrorStatusCode });
@@ -94,6 +100,16 @@ describe('tracer config tests', () => {
     it('setConfig: set decodeHTTP to false', () => {
         config.setConfig({ decodeHTTP: false });
         expect(config.getConfig()).to.contain({ decodeHTTP: false });
+    });
+
+    it('setConfig: set addReturnValue to false', () => {
+        config.setConfig({ addReturnValue: false });
+        expect(config.getConfig()).to.contain({ addReturnValue: false });
+    });
+
+    it('setConfig: set addReturnValue to true', () => {
+        config.setConfig({ addReturnValue: true });
+        expect(config.getConfig()).to.contain({ addReturnValue: true });
     });
 
     it('setConfig: set custom sendTimeout', () => {

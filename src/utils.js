@@ -182,7 +182,6 @@ const getLastSplittedItem = (string, seperator) => {
 
 const isLambdaEnv = !!process.env.AWS_LAMBDA_FUNCTION_NAME;
 
-
 /**
  * Function to truncate a long string to a maximum length.
  * @param {string} message to be trancated.
