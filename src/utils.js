@@ -3,6 +3,7 @@
  */
 
 const consts = require('./consts.js');
+const config = require("./config.js");
 
 /**
  * Creates a timestamp (according to epsagon-protocol timestamp format) from a given js time
@@ -181,6 +182,28 @@ const getLastSplittedItem = (string, seperator) => {
 };
 
 const isLambdaEnv = !!process.env.AWS_LAMBDA_FUNCTION_NAME;
+
+/**
+ * Tests if a value is found in keys
+ * @param {Array<String | RegExp>} keys a list of keys to match
+ * @param {string} testVal a value to search keys for
+ * @returns {boolean} true for non-ignored keys
+ */
+module.exports.keyMatched = function doesMatchKey(keys, testVal) {
+    return keys
+        .some((key) => {
+            // on a string key, convert to a looser fmt first
+            // includes() can handle more edge cases than ===
+            if (typeof key === 'string' && config.processIgnoredKey(testVal).includes(key)) {
+                return true;
+            }
+            // on a regex key, test directly for a match
+            if (key instanceof RegExp && key.test(testVal)) {
+                return true;
+            }
+            return false;
+        });
+};
 
 /**
  * Function to truncate a long string to a maximum length.

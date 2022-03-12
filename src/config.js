@@ -12,7 +12,7 @@ module.exports.HTTP_ERR_CODE = parseInt(process.env.EPSAGON_HTTP_ERR_CODE, 10) |
  * @param {string} key the key to process
  * @returns {string} key after process
  */
-module.exports.processIgnoredKey = function processIgnoredKey(key) {
+module.exports.prepareMatchingKey = function prepareMatchingKey(key) {
     return key
         .toLowerCase()
         .replace('-', '')
@@ -21,18 +21,11 @@ module.exports.processIgnoredKey = function processIgnoredKey(key) {
 };
 
 /**
- * process list of ignored keys
- * @param {Array<string | RegExp>} keys the list of keys to process
- * @returns {Array<string | RegExp>} the list of keys after process
- */
-const processIgnoredKeys = keys => keys.map(k => (typeof k === 'string' ? module.exports.processIgnoredKey(k) : k));
-
-/**
  * process list of ignored keys, supporting String & RegExp. Warns if else
  * @param {Array<string | RegExp>}keys the list of keys to match
  * @return {Array<string | RegExp>} the list of keys to override in config
  */
-const matchKeysToIgnore = (keys) => {
+module.exports.prepareMatchingKeys = (keys) => {
     const filteredKeys = keys
         .filter(key => key && (typeof key === 'string' || key instanceof RegExp));
     if (filteredKeys.length !== keys.length) {
@@ -41,7 +34,7 @@ const matchKeysToIgnore = (keys) => {
             keys
         );
     }
-    return processIgnoredKeys(filteredKeys);
+    return keys.map(key => (typeof key === 'string' ? module.exports.prepareMatchingKey(key) : key));
 };
 
 /**
@@ -59,10 +52,13 @@ const config = {
     useSSL: (process.env.EPSAGON_SSL || 'TRUE').toUpperCase() === 'TRUE',
     traceCollectorURL: process.env.EPSAGON_COLLECTOR_URL || consts.TRACE_COLLECTOR_URL,
     isEpsagonDisabled: (process.env.DISABLE_EPSAGON || '').toUpperCase() === 'TRUE',
+    isConsolePatched: (process.env.EPSAGON_PATCH_CONSOLE || '').toUpperCase() === 'TRUE',
     urlPatternsToIgnore: [],
     ignoredDBTables: [],
     internalSampleRate: consts.DEFAULT_SAMPLE_RATE,
     labels: {},
+    keysToAllow: [],
+    labelConsole: (process.env.EPSAGON_LABEL_CONSOLE || '').toUpperCase() === 'TRUE',
     sendOnlyErrors: (process.env.EPSAGON_SEND_TRACE_ON_ERROR || '').toUpperCase() === 'TRUE',
     removeIgnoredKeys: (process.env.EPSAGON_REMOVE_IGNORED_KEYS || '').toUpperCase() === 'TRUE',
     sendTimeout: (Number(process.env.EPSAGON_SEND_TIMEOUT_SEC) || DEFAULT_TIMEOUT_SEC) * 1000.0,
@@ -117,7 +113,11 @@ if (process.env.EPSAGON_IGNORED_DB_TABLES) {
 }
 
 if (process.env.EPSAGON_IGNORED_KEYS) {
-    config.ignoredKeys = processIgnoredKeys(process.env.EPSAGON_IGNORED_KEYS.split(','));
+    config.ignoredKeys = module.exports.prepareMatchingKeys(process.env.EPSAGON_IGNORED_KEYS.split(','));
+}
+
+if (process.env.EPSAGON_ALLOWED_KEYS) {
+    config.keysToAllow = module.exports.prepareMatchingKeys(process.env.EPSAGON_ALLOWED_KEYS.split(','));
 }
 
 if ((process.env.EPSAGON_SSL || 'TRUE').toUpperCase() === 'FALSE') {
@@ -219,13 +219,18 @@ module.exports.setConfig = function setConfig(configData) {
         config.disableHttpResponseBodyCapture = configData.disableHttpResponseBodyCapture;
     }
 
+    // Keys to automatically capture and label
+    if (configData.keysToAllow) {
+        config.keysToAllow = module.exports.prepareMatchingKeys(configData.keysToAllow);
+    }
+
     // User-defined DB Table response blacklist
     if (configData.ignoredDBTables && Array.isArray(configData.ignoredDBTables)) {
-        config.ignoredDBTables = matchKeysToIgnore(configData.ignoredDBTables);
+        config.ignoredDBTables = module.exports.prepareMatchingKeys(configData.ignoredDBTables);
     }
 
     if (configData.ignoredKeys && Array.isArray(configData.ignoredKeys)) {
-        config.ignoredKeys = matchKeysToIgnore(configData.ignoredKeys);
+        config.ignoredKeys = module.exports.prepareMatchingKeys(configData.ignoredKeys);
     }
 
     if (configData.removeIgnoredKeys) {

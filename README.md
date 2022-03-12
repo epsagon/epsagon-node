@@ -780,6 +780,7 @@ Advanced options can be configured as a parameter to the init() method or as env
 |useSSL             |EPSAGON_SSL                |Boolean|`true`       |Whether to send the traces over HTTPS SSL or not                                   |
 |traceCollectorURL  |EPSAGON_COLLECTOR_URL      |String |-            |The address of the trace collector to send trace to                                |
 |isEpsagonDisabled  |DISABLE_EPSAGON            |Boolean|`false`      |A flag to completely disable Epsagon (can be used for tests or locally)            |
+|keysToAllow        |EPSAGON_ALLOWED_KEYS       |Boolean|-            |Array of keys to automatically capture, label, and index in the trace              |
 |ignoredKeys        |EPSAGON_IGNORED_KEYS       |Array  |-            |Array of keys names (can be string or regex) to be removed from the trace          |
 |ignoredDBTables    |EPSAGON_IGNORED_DB_TABLES  |Array  |-            |Array of DB Table names (can be string or regex) to ignore response from trace.    |
 |removeIgnoredKeys  |EPSAGON_REMOVE_IGNORED_KEYS|Boolean|`false`      |Whether to remove ignored keys instead of masking them                             |
@@ -791,6 +792,7 @@ Advanced options can be configured as a parameter to the init() method or as env
 |httpErrorStatusCode|EPSAGON_HTTP_ERR_CODE      |Integer|`400`        |The minimum number of an HTTP response status code to treat as an error            |
 |-                  |EPSAGON_PROPAGATE_LAMBDA_ID|Boolean|`false`      |Insert Lambda request ID into the response payload                                 |
 |-                  |DISABLE_EPSAGON_PATCH      |Boolean|`false`      |Disable the library patching (instrumentation)                                     |
+|isConsolePatched   |EPSAGON_PATCH_CONSOLE      |Boolean|`false`      |Enable console module patching (instrumentation) for labelling                     |
 |-                  |EPSAGON_DEBUG              |Boolean|`false`      |Enable debug prints for troubleshooting                                            |
 |-                  |EPSAGON_PROPAGATE_NATS_ID  |Boolean|`false`      |Whether to propagate a correlation ID in NATS.io calls for distributed tracing     |
 |-                  |EPSAGON_ADD_NODE_PATH      |String |-            |List of folders to looks for node_modules when patching libraries. Separated by `:`|
