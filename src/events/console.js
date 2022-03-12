@@ -31,6 +31,9 @@ function wrapConsoleStdoutFunction(original) {
 }
 
 module.exports = {
+    /**
+     * Patch Node.JS console functions.
+     */
     init() {
         if (console) {
             utils.debugLog('Patching console module');
