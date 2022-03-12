@@ -461,7 +461,7 @@ module.exports.filterTrace = function filterTrace(traceObject, ignoredKeys, remo
         for (let i = 0; i < ignoredKeys.length; i += 1) {
             const predicate = ignoredKeys[i];
             if (typeof predicate === 'string' &&
-            predicate === config.processIgnoredKey(key)) {
+            predicate === config.prepareMatchingKey(key)) {
                 return false;
             }
             if (predicate instanceof RegExp && predicate.test(key)) {

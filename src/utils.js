@@ -194,7 +194,7 @@ module.exports.keyMatched = function doesMatchKey(keys, testVal) {
         .some((key) => {
             // on a string key, convert to a looser fmt first
             // includes() can handle more edge cases than ===
-            if (typeof key === 'string' && config.processIgnoredKey(testVal).includes(key)) {
+            if (typeof key === 'string' && config.prepareMatchingKey(testVal).includes(key)) {
                 return true;
             }
             // on a regex key, test directly for a match
