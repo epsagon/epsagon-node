@@ -57,7 +57,7 @@ module.exports.isKeyMatched = function isKeyMatched(keys, testVal) {
             }
             return false;
         });
-}
+};
 
 /**
  * The default sendTimeout to send for send operations (both sync and async)

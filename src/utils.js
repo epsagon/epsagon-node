@@ -3,7 +3,6 @@
  */
 
 const consts = require('./consts.js');
-const config = require('./config.js');
 
 /**
  * Creates a timestamp (according to epsagon-protocol timestamp format) from a given js time
