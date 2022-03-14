@@ -189,7 +189,7 @@ const isLambdaEnv = !!process.env.AWS_LAMBDA_FUNCTION_NAME;
  * @param {string} testVal a value to search keys for
  * @returns {boolean} true for non-ignored keys
  */
-module.exports.keyMatched = function doesMatchKey(keys, testVal) {
+function isKeyMatched(keys, testVal) {
     return keys
         .some((key) => {
             // on a string key, convert to a looser fmt first
@@ -203,7 +203,7 @@ module.exports.keyMatched = function doesMatchKey(keys, testVal) {
             }
             return false;
         });
-};
+}
 
 /**
  * Function to truncate a long string to a maximum length.
@@ -240,6 +240,7 @@ module.exports.flatten = flatten;
 module.exports.getLastSplittedItem = getLastSplittedItem;
 module.exports.isPromise = isPromise;
 module.exports.isLambdaEnv = isLambdaEnv;
+module.exports.isKeyMatched = isKeyMatched;
 module.exports.getValueIfExist = getValueIfExist;
 module.exports.truncateMessage = truncateMessage;
 module.exports.distinct = distinct;

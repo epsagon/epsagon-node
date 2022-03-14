@@ -23,7 +23,7 @@ function wrapConsoleStdoutFunction(original) {
                 return;
             }
 
-            if (utils.keyMatched(config.getConfig().keysToAllow, k)) {
+            if (utils.isKeyMatched(config.getConfig().keysToAllow, k)) {
                 tracer.label(k, v);
             }
         }

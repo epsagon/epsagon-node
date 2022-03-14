@@ -25,7 +25,7 @@ module.exports.prepareMatchingKey = function prepareMatchingKey(key) {
  * @param {Array<string | RegExp>}keys the list of keys to match
  * @return {Array<string | RegExp>} the list of keys to override in config
  */
-module.exports.prepareMatchingKeys = (keys) => {
+module.exports.prepareMatchingKeys = function prepareMatchingKeys(keys) {
     const filteredKeys = keys
         .filter(key => key && (typeof key === 'string' || key instanceof RegExp));
     if (filteredKeys.length !== keys.length) {
