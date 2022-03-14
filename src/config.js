@@ -38,6 +38,28 @@ module.exports.prepareMatchingKeys = function prepareMatchingKeys(keys) {
 };
 
 /**
+ * Tests if a value is found in keys
+ * @param {Array<String | RegExp>} keys a list of keys to match
+ * @param {string} testVal a value to search keys for
+ * @returns {boolean} true for non-ignored keys
+ */
+module.exports.isKeyMatched = function isKeyMatched(keys, testVal) {
+    return keys
+        .some((key) => {
+            // on a string key, convert to a looser fmt first
+            // includes() can handle more edge cases than ===
+            if (typeof key === 'string' && module.exports.prepareMatchingKey(testVal).includes(key)) {
+                return true;
+            }
+            // on a regex key, test directly for a match
+            if (key instanceof RegExp && key.test(testVal)) {
+                return true;
+            }
+            return false;
+        });
+}
+
+/**
  * The default sendTimeout to send for send operations (both sync and async)
  */
 const DEFAULT_TIMEOUT_SEC = 1.0;
