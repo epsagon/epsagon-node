@@ -380,7 +380,7 @@ function AWSSDKv3Wrapper(wrappedFunction) {
 
             if (!(serviceIdentifier in specificEventCreators)) {
                 // resource is not supported yet
-                return wrappedFunction.apply(this, [command]);
+                return responsePromise;
             }
 
             const operation = getOperationByCommand(command);
