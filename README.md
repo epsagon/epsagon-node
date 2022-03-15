@@ -780,7 +780,7 @@ Advanced options can be configured as a parameter to the init() method or as env
 |useSSL             |EPSAGON_SSL                |Boolean|`true`       |Whether to send the traces over HTTPS SSL or not                                   |
 |traceCollectorURL  |EPSAGON_COLLECTOR_URL      |String |-            |The address of the trace collector to send trace to                                |
 |isEpsagonDisabled  |DISABLE_EPSAGON            |Boolean|`false`      |A flag to completely disable Epsagon (can be used for tests or locally)            |
-|keysToAllow        |EPSAGON_ALLOWED_KEYS       |Boolean|-            |Array of keys to automatically capture, label, and index in the trace              |
+|keysToAllow        |EPSAGON_ALLOWED_KEYS       |Boolean|-            |Array of keys to automatically label in the trace              |
 |ignoredKeys        |EPSAGON_IGNORED_KEYS       |Array  |-            |Array of keys names (can be string or regex) to be removed from the trace          |
 |ignoredDBTables    |EPSAGON_IGNORED_DB_TABLES  |Array  |-            |Array of DB Table names (can be string or regex) to ignore response from trace.    |
 |removeIgnoredKeys  |EPSAGON_REMOVE_IGNORED_KEYS|Boolean|`false`      |Whether to remove ignored keys instead of masking them                             |
