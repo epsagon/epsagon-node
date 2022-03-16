@@ -6,6 +6,7 @@ const config = require('./config.js');
 const utils = require('./utils.js');
 const awsSDKPatcher = require('./events/aws_sdk.js');
 const awsSDKv3Patcher = require('./events/aws_sdk_v3.js');
+const consolePatcher = require('./events/console.js');
 const daxPatcher = require('./events/amazon_dax_client.js');
 const httpPatcher = require('./events/http.js');
 const http2Patcher = require('./events/http2.js');
@@ -45,6 +46,7 @@ const LIBNAME_TO_PATCHER = {
     'azure-sdk': azureSdkPatcher,
     'winston-cw': winstonCloudwatchPatcher,
     'cos-nodejs-sdk-v5': tencentCOSPatcher,
+    console: consolePatcher,
     http: httpPatcher,
     http2: http2Patcher,
     pg: pgPatcher,
@@ -91,6 +93,7 @@ if (!config.getConfig().isEpsagonPatchDisabled) {
         [
             awsSDKPatcher,
             awsSDKv3Patcher,
+            (config.getConfig().isConsolePatched ? consolePatcher : undefined),
             httpPatcher,
             http2Patcher,
             pgPatcher,
@@ -119,7 +122,9 @@ if (!config.getConfig().isEpsagonPatchDisabled) {
             tencentCOSPatcher,
             neo4jPatcher,
             fs,
-        ].forEach(patch);
+        ]
+            .filter(p => p !== undefined)
+            .forEach(patch);
     } else {
         config.getConfig().patchWhitelist.forEach(
             (lib) => {
