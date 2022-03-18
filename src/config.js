@@ -12,7 +12,7 @@ module.exports.HTTP_ERR_CODE = parseInt(process.env.EPSAGON_HTTP_ERR_CODE, 10) |
  * @param {string} key the key to process
  * @returns {string} key after process
  */
-module.exports.prepareMatchingKey = function prepareMatchingKey(key) {
+module.exports.processIgnoredKey = function processIgnoredKey(key) {
     return key
         .toLowerCase()
         .replace('-', '')
@@ -21,11 +21,18 @@ module.exports.prepareMatchingKey = function prepareMatchingKey(key) {
 };
 
 /**
+ * process list of ignored keys
+ * @param {Array<string | RegExp>} keys the list of keys to process
+ * @returns {Array<string | RegExp>} the list of keys after process
+ */
+const processIgnoredKeys = keys => keys.map(k => (typeof k === 'string' ? module.exports.processIgnoredKey(k) : k));
+
+/**
  * process list of ignored keys, supporting String & RegExp. Warns if else
  * @param {Array<string | RegExp>}keys the list of keys to match
  * @return {Array<string | RegExp>} the list of keys to override in config
  */
-module.exports.prepareMatchingKeys = function prepareMatchingKeys(keys) {
+const matchKeysToIgnore = (keys) => {
     const filteredKeys = keys
         .filter(key => key && (typeof key === 'string' || key instanceof RegExp));
     if (filteredKeys.length !== keys.length) {
@@ -34,29 +41,7 @@ module.exports.prepareMatchingKeys = function prepareMatchingKeys(keys) {
             keys
         );
     }
-    return keys.map(key => (typeof key === 'string' ? module.exports.prepareMatchingKey(key) : key));
-};
-
-/**
- * Tests if a value is found in keys
- * @param {Array<String | RegExp>} keys a list of keys to match
- * @param {string} testVal a value to search keys for
- * @returns {boolean} true for non-ignored keys
- */
-module.exports.isKeyMatched = function isKeyMatched(keys, testVal) {
-    return keys
-        .some((key) => {
-            // on a string key, convert to a looser fmt first
-            // includes() can handle more edge cases than ===
-            if (typeof key === 'string' && module.exports.prepareMatchingKey(testVal).includes(key)) {
-                return true;
-            }
-            // on a regex key, test directly for a match
-            if (key instanceof RegExp && key.test(testVal)) {
-                return true;
-            }
-            return false;
-        });
+    return processIgnoredKeys(filteredKeys);
 };
 
 /**
@@ -74,13 +59,10 @@ const config = {
     useSSL: (process.env.EPSAGON_SSL || 'TRUE').toUpperCase() === 'TRUE',
     traceCollectorURL: process.env.EPSAGON_COLLECTOR_URL || consts.TRACE_COLLECTOR_URL,
     isEpsagonDisabled: (process.env.DISABLE_EPSAGON || '').toUpperCase() === 'TRUE',
-    isConsolePatched: (process.env.EPSAGON_PATCH_CONSOLE || '').toUpperCase() === 'TRUE',
     urlPatternsToIgnore: [],
     ignoredDBTables: [],
     internalSampleRate: consts.DEFAULT_SAMPLE_RATE,
     labels: {},
-    keysToAllow: [],
-    labelConsole: (process.env.EPSAGON_LABEL_CONSOLE || '').toUpperCase() === 'TRUE',
     sendOnlyErrors: (process.env.EPSAGON_SEND_TRACE_ON_ERROR || '').toUpperCase() === 'TRUE',
     removeIgnoredKeys: (process.env.EPSAGON_REMOVE_IGNORED_KEYS || '').toUpperCase() === 'TRUE',
     sendTimeout: (Number(process.env.EPSAGON_SEND_TIMEOUT_SEC) || DEFAULT_TIMEOUT_SEC) * 1000.0,
@@ -135,11 +117,7 @@ if (process.env.EPSAGON_IGNORED_DB_TABLES) {
 }
 
 if (process.env.EPSAGON_IGNORED_KEYS) {
-    config.ignoredKeys = module.exports.prepareMatchingKeys(process.env.EPSAGON_IGNORED_KEYS.split(','));
-}
-
-if (process.env.EPSAGON_ALLOWED_KEYS) {
-    config.keysToAllow = module.exports.prepareMatchingKeys(process.env.EPSAGON_ALLOWED_KEYS.split(','));
+    config.ignoredKeys = processIgnoredKeys(process.env.EPSAGON_IGNORED_KEYS.split(','));
 }
 
 if ((process.env.EPSAGON_SSL || 'TRUE').toUpperCase() === 'FALSE') {
@@ -241,18 +219,13 @@ module.exports.setConfig = function setConfig(configData) {
         config.disableHttpResponseBodyCapture = configData.disableHttpResponseBodyCapture;
     }
 
-    // Keys to automatically capture and label
-    if (configData.keysToAllow) {
-        config.keysToAllow = module.exports.prepareMatchingKeys(configData.keysToAllow);
-    }
-
     // User-defined DB Table response blacklist
     if (configData.ignoredDBTables && Array.isArray(configData.ignoredDBTables)) {
-        config.ignoredDBTables = module.exports.prepareMatchingKeys(configData.ignoredDBTables);
+        config.ignoredDBTables = matchKeysToIgnore(configData.ignoredDBTables);
     }
 
     if (configData.ignoredKeys && Array.isArray(configData.ignoredKeys)) {
-        config.ignoredKeys = module.exports.prepareMatchingKeys(configData.ignoredKeys);
+        config.ignoredKeys = matchKeysToIgnore(configData.ignoredKeys);
     }
 
     if (configData.removeIgnoredKeys) {
