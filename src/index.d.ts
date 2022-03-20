@@ -23,7 +23,7 @@ declare module 'epsagon' {
     batchSize?: number
     maxBatchSizeBytes?: number
   }): void
-  export function label(key: string, value: string): void
+  export function label(key: string, value: string | number | boolean): void
   export function unpatch(): void
   export function setError(error: Error): void
   export function setWarning(error: Error): void
