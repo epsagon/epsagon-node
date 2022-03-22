@@ -80,7 +80,6 @@ const config = {
     internalSampleRate: consts.DEFAULT_SAMPLE_RATE,
     labels: {},
     keysToAllow: [],
-    labelConsole: (process.env.EPSAGON_LABEL_CONSOLE || '').toUpperCase() === 'TRUE',
     sendOnlyErrors: (process.env.EPSAGON_SEND_TRACE_ON_ERROR || '').toUpperCase() === 'TRUE',
     removeIgnoredKeys: (process.env.EPSAGON_REMOVE_IGNORED_KEYS || '').toUpperCase() === 'TRUE',
     sendTimeout: (Number(process.env.EPSAGON_SEND_TIMEOUT_SEC) || DEFAULT_TIMEOUT_SEC) * 1000.0,
