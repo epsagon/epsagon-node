@@ -10,12 +10,12 @@ const console = tryRequire('console');
 
 /**
  * Wrap console stdout methods.
- * @param {Function} original the Original stdout function
+ * @param {Function} originalFunc the Original stdout function
  * @returns {Function} the wrapped function
  */
-function wrapConsoleStdoutFunction(original) {
+function wrapConsoleStdoutFunction(originalFunc) {
     return function internalWrapConsoleStdoutFunction(...args) {
-        original(...args);
+        originalFunc.apply(this, args);
         if (args.length === 2) {
             const [k, v] = args;
 
@@ -39,8 +39,8 @@ module.exports = {
             utils.debugLog('Patching console module');
             [
                 'log',
-                'err',
                 'warn',
+                'error',
             ]
                 .forEach((method) => {
                     moduleUtils.patchSingle(console, method, wrapConsoleStdoutFunction);
