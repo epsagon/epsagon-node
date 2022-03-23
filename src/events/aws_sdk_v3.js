@@ -293,6 +293,54 @@ const DynamoDBv3EventCreator = {
     },
 };
 
+const CloudWatchEventsv3EventCreator = {
+    /**
+     * Updates an event with the appropriate fields from an AWS CloudWatch Events command
+     * @param {string} operation the operation we wrapped.
+     * @param {Command} command the wrapped command
+     * @param {proto.event_pb.Event} event The event to update the data on
+     */
+    requestHandler(operation, command, event) {
+        const parameters = command.input || {};
+        const entry = parameters.Entries[0] || {};
+        const resource = event.getResource();
+        resource.setType('events');
+        switch (operation) {
+        case 'PutEventsCommand':
+            resource.setName(entry.EventBusName || 'CloudWatch Events');
+            eventInterface.addToMetadata(event, {
+                'aws.cloudwatch.detail_type': entry.DetailType,
+                'aws.cloudwatch.resources': entry.Resources,
+                'aws.cloudwatch.source': entry.Source,
+            }, {
+                'aws.cloudwatch.detail': entry.Detail,
+            });
+            break;
+        default:
+            break;
+        }
+    },
+
+    /**
+     * Updates an event with the appropriate fields from an AWS CloudWatch Events response
+     * @param {string} operation the operation we wrapped.
+     * @param {object} response The AWS.Response object
+     * @param {proto.event_pb.Event} event The event to update the data on
+     */
+    responseHandler(operation, response, event) {
+        switch (operation) {
+        case 'PutEventsCommand':
+            eventInterface.addToMetadata(event, {
+                'aws.cloudwatch.event_id': `${response.Entries[0].EventId}`,
+            });
+            break;
+
+        default:
+            break;
+        }
+    },
+};
+
 /**
  * a map between AWS resource names and their appropriate creator object.
  */
@@ -300,6 +348,7 @@ const specificEventCreators = {
     sns: SNSv3EventCreator,
     dynamodb: DynamoDBv3EventCreator,
     sqs: SQSv3EventCreator,
+    eventbridge: CloudWatchEventsv3EventCreator,
 };
 
 /**
@@ -324,13 +373,14 @@ function getOperationByCommand(command) {
  */
 function AWSSDKv3Wrapper(wrappedFunction) {
     return function internalAWSSDKv3Wrapper(command) {
+        let responsePromise = wrappedFunction.apply(this, [command]);
         try {
             const serviceIdentifier = this.config.serviceId.toLowerCase();
             const resourceName = '';
 
             if (!(serviceIdentifier in specificEventCreators)) {
                 // resource is not supported yet
-                return wrappedFunction.apply(this, [command]);
+                return responsePromise;
             }
 
             const operation = getOperationByCommand(command);
@@ -351,7 +401,6 @@ function AWSSDKv3Wrapper(wrappedFunction) {
             ]);
             awsEvent.setResource(resource);
 
-            let responsePromise = wrappedFunction.apply(this, [command]);
             specificEventCreators[serviceIdentifier].requestHandler(
                 operation,
                 command,
@@ -377,6 +426,7 @@ function AWSSDKv3Wrapper(wrappedFunction) {
                 } catch (e) {
                     tracer.addException(e);
                 }
+                return response;
             }).catch((error) => {
                 utils.debugLog(error);
                 try {
@@ -398,7 +448,7 @@ function AWSSDKv3Wrapper(wrappedFunction) {
         } catch (error) {
             tracer.addException(error);
         }
-        return wrappedFunction.apply(this, [command]);
+        return responsePromise;
     };
 }
 
