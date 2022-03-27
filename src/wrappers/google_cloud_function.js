@@ -87,7 +87,7 @@ module.exports.googleCloudFunctionWrapper = function googleCloudFunctionWrapper(
             eventStartTime = startTime;
             tracer.addRunner(runner);
         } catch (err) {
-            console.log(err); // eslint-disable-line no-console
+            utils.debugLog(err);
             // If we failed, call the user's function anyway
             return functionToWrap(req, res);
         }

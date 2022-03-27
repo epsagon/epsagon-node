@@ -77,6 +77,21 @@ describe('tracer config tests', () => {
         expect(config.getConfig()).to.contain(updatedConfig);
     });
 
+    it('setConfig: set AllowedKeys and match them', () => {
+        const keysToAllow = ['username', /.*password.*/];
+        config.setConfig({ keysToAllow });
+        [
+            'username',
+            'user name',
+            'User Name',
+            'USER - NAME',
+            'PaSsWoRd',
+            'pass   _____     word',
+        ].forEach(k => expect(
+            config.isKeyMatched(config.getConfig().keysToAllow, k)
+        ));
+    });
+
     it('setConfig: set custom ignored DB tables', () => {
         const ignoredDBTables = ['customers', /.*password.*/];
         config.setConfig({ ignoredDBTables });

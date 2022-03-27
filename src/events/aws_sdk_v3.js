@@ -428,7 +428,7 @@ function AWSSDKv3Wrapper(wrappedFunction) {
                 }
                 return response;
             }).catch((error) => {
-                console.log(error);
+                utils.debugLog(error);
                 try {
                     eventInterface.setException(awsEvent, error);
                     if (awsEvent.getErrorCode() !== errorCode.ErrorCode.EXCEPTION) {
