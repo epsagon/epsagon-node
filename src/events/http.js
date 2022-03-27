@@ -185,10 +185,8 @@ function httpWrapper(wrappedFunction) {
                     } catch (err) {
                         utils.debugLog('Could not catch stripe call');
                     }
-                    
                 }
             }
-            
 
             // Capture the port if provided and is different than standard 80 and 443
             if (options.port && !['80', '443', 80, 443].includes(options.port)) {
