@@ -177,13 +177,14 @@ function httpWrapper(wrappedFunction) {
             // Skipping new stripe calls since it interfere with async events
             if (options.headers['User-Agent']) {
                 if (options.headers['User-Agent'].includes('Stripe/v1 NodeBindings/')) {
+                    var stripeVersion = 0;
                     try {
-                        const stripeVersion = parseInt(options.headers['User-Agent'].split('/')[2].split('.')[1], 10);
-                        if (stripeVersion > 169) {
-                            return wrappedFunction.apply(this, [a, b, c]);
-                        }
+                        stripeVersion = parseInt(options.headers['User-Agent'].split('/')[2].split('.')[1], 10);
                     } catch (err) {
-                        utils.debugLog('Could not catch stripe call');
+                        utils.debugLog('Could not parse stripe version');
+                    }
+                    if (stripeVersion > 169 || !stripeVersion) {
+                        return wrappedFunction.apply(this, [a, b, c]);
                     }
                 }
             }
