@@ -512,6 +512,18 @@ describe('lambdaWrapper tests', () => {
         }, 1);
     });
 
+    it('lambdaWrapper: omit return value by env variable', (done) => {
+        config.setConfig({ addReturnValue: false });
+        this.wrappedStub({}, this.context, this.callbackStub);
+        expect(this.createFromEventStub.callCount).to.equal(1);
+        expect(getReturnValue(this.addRunnerStub)).to.equal(undefined);
+        expect(this.addExceptionStub.called).to.be.false;
+        expect(this.callbackStub.callCount).to.equal(0);
+        expect(this.setExceptionStub.called).to.be.false;
+        config.setConfig({ addReturnValue: true });
+        done();
+    });
+
     it('lambdaWrapper: dont trace ignored payloads (multiple)', (done) => {
         process.env.EPSAGON_PAYLOADS_TO_IGNORE = '[{"source": "serverless-plugin-warmup"}, {"foo": "bar"}]';
 

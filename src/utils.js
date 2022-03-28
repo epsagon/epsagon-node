@@ -183,19 +183,6 @@ const getLastSplittedItem = (string, seperator) => {
 const isLambdaEnv = !!process.env.AWS_LAMBDA_FUNCTION_NAME;
 
 /**
- * Get target trace object from runner
- * @param {runner} runner proto.event_pb.Event runner representing the lambda
- * @returns {string} the name of the object lambda was triggered with
- */
-const getObjectFromRunner = (runner) => {
-    const { array } = runner;
-    if (array && array.length >= 2 && array[2][0]) {
-        return array[2][0];
-    }
-    return '';
-};
-
-/**
  * Function to truncate a long string to a maximum length.
  * @param {string} message to be trancated.
  * @param {integer} maxSize maximum message length.
@@ -228,7 +215,6 @@ module.exports.printError = printError;
 module.exports.makeQueryablePromise = makeQueryablePromise;
 module.exports.flatten = flatten;
 module.exports.getLastSplittedItem = getLastSplittedItem;
-module.exports.getObjectFromRunner = getObjectFromRunner;
 module.exports.isPromise = isPromise;
 module.exports.isLambdaEnv = isLambdaEnv;
 module.exports.getValueIfExist = getValueIfExist;
