@@ -177,7 +177,7 @@ function httpWrapper(wrappedFunction) {
             // Skipping new stripe calls since it interfere with async events
             if (options.headers['User-Agent']) {
                 if (options.headers['User-Agent'].includes('Stripe/v1 NodeBindings/')) {
-                    var stripeVersion = 0;
+                    let stripeVersion = 0;
                     try {
                         stripeVersion = parseInt(options.headers['User-Agent'].split('/')[2].split('.')[1], 10);
                     } catch (err) {
