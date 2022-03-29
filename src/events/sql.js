@@ -114,7 +114,7 @@ module.exports.wrapSqlQuery = function wrapSqlQuery(queryString, params, callbac
                     if (rowCount &&
                         rows instanceof Array &&
                         rows.length &&
-                        !tables.some(t => tracer.doesContainIgnoredKey(ignoredTables, t))
+                        !tables.some(t => epsagonConfig.isKeyMatched(ignoredTables, t))
                     ) {
                         if (rows.length > consts.MAX_QUERY_ELEMENTS) {
                             eventInterface.addToMetadata(dbapiEvent, { is_trimmed: true });
