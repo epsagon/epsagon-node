@@ -174,21 +174,6 @@ function httpWrapper(wrappedFunction) {
                 return wrappedFunction.apply(this, [a, b, c]);
             }
 
-            // Skipping new stripe calls since it interfere with async events
-            if (options.headers['User-Agent']) {
-                if (options.headers['User-Agent'].includes('Stripe/v1 NodeBindings/')) {
-                    let stripeVersion = 0;
-                    try {
-                        stripeVersion = parseInt(options.headers['User-Agent'].split('/')[2].split('.')[1], 10);
-                    } catch (err) {
-                        utils.debugLog('Could not parse stripe version');
-                    }
-                    if (stripeVersion > 169 || !stripeVersion) {
-                        return wrappedFunction.apply(this, [a, b, c]);
-                    }
-                }
-            }
-
             // Capture the port if provided and is different than standard 80 and 443
             if (options.port && !['80', '443', 80, 443].includes(options.port)) {
                 hostname = `${hostname}:${options.port}`;
