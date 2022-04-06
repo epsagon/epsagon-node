@@ -241,6 +241,8 @@ const DynamoDBv3EventCreator = {
             };
             parameters.TransactItems.forEach(
                 (item) => {
+                    // common properties are optional for items of all types
+                    // for each item, populate commonProperties according to type
                     const commonProperties = {};
                     const addCommonProps = itemCmd => [
                         'ConditionExpression',
