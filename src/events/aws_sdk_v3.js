@@ -248,7 +248,6 @@ const DynamoDBv3EventCreator = {
                         'ExpressionAttributeValues',
                         'ReturnValuesOnConditionCheckFailure',
                     ].forEach((cProp) => {
-                        console.log('CPROP:', cProp, itemCmd[cProp]);
                         if (itemCmd[cProp]) {
                             commonProperties[cProp] = itemCmd[cProp];
                         }
