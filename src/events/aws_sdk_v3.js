@@ -232,6 +232,78 @@ const DynamoDBv3EventCreator = {
             break;
         }
 
+        case 'TransactWriteItemsCommand': {
+            const items = {
+                put: [],
+                update: [],
+                delete: [],
+                conditionCheck: [],
+            };
+            parameters.TransactItems.forEach(
+                (item) => {
+                    // common properties are optional for items of all types
+                    // for each item, populate commonProperties according to type
+                    const commonProperties = {};
+                    const addCommonProps = itemCmd => [
+                        'ConditionExpression',
+                        'ExpressionAttributeNames',
+                        'ExpressionAttributeValues',
+                        'ReturnValuesOnConditionCheckFailure',
+                    ].forEach((cProp) => {
+                        if (itemCmd[cProp]) {
+                            commonProperties[cProp] = itemCmd[cProp];
+                        }
+                    });
+                    if (item.Put) {
+                        addCommonProps(item.Put);
+                        items.put.push({
+                            ...commonProperties,
+                            Table: item.Put.TableName,
+                            Item: item.Put.Item,
+                        });
+                    } else if (item.Update) {
+                        addCommonProps(item.Update);
+                        items.update.push({
+                            ...commonProperties,
+                            Table: item.Update.TableName,
+                            Key: item.Update.Key,
+                            UpdateExpression: item.Update.UpdateExpression,
+                        });
+                    } else if (item.Delete) {
+                        addCommonProps(item.Delete);
+                        items.delete.push({
+                            ...commonProperties,
+                            Table: item.Delete.TableName,
+                            Key: item.Delete.Key,
+                        });
+                    } else if (item.ConditionCheck) {
+                        addCommonProps(item.ConditionCheck);
+                        items.conditionCheck.push({
+                            ...commonProperties,
+                            Table: item.ConditionCheck.TableName,
+                            Key: item.ConditionCheck.Key,
+                        });
+                    }
+                }
+            );
+            if (items.put.length) {
+                eventInterface.addToMetadata(event, {}, { 'Added Items': JSON.stringify(items.put) });
+            }
+            if (items.update.length) {
+                eventInterface.addToMetadata(event, {}, { 'Updated Keys': JSON.stringify(items.update) });
+            }
+            if (items.delete.length) {
+                eventInterface.addToMetadata(event, {}, { 'Deleted Keys': JSON.stringify(items.delete) });
+            }
+            if (items.conditionCheck.length) {
+                eventInterface.addToMetadata(event, {}, {
+                    'Condition Checked Keys': JSON.stringify(items.conditionCheck),
+                });
+            }
+            break;
+        }
+
+
         default:
             break;
         }
@@ -437,12 +509,14 @@ function AWSSDKv3Wrapper(wrappedFunction) {
                     eventInterface.addToMetadata(awsEvent, {
                         request_id: `${error.$metadata.requestId}`,
                         error_message: `${error.message}`,
-                        error_code: `${error.Code}`,
+                        error_code: `${error.Code || error.$metadata.httpStatusCode}`,
+                        cancellation_reasons: JSON.stringify(error.CancellationReasons),
+                        attempts: `${error.$metadata.attempts}`,
+                        retry_delay: `${error.$metadata.totalRetryDelay || 0}`,
                     });
                 } catch (e) {
                     tracer.addException(e);
                 }
-                throw error;
             });
             tracer.addEvent(awsEvent, responsePromise);
         } catch (error) {
