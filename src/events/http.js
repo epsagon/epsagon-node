@@ -174,21 +174,6 @@ function httpWrapper(wrappedFunction) {
                 return wrappedFunction.apply(this, [a, b, c]);
             }
 
-            // Skipping new stripe calls since it interfere with async events
-            if (options.headers['User-Agent']) {
-                if (options.headers['User-Agent'].includes('Stripe/v1 NodeBindings/')) {
-                    let stripeVersion = 0;
-                    try {
-                        stripeVersion = parseInt(options.headers['User-Agent'].split('/')[2].split('.')[1], 10);
-                    } catch (err) {
-                        utils.debugLog('Could not parse stripe version');
-                    }
-                    if (stripeVersion > 169 || !stripeVersion) {
-                        return wrappedFunction.apply(this, [a, b, c]);
-                    }
-                }
-            }
-
             // Capture the port if provided and is different than standard 80 and 443
             if (options.port && !['80', '443', 80, 443].includes(options.port)) {
                 hostname = `${hostname}:${options.port}`;
@@ -420,6 +405,7 @@ function httpWrapper(wrappedFunction) {
                         patchedError.message += '\nRequest aborted';
                     }
                     eventInterface.setException(httpEvent, patchedError);
+                    // if there is an error, it is patched and we resolve null
                     resolveHttpPromise(httpEvent, resolve, startTime);
 
                     // if there are no listeners on eventEmitter.error, the process
@@ -447,6 +433,9 @@ function httpWrapper(wrappedFunction) {
 
                 clientRequest.on('response', (res) => {
                     utils.debugLog(`[http] response arrived for ${hostname}`);
+                    // pausing the response stream enables subsrcibing multiple
+                    // `data` event listeners
+                    res.pause();
                     // Listening to data only if options.epsagonSkipResponseData!=true or no options
                     if (!checkIfOmitData()) {
                         res.on('data', chunk => addChunk(chunk, chunks));
@@ -454,12 +443,21 @@ function httpWrapper(wrappedFunction) {
                     res.on('end', () => {
                         const contentEncoding = res.headers && res.headers['content-encoding'];
                         setJsonPayload(httpEvent, 'response_body', Buffer.concat(chunks), contentEncoding);
-                        resolveHttpPromise(httpEvent, resolve, startTime);
+                        httpEvent.setDuration(utils.createDurationTimestamp(startTime));
                     });
+                    // if there is no error, we resolve the response to treat it in the then
+                    resolve(res);
                 }, 'skip'); // skip is for epsagonMarker
-            }).catch((err) => {
-                tracer.addException(err);
-            });
+            })
+                .then((response) => {
+                    // if the response is returned, we resume it to receive `data` events
+                    if (response) {
+                        response.resume();
+                    }
+                })
+                .catch((err) => {
+                    tracer.addException(err);
+                });
 
             tracer.addEvent(httpEvent, responsePromise);
             utils.debugLog(`[http] event added ${hostname}`);
