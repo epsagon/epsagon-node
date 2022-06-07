@@ -107,7 +107,6 @@
     "axios-minified": "^1.0.7",
     "google-protobuf-minified": "^1.0.8",
     "json-stringify-safe": "^5.0.1",
-    "json5": "^2.2.1",
     "md5": "^2.2.1",
     "require-in-the-middle": "^5.0.3",
     "shimmer": "^1.2.1",
