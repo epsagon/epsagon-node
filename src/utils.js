@@ -2,7 +2,6 @@
  * @fileoverview Utility functions
  */
 
-const json5 = require('json5');
 const consts = require('./consts.js');
 
 /**
@@ -206,26 +205,22 @@ function distinct(arr) {
 }
 
 /**
- * Attempt to convert Relaxed JSON String to Object literal.
- * @param {String} relaxedJSON  string of relaxed JSON
- * @returns {Object} Obj Literal of parsed JSON. Empty if unsuccessful.
+ * Attempt to extract an HTTP Status Code from a String.
+ * Matches and returns only 3-digit numbers in range 2XX-5XX.
+ * @param {String} message A String containing a Status Code.
+ * @return {Number} extracted Status Code. If not found -> 0, the only falsy Number.
  */
-function parseRelaxedJSON(relaxedJSON) {
-    // Matches a [colon], [optional whitespace], and [string value] globally.
-    //              :           \s*            ([a-zA-Z_][a-zA-Z0-9-_]+)
-    // values are classified strings if starts with a Letter or Underscore.
-    const colonValueMatch = /:\s*([a-zA-Z_][a-zA-Z0-9-_]+)/g;
-    const quotedReplacement = ': "$1"';
-    const quotedValuesJSON = relaxedJSON
-        .toString()
-        .replace(colonValueMatch, quotedReplacement);
-
-    try {
-        return json5.parse(quotedValuesJSON);
-    } catch (parsingErr) {
-        debugLog('Could not parse JSON as relaxed.');
+function extractStatusCode(message) {
+    // matches a [Non-Digit], [2xx - 5xx], and a [Non-Digit]. globally & multiline.
+    //              \D        ([2-5]\d{2})          \D            /g         m
+    const statusCodeMatch = /\D([2-5]\d{2})\D/gm;
+    const statusCodes = message
+        .match(statusCodeMatch)
+        .map(m => m.replace(statusCodeMatch, '$1'));
+    if (statusCodes && statusCodes.length) {
+        return Number(statusCodes[0]);
     }
-    return {};
+    return 0;
 }
 
 module.exports.createTimestampFromTime = createTimestampFromTime;
@@ -243,4 +238,4 @@ module.exports.isLambdaEnv = isLambdaEnv;
 module.exports.getValueIfExist = getValueIfExist;
 module.exports.truncateMessage = truncateMessage;
 module.exports.distinct = distinct;
-module.exports.parseRelaxedJSON = parseRelaxedJSON;
+module.exports.extractStatusCode = extractStatusCode;

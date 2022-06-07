@@ -162,6 +162,7 @@ function baseLambdaWrapper(
                 return Promise.resolve();
             }
             callbackCalled = true;
+            const config = getConfig();
             if (error) {
                 // not catching false here, but that seems OK
                 let reportedError = error;
@@ -178,12 +179,14 @@ function baseLambdaWrapper(
                         message: errorMessage,
                     };
                 }
-                // Attempt to extract Status Code from err message.
-                const parsedErrMessage = utils.parseRelaxedJSON(reportedError.message);
-                if (parsedErrMessage.statusCode) {
-                    eventInterface.addToMetadata(runner, {
-                        status_code: parsedErrMessage.statusCode,
-                    });
+                // Override status code with Error message
+                if (config.allowErrMessageStatus) {
+                    const errStatusCode = utils.extractStatusCode(reportedError.message);
+                    if (errStatusCode) {
+                        eventInterface.addToMetadata(runner, {
+                            status_code: errStatusCode,
+                        });
+                    }
                 }
                 // Setting this error only if there is no existing error already
                 if (!runner.getException()) {
@@ -196,7 +199,6 @@ function baseLambdaWrapper(
             if (statusCode) {
                 eventInterface.addToMetadata(runner, { status_code: statusCode });
             }
-            const config = getConfig();
             if (error === null && !config.metadataOnly && config.addReturnValue) {
                 try {
                     // Taken from AWS Lambda runtime
