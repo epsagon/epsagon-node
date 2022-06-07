@@ -178,7 +178,13 @@ function baseLambdaWrapper(
                         message: errorMessage,
                     };
                 }
-
+                // Attempt to extract Status Code from err message.
+                const parsedErrMessage = utils.parseRelaxedJSON(reportedError.message);
+                if (parsedErrMessage.statusCode) {
+                    eventInterface.addToMetadata(runner, {
+                        status_code: parsedErrMessage.statusCode,
+                    });
+                }
                 // Setting this error only if there is no existing error already
                 if (!runner.getException()) {
                     utils.debugLog('Setting exception from handleUserExecutionDone');
