@@ -345,7 +345,7 @@ function baseLambdaWrapper(
                     .then(() => waitForOriginalCallbackPromise)
                     .then(() => waitForContextResultHandlersPromise)
                     .then(() => {
-                        if (raisedError) {
+                        if (raisedError && config.allowErrMessageStatus) {
                             throw raisedError;
                         }
                         return returnValue;
