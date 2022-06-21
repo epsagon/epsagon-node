@@ -241,6 +241,10 @@ module.exports.setConfig = function setConfig(configData) {
         config.disableHttpResponseBodyCapture = configData.disableHttpResponseBodyCapture;
     }
 
+    if (configData.allowErrMessageStatus) {
+        config.allowErrMessageStatus = configData.allowErrMessageStatus;
+    }
+
     // Keys to automatically capture and label
     if (configData.keysToAllow) {
         config.keysToAllow = module.exports.prepareMatchingKeys(configData.keysToAllow);
