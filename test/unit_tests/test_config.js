@@ -1,6 +1,7 @@
 const { expect } = require('chai');
 const consts = require('../../src/consts.js');
 const config = require('../../src/config.js');
+const utils = require('../../src/utils.js');
 
 
 describe('tracer config tests', () => {
@@ -115,6 +116,47 @@ describe('tracer config tests', () => {
     it('setConfig: set decodeHTTP to false', () => {
         config.setConfig({ decodeHTTP: false });
         expect(config.getConfig()).to.contain({ decodeHTTP: false });
+    });
+
+    it('setConfig: set allowErrMessageStatus to true', () => {
+        config.setConfig({ allowErrMessageStatus: true });
+        expect(config.getConfig()).to.contain({ allowErrMessageStatus: true });
+    });
+
+    it('setConfig: set allowErrMessageStatus and match error message', () => {
+        config.setConfig({ allowErrMessageStatus: true });
+
+        const testCode = 324;
+        [
+            `{errorMessage: TEST-MESSAGE, statusCode: ${testCode}}`,
+            `errorMessage: TEST-MESSAGE, statusCode: ${testCode}`,
+            `{statusCode:${testCode}}`,
+            `{statusCode:${testCode}}`,
+            `Error - ${testCode}`,
+            `${testCode}`,
+            `${testCode}: errorMessage`,
+            `${testCode} - error has a message`,
+        ]
+            .forEach((m) => {
+                const statusCode = utils.extractStatusCode(m);
+                expect(statusCode).to.be.equal(testCode);
+            });
+    });
+
+    it('setConfig: set allowErrMessageStatus without matches', () => {
+        config.setConfig({ allowErrMessageStatus: true });
+
+        const defaultStatusCode = 900;
+        [
+            'test message',
+            'No Status Code Found',
+            '4123 is not a Status Code',
+            '22 is also not one.',
+        ]
+            .forEach((m) => {
+                const statusCode = utils.extractStatusCode(m, defaultStatusCode);
+                expect(statusCode).to.be.equal(defaultStatusCode);
+            });
     });
 
     it('setConfig: set addReturnValue to false', () => {
