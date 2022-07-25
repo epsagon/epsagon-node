@@ -790,6 +790,7 @@ Advanced options can be configured as a parameter to the init() method or as env
 |batchSize          |EPSAGON_BATCH_SIZE         |Integer|`5 `         |The traces' batch size, when batch mode is activated                               |
 |decodeHTTP         |EPSAGON_DECODE_HTTP        |Boolean|`true`       |Whether to decode and decompress HTTP responses into the payload                   |
 |httpErrorStatusCode|EPSAGON_HTTP_ERR_CODE      |Integer|`400`        |The minimum number of an HTTP response status code to treat as an error            |
+|-                  |EPSAGON_ALLOW_ERR_MESSAGE_STATUS|Boolean|`true`  |Whether to override `http.status_code` with a Status Code found in a raised Error's Message|
 |-                  |EPSAGON_PROPAGATE_LAMBDA_ID|Boolean|`false`      |Insert Lambda request ID into the response payload                                 |
 |-                  |DISABLE_EPSAGON_PATCH      |Boolean|`false`      |Disable the library patching (instrumentation)                                     |
 |isConsolePatched   |EPSAGON_PATCH_CONSOLE      |Boolean|`false`      |Enable console module patching (instrumentation) for labelling                     |
@@ -833,3 +834,4 @@ For help and questions about Epsagon, use the help widget inside the product.
 Provided under the MIT license. See LICENSE for details.
 
 Copyright 2021, Epsagon
+

@@ -85,6 +85,7 @@ const config = {
     sendTimeout: (Number(process.env.EPSAGON_SEND_TIMEOUT_SEC) || DEFAULT_TIMEOUT_SEC) * 1000.0,
     decodeHTTP: (process.env.EPSAGON_DECODE_HTTP || 'TRUE').toUpperCase() === 'TRUE',
     disableHttpResponseBodyCapture: (process.env.EPSAGON_DISABLE_HTTP_RESPONSE || '').toUpperCase() === 'TRUE',
+    allowErrMessageStatus: (process.env.EPSAGON_ALLOW_ERR_MESSAGE_STATUS || '').toUpperCase() === 'TRUE',
     loggingTracingEnabled: (process.env.EPSAGON_LOGGING_TRACING_ENABLED || (!utils.isLambdaEnv).toString()).toUpperCase() === 'TRUE',
     sendBatch: (process.env.EPSAGON_SEND_BATCH || (!utils.isLambdaEnv).toString()).toUpperCase() === 'TRUE',
     batchSize: (Number(process.env.EPSAGON_BATCH_SIZE) || consts.DEFAULT_BATCH_SIZE),
@@ -238,6 +239,10 @@ module.exports.setConfig = function setConfig(configData) {
     // Whether to ignore HTTP responses capture
     if (configData.disableHttpResponseBodyCapture) {
         config.disableHttpResponseBodyCapture = configData.disableHttpResponseBodyCapture;
+    }
+
+    if (configData.allowErrMessageStatus) {
+        config.allowErrMessageStatus = configData.allowErrMessageStatus;
     }
 
     // Keys to automatically capture and label
