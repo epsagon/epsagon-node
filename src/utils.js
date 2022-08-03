@@ -208,19 +208,24 @@ function distinct(arr) {
  * Attempt to extract an HTTP Status Code from a String.
  * Matches and returns only 3-digit numbers in range 2XX-5XX.
  * @param {String} message A String containing a Status Code.
- * @return {Number} extracted Status Code. If not found -> 0, the only falsy Number.
+ * @param {Number} defaultCode The defaulting Status Code if none are found.
+ *                              0 is chosen as the only falsy Number to avoid being added.
+ * @return {Number} extracted Status Code.
  */
-function extractStatusCode(message) {
-    // matches a [Non-Digit], [2xx - 5xx], and a [Non-Digit]. globally & multiline.
-    //              \D        ([2-5]\d{2})          \D            /g         m
-    const statusCodeMatch = /\D([2-5]\d{2})\D/gm;
-    const statusCodes = message
-        .match(statusCodeMatch)
-        .map(m => m.replace(statusCodeMatch, '$1'));
-    if (statusCodes && statusCodes.length) {
-        return Number(statusCodes[0]);
+function extractStatusCode(message, defaultCode = 0) {
+    // matches a [Non-Digit or SOL], [2xx - 5xx], and a [Non-Digit or EOL]. globally & multiline.
+    //                (?:^|\D)       ([2-5]\d{2})          (?:$|\D)        /g          m
+    const statusCodeMatch = /(?:^|\D)([2-5]\d{2})(?:$|\D)/gm;
+    const matches = message
+        .match(statusCodeMatch);
+    if (matches === null || !matches.length) {
+        debugLog('Could not extract Status Code from Message:', message);
+        debugLog('Defaulting Status to', defaultCode);
+        return defaultCode;
     }
-    return 0;
+    const statusCodes = matches
+        .map(m => m.replace(statusCodeMatch, '$1'));
+    return Number(statusCodes[0]);
 }
 
 module.exports.createTimestampFromTime = createTimestampFromTime;
