@@ -29,7 +29,7 @@ jobs:
         - ./test/acceptance/run.sh $TRAVIS_BUILD_NUMBER
 
     - stage: build-and-deploy
-      node_js: "12.13"
+      node_js: "14.17"
       script:
         - npm run build && npm run semantic-release && ./scripts/publish_layers.sh
 
