@@ -116,6 +116,12 @@ function getNeo4JSessionMetadata(session) {
 
         break;
 
+    case 'TransactionPromise':
+        connectionHolder = session._connectionHolder;
+        sessionMode = connectionHolder._mode;
+
+        break;
+
     default:
         return;
     }
